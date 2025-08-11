@@ -243,4 +243,29 @@ public class Rvgs{
 	return (normal(0.0, 1.0) / Math.sqrt(chiSquare(n) / n));
     }
 
+	public double hyperExponential(double p, double m1, double m2, int streamSelect, int streamExp1, int streamExp2) {
+/* =========================================================
+ * Returns a hyperexponential (2-phase) distributed positive real number.
+ * Parameters:
+ *    p  = probability of selecting the first exponential (0 < p < 1)
+ *    m1 = mean of the first exponential (> 0)
+ *    m2 = mean of the second exponential (> 0)
+ *    streamSelect = stream to select for the hyperexponential
+ *    streamExp1 = stream to select for the first exponential
+ *    streamExp2 = stream to select for the second exponential
+ * =========================================================
+ */
+		rngs.selectStream(streamSelect);
+		double u = rngs.random();
+
+		if (u < p) {
+			rngs.selectStream(streamExp1);
+			return -m1 * Math.log(1.0 - rngs.random());
+		} else {
+			rngs.selectStream(streamExp2);
+			return -m2 * Math.log(1.0 - rngs.random());
+		}
+	}
+
+
 }
