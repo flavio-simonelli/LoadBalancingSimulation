@@ -267,5 +267,18 @@ public class Rvgs{
 		}
 	}
 
+    public double hyperExponentialV2(double p, double m1, double m2) {
+        // p: probability of choosing the first exponential (0 < p < 1)
+        // m1: mean of the first exponential (> 0)
+        // m2: mean of the second exponential (> 0)
+        if (p <= 0.0 || p >= 1.0 || m1 <= 0.0 || m2 <= 0.0)
+            throw new IllegalArgumentException("Invalid parameters for hyperExponential");
+
+        if (rngs.random() < p)
+            return (-m1 * Math.log(1.0 - rngs.random()));
+        else
+            return (-m2 * Math.log(1.0 - rngs.random()));
+    }
+
 
 }

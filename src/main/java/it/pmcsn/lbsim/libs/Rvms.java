@@ -743,4 +743,35 @@ public class Rvms{
 	else
 	    return (factor * f);
     }
+
+    public double pdfHyperExponentialV2(double p, double m1, double m2, double x) {
+        // p: probability of choosing the first exponential (0 < p < 1)
+        // m1, m2: means of the two exponentials (> 0)
+        // x: value (> 0)
+        if (p <= 0.0 || p >= 1.0 || m1 <= 0.0 || m2 <= 0.0 || x < 0.0)
+            throw new IllegalArgumentException("Invalid parameters for pdfHyperExponentialV2");
+        return p * pdfExponential(m1, x) + (1.0 - p) * pdfExponential(m2, x);
+    }
+
+    public double cdfHyperExponentialV2(double p, double m1, double m2, double x) {
+        if (p <= 0.0 || p >= 1.0 || m1 <= 0.0 || m2 <= 0.0 || x < 0.0)
+            throw new IllegalArgumentException("Invalid parameters for cdfHyperExponentialV2");
+        return p * cdfExponential(m1, x) + (1.0 - p) * cdfExponential(m2, x);
+    }
+
+    public double idfHyperExponentialV2(double p, double m1, double m2, double u) {
+        // Numerical search (like the other idf): Newton-Raphson
+        if (p <= 0.0 || p >= 1.0 || m1 <= 0.0 || m2 <= 0.0 || u <= 0.0 || u >= 1.0)
+            throw new IllegalArgumentException("Invalid parameters for idfHyperExponentialV2");
+        double x = p * m1 + (1.0 - p) * m2; // initialize to the mean
+        double t;
+        do {
+            t = x;
+            double cdf = cdfHyperExponentialV2(p, m1, m2, t);
+            double pdf = pdfHyperExponentialV2(p, m1, m2, t);
+            x = t + (u - cdf) / pdf;
+            if (x < 0.0) x = 0.5 * t;
+        } while (Math.abs(x - t) >= TINY);
+        return x;
+    }
 }
