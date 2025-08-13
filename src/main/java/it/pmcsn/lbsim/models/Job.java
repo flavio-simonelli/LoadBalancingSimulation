@@ -3,89 +3,77 @@ package it.pmcsn.lbsim.models;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+
+
 /**
  * Represents a job in an event-driven processor sharing scheduling simulation.
  * Job state changes only through discrete events managed by the simulation scheduler.
  */
 public class Job {
     private static final Logger logger = Logger.getLogger(Job.class.getName());
-    private final int jobId;
-    private Server assignedServer;
-    private final double totalServiceDemand;      // Original processing time required
-    private double remainingServiceDemand;        // How much processing is left
-    private boolean isCompleted;                  // Whether the job has finished processing
+    private final int jobId;                      // Unique integer identifier for the job
+    private final double size;
+    private double remainingSize;                 // This is UNCORRELATED from the assigned server, but coincides numerically with the job service demand to a WebServer with exclusive CPU access
+    private Server assignedServer;                // Server to which this job is assigned
+    private double arrivalTime;                   // Arrival time of the job in the system, used for calculate statistical results
+    private double currentExtimatedDeparture;     // Departure estimated time of the job in the system, used for calculate the next departure event in simulation (and for statistical results)
 
-    /**
-     * Constructor for creating a new job
-     * @param jobId Unique identifier for this job
-     * @param totalServiceDemand Total processing time required (assuming exclusive CPU access)
-     */
-    public Job(int jobId, double totalServiceDemand) {
+    public Job(int jobId, double size, double arrivalTime) {
         this.jobId = jobId;
-        this.totalServiceDemand = totalServiceDemand;
-        this.remainingServiceDemand = totalServiceDemand;
-        this.isCompleted = false;
+        this.size = size;
+        this.remainingSize = size;
+        this.arrivalTime = arrivalTime;
         this.assignedServer = null;
     }
 
-    /**
-     * Processes this job for a given elapsed time period, considering processor sharing.
-     * The actual service received depends on how many jobs are currently sharing the CPU.
-     * It is mandatory to assign this job to a server before calling this method.
-     *
-     * @param elapsedTime Real time that passed in the simulation
-     */
-    public void processForElapsedTime(double elapsedTime) {
-        if (isCompleted) {
-            logger.log(Level.WARNING, "Attempted to process a completed job. jobId={0}", jobId);
-            return;
+    public void assignServer(Server server, double currentTime) {
+        if (server == null) {
+            throw new IllegalArgumentException("Assigned server cannot be null");
         }
+        this.assignedServer = server;
+    }
+
+    //MUS ASSIGN THE SERVER BEFORE
+    public void processForElapsedTime(double elapsedTime) {
         if (assignedServer == null) {
-            logger.log(Level.WARNING, "Attempted to process a job without an assigned server. jobId={0}", jobId);
-            return;
+            logger.log(Level.SEVERE, "Attempted to process a job without an assigned server. jobId={0}", jobId);
+            throw new IllegalStateException("Job must be assigned to a server before processing");
         }
 
-        int currentServerLoad = assignedServer.getCurrentSi();
-        if (currentServerLoad <= 0) {
+        int currentServerLoadJobs = assignedServer.getCurrentSi();
+        if (currentServerLoadJobs <= 0) {
             throw new IllegalStateException("Server load cannot be zero or negative");
         }
 
         // In processor sharing, each job gets 1/n of the CPU time
-        double effectiveProcessingRate = 1.0 / currentServerLoad;
-        double actualServiceReceived = elapsedTime * effectiveProcessingRate;
+        double effectiveProcessingRate = assignedServer.getCpuPercentage() / currentServerLoadJobs;
+        double serviceReceived = elapsedTime * effectiveProcessingRate * assignedServer.getCpuMultiplier();
 
         // Reduce remaining service demand by actual service received
-        remainingServiceDemand = Math.max(0, remainingServiceDemand - actualServiceReceived);
-
-        // Mark as completed if no demand remains
-        if (remainingServiceDemand <= 0) {
-            isCompleted = true;
+        if (serviceReceived > remainingSize) {
+            logger.log(Level.SEVERE, "Job {0} is completed but the event is not execute!", jobId);
+            throw new IllegalStateException("Service received exceeds remaining service demand");
+        } else {
+            remainingSize -= serviceReceived;
+            logger.log(Level.INFO, "Job {0} processed for {1} seconds, remaining service demand: {2}",
+                    new Object[]{jobId, elapsedTime, remainingSize});
         }
     }
 
-    // Getters
-    public int getJobId() {
-        return jobId;
-    }
+    // TODO: check if move to simulator model
+    public void calculateDepartureTime(double currentTime) {
+        if (assignedServer == null) {
+            logger.log(Level.SEVERE, "Attempted to recalculate remaining service demand without an assigned server. jobId={0}", jobId);
+            throw new IllegalStateException("Job must be assigned to a server before recalculating remaining service demand");
+        }
 
-    public Server getAssignedServer() {
-        return assignedServer;
-    }
-
-    public double getTotalServiceDemand() {
-        return totalServiceDemand;
-    }
-
-    public double getRemainingServiceDemand() {
-        return remainingServiceDemand;
-    }
-
-    public boolean isCompleted() {
-        return isCompleted;
-    }
-
-    // Setters
-    public void setAssignedServer(Server server) {
-        this.assignedServer = server;
+        int currentServerLoadJobs = assignedServer.getCurrentSi();
+        if (currentServerLoadJobs <= 0) {
+            throw new IllegalStateException("Server load cannot be zero or negative");
+        }
+        // In processor sharing, each job gets 1/n of the CPU time
+        double effectiveProcessingRate = assignedServer.getCpuPercentage() / currentServerLoadJobs;
+        this.currentExtimatedDeparture = currentTime + remainingSize / effectiveProcessingRate;
+        logger.log(Level.INFO, "departure time for job {0} recalculated: {1}", new Object[]{jobId, this.currentExtimatedDeparture});
     }
 }

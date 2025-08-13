@@ -3,74 +3,39 @@ package it.pmcsn.lbsim.models;
 import java.util.List;
 
 public class Server {
-    private int id;
-    private double serviceRate; // the rate at which the server processes jobs
-    private double currentUtilization; // the fraction of time the server is busy
-    private double idleTime; // the total time the server is idle
-    private double busyTime; // the total time the server is busy
-    private int maxJob; // the maximum number of job the server can do
-    private int currentSi; // the service intensity, which is the average number of jobs served per time unit
-    private List<Job> jobs; // the list of jobs currently assigned to the server
+    private List<Job> activeJobs;       // List of jobs currently being processed by this server
+    private final int cpuMultiplier;    // 1 for WebServer, 2 or 3 for SpikeServer
+    private final double cpuPercentage; // WebServer is 1.0 and SpikeServer is 0.4 or 0.8
 
-
-    public Server(double serviceRate) {
-        this.serviceRate = serviceRate;
-        setUtilization(0.0);
-        this.idleTime = 0.0;
-        this.busyTime = 0.0;
+    public Server(int cpuMultiplier, double cpuPercentage) {
+        this.cpuMultiplier = cpuMultiplier;
+        this.cpuPercentage = cpuPercentage;
+        this.activeJobs = new java.util.ArrayList<>();
     }
 
-    public Server() {
+    public void addJob(Job job) {
+        if (job == null) {
+            throw new IllegalArgumentException("Job cannot be null");
+        }
+        activeJobs.add(job);
     }
 
-
-    public double getServiceRate() {
-        return serviceRate;
+    public void removeJob(Job job) {
+        if (job == null) {
+            throw new IllegalArgumentException("Job cannot be null");
+        }
+        activeJobs.remove(job);
     }
 
-    public void setServiceRate(double serviceRate) {
-        this.serviceRate = serviceRate;
+    public int getCurrentSi(){
+        return activeJobs.size();
     }
 
-    public double getUtilization() {
-        return this.currentUtilization;
+    public int getCpuMultiplier() {
+        return cpuMultiplier;
     }
 
-    public void setUtilization(double utilization) {
-        this.currentUtilization = utilization;
-    }
-
-    public double getIdleTime() {
-        return idleTime;
-    }
-
-    public void setIdleTime(double idleTime) {
-        this.idleTime = idleTime;
-    }
-
-    public double getBusyTime() {
-        return busyTime;
-    }
-
-    public void setBusyTime(double busyTime) {
-        this.busyTime = busyTime;
-    }
-    public int getMaxJob() {
-        return maxJob;
-    }
-    public void setMaxJob(int maxJob) {
-        this.maxJob = maxJob;
-    }
-    public int getCurrentSi() {
-        return currentSi;
-    }
-    public void setCurrentSi(int si) {
-        this.currentSi = si;
-    }
-    public List<Job> getJobs() {
-        return jobs;
-    }
-    public void setJobs(List<Job> jobs) {
-        this.jobs = jobs;
+    public double getCpuPercentage() {
+        return cpuPercentage;
     }
 }

@@ -1,7 +1,10 @@
 package it.pmcsn.lbsim;
 
+import it.pmcsn.lbsim.view.StartView;
+
 public class Main {
     public static void main(String[] args) {
-        System.out.println("Hello, World!");
+        StartView startView = new StartView();
+        startView.init();
     }
 }
