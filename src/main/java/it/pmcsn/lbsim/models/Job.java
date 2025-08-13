@@ -36,8 +36,12 @@ public class Job {
      * @param elapsedTime Real time that passed in the simulation
      */
     public void processForElapsedTime(double elapsedTime) {
-        if (isCompleted || assignedServer == null) {
-            logger.log(Level.WARNING, "Attempted to process a completed job or a job without an assigned server. jobId={0}", jobId);
+        if (isCompleted) {
+            logger.log(Level.WARNING, "Attempted to process a completed job. jobId={0}", jobId);
+            return;
+        }
+        if (assignedServer == null) {
+            logger.log(Level.WARNING, "Attempted to process a job without an assigned server. jobId={0}", jobId);
             return;
         }
 
