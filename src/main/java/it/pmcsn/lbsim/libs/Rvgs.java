@@ -243,28 +243,68 @@ public class Rvgs{
 	return (normal(0.0, 1.0) / Math.sqrt(chiSquare(n) / n));
     }
 
-	public double hyperExponential(double p, double m1, double m2, int streamSelect, int streamExp1, int streamExp2) {
-/* =========================================================
- * Returns a hyperexponential (2-phase) distributed positive real number.
- * Parameters:
- *    p  = probability of selecting the first exponential (0 < p < 1)
- *    m1 = mean of the first exponential (> 0)
- *    m2 = mean of the second exponential (> 0)
- *    streamSelect = stream to select for the hyperexponential
- *    streamExp1 = stream to select for the first exponential
- *    streamExp2 = stream to select for the second exponential
- * =========================================================
- */
-		rngs.selectStream(streamSelect);
-		double u = rngs.random();
+//	public double hyperExponential(double p, double m1, double m2, int streamSelect, int streamExp1, int streamExp2) {
+///* =========================================================
+// * Returns a hyperexponential (2-phase) distributed positive real number.
+// * Parameters:
+// *    p  = probability of selecting the first exponential (0 < p < 1)
+// *    m1 = mean of the first exponential (> 0)
+// *    m2 = mean of the second exponential (> 0)
+// *    streamSelect = stream to select for the hyperexponential
+// *    streamExp1 = stream to select for the first exponential
+// *    streamExp2 = stream to select for the second exponential
+// * =========================================================
+// */
+//		rngs.selectStream(streamSelect);
+//		double u = rngs.random();
+//
+//		if (u < p) {
+//			rngs.selectStream(streamExp1);
+//			return -m1 * Math.log(1.0 - rngs.random());
+//		} else {
+//			rngs.selectStream(streamExp2);
+//			return -m2 * Math.log(1.0 - rngs.random());
+//		}
+//	}
 
-		if (u < p) {
-			rngs.selectStream(streamExp1);
-			return -m1 * Math.log(1.0 - rngs.random());
-		} else {
-			rngs.selectStream(streamExp2);
-			return -m2 * Math.log(1.0 - rngs.random());
-		}
-	}
+    //TODO: check if this is correct
+    public double hyperExponentialFromMeanCV(double mean, double cv,
+                                             int streamSelect, int streamExp1, int streamExp2) {
+        /* =========================================================
+         * Returns a hyperexponential (2-phase) distributed positive real number.
+         * Parameters:
+         *    mean   = overall mean (> 0)
+         *    cv     = coefficient of variation (> 1)
+         *    streamSelect = stream for selecting phase
+         *    streamExp1   = stream for first exponential
+         *    streamExp2   = stream for second exponential
+         * =========================================================
+         */
+        if (mean <= 0.0) {
+            throw new IllegalArgumentException("Mean must be > 0");
+        }
+        if (cv <= 1.0) {
+            throw new IllegalArgumentException("CV must be > 1 for hyperexponential");
+        }
+
+        // Compute phase means and probability
+        double ratio = Math.sqrt((cv * cv - 1) / (cv * cv + 1));
+        double m1 = mean * (1.0 + ratio);
+        double m2 = mean * (1.0 - ratio);
+        double p = (mean - m2) / (m1 - m2);
+
+        // Select which exponential to sample from
+        rngs.selectStream(streamSelect);
+        double u = rngs.random();
+
+        if (u < p) {
+            rngs.selectStream(streamExp1);
+            return -m1 * Math.log(1.0 - rngs.random());
+        } else {
+            rngs.selectStream(streamExp2);
+            return -m2 * Math.log(1.0 - rngs.random());
+        }
+    }
+
 
 }

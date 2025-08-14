@@ -4,8 +4,8 @@ import java.util.LinkedList;
 import java.util.Queue;
 
 public class SlidingWindowResponseTime {
-    private Queue<Double> queue; // List to store response times
-    private final int windowSize; // Size of the sliding window
+    private Queue<Double> queue;    // List to store response times
+    private final int windowSize;   // Size of the sliding window
 
     public SlidingWindowResponseTime(int windowSize) {
         if (windowSize <= 0) {
