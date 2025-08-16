@@ -9,6 +9,7 @@ import java.util.logging.Logger;
  */
 public class Job {
     private static final Logger logger = Logger.getLogger(Job.class.getName());
+    private static final double EPSILON = 1e-9;
     private final int jobId;
     private Server assignedServer;
 
@@ -41,8 +42,10 @@ public class Job {
         double serviceReceived = elapsedTime * effectiveProcessingRate ;
 
         // Reduce remaining service demand by actual service received
-        if (serviceReceived > remainingSize) {
-            logger.log(Level.SEVERE, "Service received {0} exceeds remaining service demand {1} for job {2}", new Object[]{serviceReceived, remainingSize, jobId});
+        if (serviceReceived - remainingSize > EPSILON) {
+            logger.log(Level.SEVERE,
+                    "Service received {0} exceeds remaining service demand {1} for job {2}",
+                    new Object[]{serviceReceived, remainingSize, jobId});
             throw new IllegalStateException("Service received exceeds remaining service demand");
         } else {
             remainingSize -= serviceReceived;

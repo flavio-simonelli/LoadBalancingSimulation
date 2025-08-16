@@ -46,7 +46,7 @@ public class Rngs {
   long MODULUS      = 2147483647; /* DON'T CHANGE THIS VALUE                  */
   long MULTIPLIER   = 48271;      /* DON'T CHANGE THIS VALUE                  */
   static long CHECK = 399268537L; /* DON'T CHANGE THIS VALUE                  */
-  long DEFAULT      = 123456789L; /* initial seed, use 0 < DEFAULT < MODULUS  */
+  public long DEFAULT      = 123456789L; /* initial seed, use 0 < DEFAULT < MODULUS  */
 
   int STREAMS       = 256;        /* # of streams, DON'T CHANGE THIS VALUE    */
   long A256         = 22925;      /* jump multiplier, DON'T CHANGE THIS VALUE */

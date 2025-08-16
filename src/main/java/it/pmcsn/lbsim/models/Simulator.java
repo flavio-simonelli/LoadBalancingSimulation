@@ -11,6 +11,7 @@ import java.util.logging.Logger;
 
 public class Simulator {
     private static final Logger logger = Logger.getLogger(Simulator.class.getName());
+    private static final double EPSILON = 1e-9;
 
     private Double currentTime;                 // Current simulation time
     private Double simulationDuration;          // Total duration of the simulation
@@ -40,6 +41,7 @@ public class Simulator {
         this.currentTime = 0.0;                  // Initialize current time to zero
         this.jobStats = new ArrayList<>();               // Initialize jobStats list
         this.rngs = new Rngs();                  // Initialize the Random Variate Generator
+        rngs.plantSeeds(rngs.DEFAULT);
         this.rvgs = new Rvgs(rngs);              // Initialize the Random Variate Generator
 
         this.loadBalancer = new LoadBalancer(initialServerCount, cpuMultiplierSpike, cpuPercentageSpike, slidingWindowSize, SImax, SImin, R0max, R0min, schedulingType);
@@ -50,12 +52,18 @@ public class Simulator {
             logger.log(Level.SEVERE, "Simulation Duration must be greater than zero");
             throw new IllegalArgumentException("Simulation duration must be greater than zero");
         }
+        this.simulationDuration = simulationDuration; // Set the total duration of the simulation
 
         genNextInterarrivalTime();
 
         do {
             guessNextEvent();
         } while (currentTime < simulationDuration);
+        this.nextArrivalTime = Double.POSITIVE_INFINITY; // Set next arrival time to infinity after simulation ends
+        do {
+            guessNextEvent();
+        } while (!jobStats.isEmpty());
+        logger.log(Level.INFO, "Simulation completed at time {0}", currentTime);
     }
 
     private void guessNextEvent(){
@@ -117,7 +125,7 @@ public class Simulator {
 
         this.currentTime = departureJobStats.getEstimatedDepartureTime();
 
-        if (departureJobStats.getJob().getRemainingSize() != 0.0) {
+        if (Math.abs(departureJobStats.getJob().getRemainingSize()) > EPSILON) {
             logger.log(Level.WARNING,
                     "Remaining size of job {0} is not zero but {1,number,0.000}",
                     new Object[]{

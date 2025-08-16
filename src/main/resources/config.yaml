@@ -1,9 +1,9 @@
 simulazione:
-  duration: 1000   # durata della simulazione in secondi
-  SImax: 10 # numero massimo di job correntemente in esecuzione in un server prima di far scattare la scalabilità verticale (scale up)
-  SImin: 8 # numero minimo di job correntemente in esecuzione in un server prima di far scattare la scalabilità verticale (scale down)
-  R0max: 6.5 # media del tempo di risposta per job in un server prima di far scattare la scalabilità orizzontale (scale in)
-  R0min: 4.3 # media del tempo di risposta per job in un server prima di far scattare la scalabilità orizzontale (scale out)
+  duration: 126144000   # durata della simulazione in secondi
+  SImax: 4 # numero massimo di job correntemente in esecuzione in un server prima di far scattare la scalabilità verticale (scale up)
+  SImin: 2 # numero minimo di job correntemente in esecuzione in un server prima di far scattare la scalabilità verticale (scale down)
+  R0max: 3.4 # media del tempo di risposta per job in un server prima di far scattare la scalabilità orizzontale (scale in)
+  R0min: 3.0 # media del tempo di risposta per job in un server prima di far scattare la scalabilità orizzontale (scale out)
   slidingWindowSize: 10 # dimensione della finestra mobile per il calcolo della media del tempo di risposta
   initialServerCount: 1 # numero di server iniziali SENZA CONTARE LO SPIKE SERVER
   cpuMultiplierSpike: 2 # moltiplicatore della CPU per il server spike
