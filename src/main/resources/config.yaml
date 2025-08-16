@@ -8,3 +8,4 @@ simulazione:
   initialServerCount: 1 # numero di server iniziali SENZA CONTARE LO SPIKE SERVER
   cpuMultiplierSpike: 2 # moltiplicatore della CPU per il server spike
   cpuPercentageSpike: 0.4 # percentuale di CPU assegnata alla applicazione del server spike
+  schedulingPolicy: "least_load"   # valori possibili: least_load, round_robin

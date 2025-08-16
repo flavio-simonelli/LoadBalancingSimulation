@@ -1,5 +1,6 @@
 package it.pmcsn.lbsim.config;
 
+import it.pmcsn.lbsim.models.schedulingpolicy.SchedulingType;
 import org.yaml.snakeyaml.Yaml;
 import java.io.InputStream;
 import java.util.Map;
@@ -15,6 +16,7 @@ public class YamlSimulationConfig implements SimConfiguration {
     private int initialServerCount;
     private int cpuMultiplierSpike;
     private double cpuPercentageSpike;
+    private SchedulingType schedulingType;
 
     public YamlSimulationConfig(String filePath) {
         try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream(filePath)) {
@@ -40,6 +42,7 @@ public class YamlSimulationConfig implements SimConfiguration {
             this.initialServerCount = ((Number) simConfig.get("initialServerCount")).intValue();
             this.cpuMultiplierSpike = ((Number) simConfig.get("cpuMultiplierSpike")).intValue();
             this.cpuPercentageSpike = ((Number) simConfig.get("cpuPercentageSpike")).doubleValue();
+            this.schedulingType = SchedulingType.fromString((String) simConfig.get("schedulingPolicy"));
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -83,4 +86,6 @@ public class YamlSimulationConfig implements SimConfiguration {
     public double getCpuPercentageSpike() {
         return cpuPercentageSpike;
     }
+    @Override
+    public SchedulingType getSchedulingType() { return schedulingType; }
 }

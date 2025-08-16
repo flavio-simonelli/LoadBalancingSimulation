@@ -27,7 +27,8 @@ public class SimulatorController {
                                             config.getInitialServerCount(),
                                             config.getCpuMultiplierSpike(),
                                             config.getCpuPercentageSpike(),
-                                            config.getSlidingWindowSize()
+                                            config.getSlidingWindowSize(),
+                                            config.getSchedulingType()
                                             );
         // Start the simulation
         simulator.run(config.getDuration());

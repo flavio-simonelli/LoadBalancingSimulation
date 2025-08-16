@@ -1,6 +1,5 @@
 package it.pmcsn.lbsim.models;
 
-import java.math.BigDecimal;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -25,7 +24,7 @@ public class JobStats {
         this.estimatedDepartureTime = null; // Departure time will be estimated when the job is assigned to a server
     }
 
-    public void estimateDepartureTimeSpan() {
+    public void estimateDepartureTime(double currentTime) {
         Server assignedServer = job.getAssignedServer(); // Ensure the job has an assigned server
         if (assignedServer == null) {
             logger.log(Level.SEVERE, "Attempted to recalculate remaining service demand without " + "an assigned server. jobId={0}", job.getJobId());
@@ -40,7 +39,7 @@ public class JobStats {
         // In processor sharing, each job gets 1/n of the CPU time
         double remainingSize = job.getRemainingSize();
         double effectiveProcessingRate = assignedServer.getCpuPercentage() * assignedServer.getCpuMultiplier() / currentServerSi;
-        estimatedDepartureTime = remainingSize / effectiveProcessingRate;
+        estimatedDepartureTime = currentTime + ( remainingSize / effectiveProcessingRate) ;
     }
 
     // Getters and Setters

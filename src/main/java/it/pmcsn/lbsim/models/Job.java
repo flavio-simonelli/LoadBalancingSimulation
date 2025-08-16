@@ -69,4 +69,12 @@ public class Job {
         }
         this.assignedServer = server;
     }
+
+    public void assignServer(Server selectedServer) {
+        if (selectedServer == null) {
+            logger.log(Level.SEVERE, "Attempted to assign a null server to job {0}", jobId);
+            throw new IllegalArgumentException("Assigned server cannot be null");
+        }
+        this.assignedServer = selectedServer;
+    }
 }
