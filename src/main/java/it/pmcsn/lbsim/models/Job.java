@@ -8,8 +8,12 @@ import java.util.logging.Logger;
  * Job state changes only through discrete events managed by the simulation scheduler.
  */
 public class Job {
+
+    // Constants
     private static final Logger logger = Logger.getLogger(Job.class.getName());
     private static final double EPSILON = 1e-9;
+
+    // Instance variables
     private final int jobId;
     private Server assignedServer;
 
@@ -19,27 +23,36 @@ public class Job {
      */
     private double remainingSize;
 
-
+    // Constructor
     public Job(int jobId, double size) {
         this.jobId = jobId;
-        this.remainingSize = size;
         this.assignedServer = null;
+        this.remainingSize = size;
     }
 
+    // Methods
     public void processForElapsedTime(double elapsedTime) {
+        // Some basic validation
         if (assignedServer == null) {
-            logger.log(Level.SEVERE, "Attempted to process a job without an assigned server. jobId={0}", jobId);
+            logger.log(Level.SEVERE,
+                    "Attempted to process a job without an assigned server. jobId={0}",
+                    jobId);
             throw new IllegalStateException("Job must be assigned to a server before processing");
         }
 
-        int currentServerSi = assignedServer.getCurrentSi();
-        if (currentServerSi <= 0) {
+        if (assignedServer.getCurrentSi() <= 0) {
+            logger.log(Level.SEVERE,
+                    "Attempted to process a job on a server with zero load. jobId={0}, serverSi={1}",
+                    new Object[]{jobId, assignedServer.getCurrentSi()});
             throw new IllegalStateException("Server load cannot be zero or negative");
         }
 
         // In processor sharing, each job gets 1/n of the CPU time
-        double effectiveProcessingRate = assignedServer.getCpuPercentage() * assignedServer.getCpuMultiplier() / currentServerSi;
-        double serviceReceived = elapsedTime * effectiveProcessingRate ;
+        double effectiveProcessingRate = assignedServer.getCpuPercentage() *
+                assignedServer.getCpuMultiplier() /
+                assignedServer.getCurrentSi();
+
+        double serviceReceived = elapsedTime * effectiveProcessingRate;
 
         // Reduce remaining service demand by actual service received
         if (serviceReceived - remainingSize > EPSILON) {
@@ -49,7 +62,9 @@ public class Job {
             throw new IllegalStateException("Service received exceeds remaining service demand");
         } else {
             remainingSize -= serviceReceived;
-            logger.log(Level.INFO, "Job {0} processed for {1} seconds, remaining service demand: {2}", new Object[]{jobId, elapsedTime, remainingSize});
+            logger.log(Level.INFO,
+                    "Job {0} processed for {1} seconds, remaining service demand: {2}\n",
+                    new Object[]{jobId, elapsedTime, remainingSize});
         }
     }
 
@@ -66,16 +81,11 @@ public class Job {
         return assignedServer;
     }
 
-    public void setAssignedServer(Server server) {
-        if (server == null) {
-            throw new IllegalArgumentException("Assigned server cannot be null");
-        }
-        this.assignedServer = server;
-    }
-
     public void assignServer(Server selectedServer) {
         if (selectedServer == null) {
-            logger.log(Level.SEVERE, "Attempted to assign a null server to job {0}", jobId);
+            logger.log(Level.SEVERE,
+                    "Attempted to assign a null server to job {0}",
+                    jobId);
             throw new IllegalArgumentException("Assigned server cannot be null");
         }
         this.assignedServer = selectedServer;

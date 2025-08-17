@@ -5,6 +5,8 @@ import it.pmcsn.lbsim.config.YamlSimulationConfig;
 import it.pmcsn.lbsim.models.Job;
 import it.pmcsn.lbsim.models.Simulator;
 
+import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -28,9 +30,11 @@ public class SimulatorController {
                                             config.getCpuMultiplierSpike(),
                                             config.getCpuPercentageSpike(),
                                             config.getSlidingWindowSize(),
-                                            config.getSchedulingType()
+                                            config.getSchedulingType(),
+                                            config.getHorizonalScalingCoolDown()
                                             );
         // Start the simulation
         simulator.run(config.getDuration());
     }
 }
+

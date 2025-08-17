@@ -33,7 +33,7 @@
  * Latest Revision   : 7-1-04
  * --------------------------------------------------------------------------
  */
-package it.pmcsn.lbsim.libs;
+package it.pmcsn.lbsim.libs.random;
 
 public class Rvgs{
     

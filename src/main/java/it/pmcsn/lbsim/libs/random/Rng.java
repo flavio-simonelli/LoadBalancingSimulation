@@ -29,7 +29,7 @@
  * ------------------------------------------------------------------------- 
  */
 
-package it.pmcsn.lbsim.libs;
+package it.pmcsn.lbsim.libs.random;
 
 import java.io.BufferedReader;
 import java.io.IOException;

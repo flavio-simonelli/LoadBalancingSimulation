@@ -32,7 +32,7 @@
  * Latest Revision : 6-10-04
  * ------------------------------------------------------------------------- 
  */
-package it.pmcsn.lbsim.libs;
+package it.pmcsn.lbsim.libs.random;
 
 
 import java.io.BufferedReader;

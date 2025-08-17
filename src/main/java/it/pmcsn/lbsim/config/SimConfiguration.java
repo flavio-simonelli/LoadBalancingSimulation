@@ -9,8 +9,10 @@ public interface SimConfiguration {
     double getR0max();
     double getR0min();
     int getSlidingWindowSize();
+    int getHorizonalScalingCoolDown();
     int getInitialServerCount();
     int getCpuMultiplierSpike();
     double getCpuPercentageSpike();
     SchedulingType getSchedulingType();
+    String getPathCsv();
 }

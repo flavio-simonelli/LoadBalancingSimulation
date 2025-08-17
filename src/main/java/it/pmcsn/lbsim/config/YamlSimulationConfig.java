@@ -13,10 +13,12 @@ public class YamlSimulationConfig implements SimConfiguration {
     private double R0max;
     private double R0min;
     private int slidingWindowSize;
+    private int horizonalScalingCoolDown;
     private int initialServerCount;
     private int cpuMultiplierSpike;
     private double cpuPercentageSpike;
     private SchedulingType schedulingType;
+    private String pathCsv;
 
     public YamlSimulationConfig(String filePath) {
         try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream(filePath)) {
@@ -43,6 +45,8 @@ public class YamlSimulationConfig implements SimConfiguration {
             this.cpuMultiplierSpike = ((Number) simConfig.get("cpuMultiplierSpike")).intValue();
             this.cpuPercentageSpike = ((Number) simConfig.get("cpuPercentageSpike")).doubleValue();
             this.schedulingType = SchedulingType.fromString((String) simConfig.get("schedulingPolicy"));
+            this.horizonalScalingCoolDown = ((Number) simConfig.get("horizontalScalingCoolDown")).intValue();
+            this.pathCsv = (String) simConfig.get("pathCsv");
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -88,4 +92,9 @@ public class YamlSimulationConfig implements SimConfiguration {
     }
     @Override
     public SchedulingType getSchedulingType() { return schedulingType; }
+    @Override
+    public int getHorizonalScalingCoolDown() { return horizonalScalingCoolDown; }
+    @Override
+    public String getPathCsv() { return pathCsv; }
+
 }
