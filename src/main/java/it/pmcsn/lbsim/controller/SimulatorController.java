@@ -1,8 +1,7 @@
 package it.pmcsn.lbsim.controller;
 
 import it.pmcsn.lbsim.config.SimConfiguration;
-import it.pmcsn.lbsim.config.YamlSimulationConfig;
-import it.pmcsn.lbsim.models.Job;
+import it.pmcsn.lbsim.libs.csv.CsvAppender;
 import it.pmcsn.lbsim.models.Simulator;
 
 import java.io.IOException;
@@ -21,6 +20,9 @@ public class SimulatorController {
             logger.log(Level.SEVERE,"Simulation configuration cannot be null");
             throw new IllegalArgumentException("Simulation configuration cannot be null");
         }
+
+        // create the output csv file
+
         // Create a new simulator instance with the provided configuration
         Simulator simulator = new Simulator(config.getSImax(),
                                             config.getSImin(),
@@ -33,6 +35,7 @@ public class SimulatorController {
                                             config.getSchedulingType(),
                                             config.getHorizonalScalingCoolDown()
                                             );
+
         // Start the simulation
         simulator.run(config.getDuration());
     }

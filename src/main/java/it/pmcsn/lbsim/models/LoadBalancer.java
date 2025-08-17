@@ -183,6 +183,7 @@ public class LoadBalancer {
 
     public void jobAssignment(Job job) {
         if (job == null) {
+            logger.log(Level.SEVERE, "Job cannot be null");
             throw new IllegalArgumentException("Job cannot be null");
         }
 
