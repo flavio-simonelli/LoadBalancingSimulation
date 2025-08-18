@@ -3,6 +3,7 @@ package it.pmcsn.lbsim.models;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+// TODO: alcuni job hanno arrival time = departure time, lo si osserva dal csv.
 public class JobStats {
 
     // Constants

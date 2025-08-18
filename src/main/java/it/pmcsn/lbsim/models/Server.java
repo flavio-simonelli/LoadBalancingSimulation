@@ -15,6 +15,7 @@ public class Server {
     private final double cpuPercentage;         // WebServer is 1.0 and SpikeServer is 0.4 or 0.8
 
 
+
     // Constructor
     public Server(int cpuMultiplier, double cpuPercentage) {
         this.cpuMultiplier = cpuMultiplier;

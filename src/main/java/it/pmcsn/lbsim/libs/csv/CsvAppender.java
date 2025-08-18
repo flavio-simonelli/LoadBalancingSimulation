@@ -19,8 +19,10 @@ public class CsvAppender implements AutoCloseable {
     private final ICSVWriter csv;
 
     public static CsvAppender getInstance(Path path) throws IOException {
-        if (instance == null) {
+        if (instance == null) {   //questo vale solo se utilizzo sempre lo stesso file nel codice
+            Files.deleteIfExists(path);
             instance = new CsvAppender(path);
+
         }
         return instance;
     }

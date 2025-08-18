@@ -4,6 +4,7 @@ import it.pmcsn.lbsim.libs.random.Rngs;
 import it.pmcsn.lbsim.libs.random.Rvgs;
 import it.pmcsn.lbsim.models.schedulingpolicy.SchedulingType;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -14,6 +15,7 @@ public class Simulator {
     // Constants
     private static final Logger logger = Logger.getLogger(Simulator.class.getName());
     private static final double EPSILON = 1e-9;
+    private static final long MYSEED = -1L;
 
     // Instance variables - Simulation state
     private Double currentTime;                     // Current simulation time
@@ -61,7 +63,7 @@ public class Simulator {
 
         // Initialize random number generators
         this.rngs = new Rngs();
-        rngs.plantSeeds(rngs.DEFAULT);
+        rngs.plantSeeds(MYSEED); //TODO: not working anymore
         this.rvgs = new Rvgs(rngs);
 
         // Initialize load balancer
@@ -167,7 +169,11 @@ public class Simulator {
 
         // Process job departure through load balancer
         double responseTime = this.currentTime - departureJobStats.getArrivalTime();
-        this.loadBalancer.departureJob(departureJobStats.getJob(), responseTime, this.currentTime);
+        try {
+            this.loadBalancer.departureJob(departureJobStats,departureJobStats.getJob(), responseTime, this.currentTime);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         this.jobStats.remove(departureJobStats);
 
         // Recalculate estimated departure times for remaining jobs
