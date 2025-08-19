@@ -33,7 +33,12 @@ public class SimulatorController {
                                             config.getCpuPercentageSpike(),
                                             config.getSlidingWindowSize(),
                                             config.getSchedulingType(),
-                                            config.getHorizonalScalingCoolDown()
+                                            config.getHorizonalScalingCoolDown(),
+                                            config.getInterarrivalCv(),
+                                            config.getInterarrivalMean(),
+                                            config.getServiceCv(),
+                                            config.getServiceMean(),
+                                            config.getCsvJobsPath()
                                             );
 
         // Start the simulation

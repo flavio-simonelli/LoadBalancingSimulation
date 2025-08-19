@@ -1,10 +1,14 @@
 package it.pmcsn.lbsim.models;
 
+import it.pmcsn.lbsim.libs.csv.CsvAppender;
+import it.pmcsn.lbsim.libs.random.HyperExponential;
 import it.pmcsn.lbsim.libs.random.Rngs;
 import it.pmcsn.lbsim.libs.random.Rvgs;
 import it.pmcsn.lbsim.models.schedulingpolicy.SchedulingType;
 
+
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -15,7 +19,6 @@ public class Simulator {
     // Constants
     private static final Logger logger = Logger.getLogger(Simulator.class.getName());
     private static final double EPSILON = 1e-9;
-    private static final long MYSEED = -1L;
 
     // Instance variables - Simulation state
     private Double currentTime;                     // Current simulation time
@@ -32,18 +35,19 @@ public class Simulator {
     private LoadBalancer loadBalancer;              // Load Balancer instance
 
     // Interarrival variate parameters
-    private double iMean = 0.15;
-    private double iCv = 4;
+    private HyperExponential interarrivalTime;
     private int iStreamP = 0;
     private int iStreamExp1 = 1;
     private int iStreamExp2 = 2;
 
     // Service variate parameters
-    private double sMean = 0.30;
-    private double sCv = 4;
+    private HyperExponential serviceTime;
     private int sStreamP = 3;
     private int sStreamExp1 = 4;
     private int sStreamExp2 = 5;
+
+    // path variable
+    private CsvAppender csvJobs;
 
     // Constructor
     public Simulator(int SImax,
@@ -55,7 +59,19 @@ public class Simulator {
                      double cpuPercentageSpike,
                      int slidingWindowSize,
                      SchedulingType schedulingType,
-                     double horizontalScalingCoolDown) {
+                     double horizontalScalingCoolDown,
+                     double interarrivalCv,
+                     double interarrivalMean,
+                     double serviceCv,
+                     double serviceMean,
+                     String csvJobsPath) {
+
+        // initialize path csv
+        try {
+            this.csvJobs = new CsvAppender(Path.of(csvJobsPath), "IdJob", "Arrival", "Departure", "ResponseTime", "size", "Isspike");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
         // Initialize simulation state
         this.currentTime = 0.0;
@@ -63,8 +79,14 @@ public class Simulator {
 
         // Initialize random number generators
         this.rngs = new Rngs();
-        rngs.plantSeeds(MYSEED); //TODO: not working anymore
+        rngs.plantSeeds(rngs.DEFAULT);
         this.rvgs = new Rvgs(rngs);
+
+        // Initialize hyperexponential distribution
+        this.interarrivalTime = new HyperExponential(interarrivalCv, interarrivalMean);
+        logger.log(Level.INFO, "Hyperexponential interarrival with parameters {0} {1} {2}", new Object[]{this.interarrivalTime.getP(), this.interarrivalTime.getM1(), this.interarrivalTime.getM2()});
+        this.serviceTime = new HyperExponential(serviceCv, serviceMean);
+        logger.log(Level.INFO, "Hyperexponential service with parameters {0} {1} {2}", new Object[]{this.serviceTime.getP(), this.serviceTime.getM1(), this.serviceTime.getM2()});
 
         // Initialize load balancer
         this.loadBalancer = new LoadBalancer(initialServerCount,
@@ -134,7 +156,12 @@ public class Simulator {
         this.currentTime = nextArrivalTime;
 
         // Create new job and assign it to load balancer
-        JobStats newJobStats = new JobStats(genJob(), this.currentTime);
+        if (rvgs == null) {
+            logger.log(Level.SEVERE, "Random Variate Generator (Rvgs) is not initialized");
+            throw new IllegalStateException("Rvgs must be initialized");
+        }
+        double size = rvgs.hyperExponential(this.serviceTime.getP(), this.serviceTime.getM1(), this.serviceTime.getM2(), sStreamP, sStreamExp1, sStreamExp2);
+        JobStats newJobStats = new JobStats(new Job(jobIdCounter++, size), this.currentTime, size);
         this.loadBalancer.jobAssignment(newJobStats.getJob());
         this.jobStats.add(newJobStats);
 
@@ -169,11 +196,19 @@ public class Simulator {
 
         // Process job departure through load balancer
         double responseTime = this.currentTime - departureJobStats.getArrivalTime();
-        try {
-            this.loadBalancer.departureJob(departureJobStats,departureJobStats.getJob(), responseTime, this.currentTime);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+
+        this.loadBalancer.departureJob(departureJobStats.getJob(), responseTime, this.currentTime);
+        // Add to the csv for forensics analysis
+
+        this.csvJobs.writeRow(
+                    String.valueOf(departureJobStats.getJob().getJobId()),                                 // job id
+                    String.valueOf(departureJobStats.getArrivalTime()),                                    // arrival time
+                    String.valueOf(currentTime),                                                           // departure time
+                    String.valueOf(responseTime),                                                          // response time
+                    String.valueOf(departureJobStats.getSize()) ,                                           // original size
+                    String.valueOf(departureJobStats.getJob().getAssignedServer().getCpuMultiplier()>1) // isSpike
+                    );
+
         this.jobStats.remove(departureJobStats);
 
         // Recalculate estimated departure times for remaining jobs
@@ -182,23 +217,13 @@ public class Simulator {
         }
     }
 
-    private Job genJob() {
-        if (rvgs == null) {
-            logger.log(Level.SEVERE, "Random Variate Generator (Rvgs) is not initialized");
-            throw new IllegalStateException("Rvgs must be initialized");
-        }
-
-        double size = rvgs.hyperExponentialFromMeanCV(sMean, sCv, sStreamP, sStreamExp1, sStreamExp2);
-        return new Job(jobIdCounter++, size);
-    }
-
     private void genNextInterarrivalTime() {
         if (rvgs == null) {
             logger.log(Level.SEVERE, "Random Variate Generator (Rvgs) is not initialized");
             throw new IllegalStateException("Rvgs must be initialized");
         }
 
-        double interarrivalTime = rvgs.hyperExponentialFromMeanCV(iMean, iCv, iStreamP, iStreamExp1, iStreamExp2);
+        double interarrivalTime = rvgs.hyperExponential(this.interarrivalTime.getP(), this.interarrivalTime.getM1(), this.interarrivalTime.getM2() , iStreamP, iStreamExp1, iStreamExp2);
         this.nextArrivalTime = this.currentTime + interarrivalTime;
     }
 }

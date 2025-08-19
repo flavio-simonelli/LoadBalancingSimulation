@@ -26,11 +26,10 @@ public class LoadBalancer {
     private final SlidingWindowResponseTime slidingWindow;      // Sliding window for response time
     private final SchedulingPolicy schedulingPolicy;            // Scheduling policy to use for job assignment
     private final int SImax;
-    private final int SImin;
     private final double R0max;
     private final double R0min;
     private final List<Server> removingServers;   //utilizzata per smaltire i job di un server web che sta per essere chiuso a seguito di uno scale in
-    private final List<Server> siCooldownServers;  //utilizzata per il meccanismo di raffreddamento di un web server nel caso in cui precedentemente ha superato il SIMax
+
 
     // Constructor
     public LoadBalancer(int initalServerCount,
@@ -91,9 +90,8 @@ public class LoadBalancer {
         // Initialize sliding window
         slidingWindow = new SlidingWindowResponseTime(windowSize);
 
-        // Set SImax and SImin
+        // Set SImax
         this.SImax = SImax;
-        this.SImin = SImin;
 
         // Set RTmax and RTmin
         this.R0max = R0max;
@@ -103,11 +101,10 @@ public class LoadBalancer {
         this.horizontalScalingCoolDown = horizontalScalingCoolDown;
         this.lastHorizontalScalingTime = Double.NEGATIVE_INFINITY;
         this.removingServers = new ArrayList<>();
-        this.siCooldownServers = new ArrayList<>();
     }
 
     // Methods
-    public void departureJob(JobStats jobStats, Job job, double responseTime, double currentTime) throws IOException {
+    public void departureJob(Job job, double responseTime, double currentTime) {
         // Input validation
         if (job == null) {
             logger.log(Level.SEVERE, "Job cannot be null");
@@ -129,23 +126,12 @@ public class LoadBalancer {
 
         if ( removingServers.contains(server)   && server.getCurrentSi() == 0) {
             removingServers.remove(server);
-            logger.log(Level.INFO, "Removing server has completed all jobs and has been removed.");
+            logger.log(Level.INFO, "Removing server has completed all jobs and has been removed. \n");
         }
 
 
         // Update the sliding window with the response time
         slidingWindow.add(responseTime);
-
-            // Add to the csv for forensics analysis
-        CsvAppender.getInstance(Path.of("target/Jobs.csv")).writeRow(
-                    String.valueOf(job.getJobId()),
-                    String.valueOf(jobStats.getArrivalTime()),
-                    String.valueOf(currentTime),
-                    String.valueOf(responseTime),
-                    String.valueOf(job.getAssignedServer().getCurrentSi() >= 10)
-        );
-
-
 
         // Check if the server needs to be scaled in/out (horizontal scaling)
         double mean = slidingWindow.getAverage();
@@ -163,10 +149,6 @@ public class LoadBalancer {
             scaleInWebServer();
         }
 
-//        if (siCooldownServers.contains(server) && server.getCurrentSi() < SImin) {
-//            siCooldownServers.remove(server);
-//            webServers.add(server);
-//        }
     }
 
     private void scaleOutWebServer() {
@@ -180,7 +162,7 @@ public class LoadBalancer {
             webServers.add(new Server(1, 1));
         }
         // Log the scaling out action
-        logger.log(Level.INFO, "Scaled out a Web Server. Total Web Servers: \n" + webServers.size());
+        logger.log(Level.INFO, "Scaled out a Web Server. Total Web Servers: " + webServers.size() + "\n");
     }
 
     private void scaleInWebServer() {
@@ -214,20 +196,15 @@ public class LoadBalancer {
         }
         if (selectedServer.getCurrentSi() >= SImax) {
             logger.log(Level.INFO,"Selected server has reached SImax (" + SImax + "). Job assigned to Spike.\n");
-//            siCooldownServers.add(selectedServer);
-//            webServers.remove(selectedServer);
-
             spikeServer.addJob(job);
             job.assignServer(spikeServer);
             return;
         }
 
 
-        // TODO: non viene usato SImin, implementare l'uso della policy con SImin
-
         // Assign the job to the selected server
         selectedServer.addJob(job);
         job.assignServer(selectedServer);
-        logger.log(Level.INFO,"Assigned job to Web Server. Current load: \n" + selectedServer.getCurrentSi());
+        logger.log(Level.INFO,"Assigned job to Web Server. Current load: " + selectedServer.getCurrentSi() + "\n");
     }
 }

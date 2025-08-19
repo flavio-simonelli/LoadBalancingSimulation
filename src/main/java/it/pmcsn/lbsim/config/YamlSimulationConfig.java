@@ -18,7 +18,12 @@ public class YamlSimulationConfig implements SimConfiguration {
     private int cpuMultiplierSpike;
     private double cpuPercentageSpike;
     private SchedulingType schedulingType;
-    private String pathCsv;
+    private double interarrivalCv;
+    private double interarrivalMean;
+    private double serviceCv;
+    private double serviceMean;
+    private String csvJobsPath;
+
 
     public YamlSimulationConfig(String filePath) {
         try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream(filePath)) {
@@ -46,7 +51,12 @@ public class YamlSimulationConfig implements SimConfiguration {
             this.cpuPercentageSpike = ((Number) simConfig.get("cpuPercentageSpike")).doubleValue();
             this.schedulingType = SchedulingType.fromString((String) simConfig.get("schedulingPolicy"));
             this.horizonalScalingCoolDown = ((Number) simConfig.get("horizontalScalingCoolDown")).intValue();
-            this.pathCsv = (String) simConfig.get("pathCsv");
+            this.interarrivalCv = ((Number) simConfig.get("interarrivalCv")).doubleValue();
+            this.interarrivalMean = ((Number) simConfig.get("interarrivalMean")).doubleValue();
+            this.serviceCv = ((Number) simConfig.get("serviceCv")).doubleValue();
+            this.serviceMean = ((Number) simConfig.get("serviceMean")).doubleValue();
+            this.csvJobsPath = (String) simConfig.get("csvJobsPath");
+
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -95,6 +105,19 @@ public class YamlSimulationConfig implements SimConfiguration {
     @Override
     public int getHorizonalScalingCoolDown() { return horizonalScalingCoolDown; }
     @Override
-    public String getPathCsv() { return pathCsv; }
+    public double getInterarrivalCv() {return interarrivalCv;}
+    @Override
+    public double getInterarrivalMean() {return interarrivalMean; }
+    @Override
+    public double getServiceCv() { return serviceCv;
+    }
+    @Override
+    public double getServiceMean() {return serviceMean;}
+    @Override
+    public String getCsvJobsPath() {
+        return csvJobsPath;
+    }
+
+
 
 }

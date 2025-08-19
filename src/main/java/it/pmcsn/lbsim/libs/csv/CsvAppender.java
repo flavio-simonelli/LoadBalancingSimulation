@@ -15,19 +15,13 @@ import java.util.logging.Logger;
 
 public class CsvAppender implements AutoCloseable {
     private static final Logger logger = Logger.getLogger(CsvAppender.class.getName());
-    private static CsvAppender instance;
     private final ICSVWriter csv;
 
-    public static CsvAppender getInstance(Path path) throws IOException {
-        if (instance == null) {   //questo vale solo se utilizzo sempre lo stesso file nel codice
-            Files.deleteIfExists(path);
-            instance = new CsvAppender(path);
-
+    public CsvAppender(Path path, String... header) throws IOException {
+        Files.deleteIfExists(path);
+        if (path.getParent() != null) {
+            Files.createDirectories(path.getParent());
         }
-        return instance;
-    }
-
-    public CsvAppender(Path path) throws IOException {
         Writer writer = Files.newBufferedWriter(
                 path,
                 StandardCharsets.UTF_8,
@@ -38,6 +32,10 @@ public class CsvAppender implements AutoCloseable {
         this.csv = new CSVWriterBuilder(writer)
                 .withSeparator(',')
                 .build();
+
+        if (header != null && header.length > 0) {
+            csv.writeNext(header, false);  // scrive l’intestazione
+        }
     }
 
     public void writeRow(String... values) {
