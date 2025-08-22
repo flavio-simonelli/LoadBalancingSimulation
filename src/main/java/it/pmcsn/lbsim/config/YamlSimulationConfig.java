@@ -7,22 +7,22 @@ import java.util.Map;
 
 public class YamlSimulationConfig implements SimConfiguration {
 
-    private double duration;
-    private int SImax;
-    private int SImin;
-    private double R0max;
-    private double R0min;
-    private int slidingWindowSize;
-    private int horizonalScalingCoolDown;
-    private int initialServerCount;
-    private int cpuMultiplierSpike;
-    private double cpuPercentageSpike;
-    private SchedulingType schedulingType;
-    private double interarrivalCv;
-    private double interarrivalMean;
-    private double serviceCv;
-    private double serviceMean;
-    private String csvJobsPath;
+    private final double duration;
+    private final int SImax;
+    private final int SImin;
+    private final double R0max;
+    private final double R0min;
+    private final int slidingWindowSize;
+    private final int horizonalScalingCoolDown;
+    private final int initialServerCount;
+    private final int cpuMultiplierSpike;
+    private final double cpuPercentageSpike;
+    private final SchedulingType schedulingType;
+    private final double interarrivalCv;
+    private final double interarrivalMean;
+    private final double serviceCv;
+    private final double serviceMean;
+    private final String csvJobsPath;
 
 
     public YamlSimulationConfig(String filePath) {

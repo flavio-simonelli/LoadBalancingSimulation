@@ -1,15 +1,10 @@
-package it.pmcsn.lbsim.libs.random;
+package it.pmcsn.lbsim.utils.random;
 
-import it.pmcsn.lbsim.models.LoadBalancer;
-
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class HyperExponential {
-    private static final Logger logger = Logger.getLogger(HyperExponential.class.getName());
-    private double p;
-    private double m1;
-    private double m2;
+    private final double p;
+    private final double m1;
+    private final double m2;
 
     public HyperExponential(double cv, double m) {
         if (m <= 0.0) {

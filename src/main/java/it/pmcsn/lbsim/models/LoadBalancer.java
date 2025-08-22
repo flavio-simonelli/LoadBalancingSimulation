@@ -1,13 +1,10 @@
 package it.pmcsn.lbsim.models;
 
-import it.pmcsn.lbsim.libs.csv.CsvAppender;
 import it.pmcsn.lbsim.models.schedulingpolicy.LeastLoadPolicy;
 import it.pmcsn.lbsim.models.schedulingpolicy.RoundRobinPolicy;
 import it.pmcsn.lbsim.models.schedulingpolicy.SchedulingPolicy;
 import it.pmcsn.lbsim.models.schedulingpolicy.SchedulingType;
 
-import java.io.IOException;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -28,7 +25,7 @@ public class LoadBalancer {
     private final int SImax;
     private final double R0max;
     private final double R0min;
-    private final List<Server> removingServers;   //utilizzata per smaltire i job di un server web che sta per essere chiuso a seguito di uno scale in
+    private final List<Server> removingServers;                 //utilizzata per smaltire i job di un server web che sta per essere chiuso a seguito di uno scale in
 
 
     // Constructor
@@ -65,7 +62,7 @@ public class LoadBalancer {
         }
 
         // Initialize web servers
-        webServers = new ArrayList<Server>();
+        webServers = new ArrayList<>();
         for (int i = 0; i < initalServerCount; i++) {
             Server server = new Server(1, 1);
             webServers.add(server);
@@ -124,18 +121,16 @@ public class LoadBalancer {
         }
         server.removeJob(job);
 
-        if ( removingServers.contains(server)   && server.getCurrentSi() == 0) {
+        if ( removingServers.contains(server) && server.getCurrentSi() == 0) {
             removingServers.remove(server);
             logger.log(Level.INFO, "Removing server has completed all jobs and has been removed. \n");
         }
-
 
         // Update the sliding window with the response time
         slidingWindow.add(responseTime);
 
         // Check if the server needs to be scaled in/out (horizontal scaling)
         double mean = slidingWindow.getAverage();
-
 
         if (mean > R0max && (currentTime - lastHorizontalScalingTime) >= horizontalScalingCoolDown) {
             // Update the last horizontal scaling time
@@ -148,7 +143,6 @@ public class LoadBalancer {
             // Scale in the server if the average response time is below R0min
             scaleInWebServer();
         }
-
     }
 
     private void scaleOutWebServer() {
@@ -194,8 +188,9 @@ public class LoadBalancer {
             logger.log(Level.SEVERE, "No available web servers to assign the job");
             throw new IllegalStateException("No available web servers to assign the job");
         }
+        // If policy is "leastUsed" then this scenario represents the case where all servers are saturated
         if (selectedServer.getCurrentSi() >= SImax) {
-            logger.log(Level.INFO,"Selected server has reached SImax (" + SImax + "). Job assigned to Spike.\n");
+            logger.log(Level.INFO,"Selected server has reached SImax (\" {0} \"). Job assigned to Spike.\n", SImax);
             spikeServer.addJob(job);
             job.assignServer(spikeServer);
             return;

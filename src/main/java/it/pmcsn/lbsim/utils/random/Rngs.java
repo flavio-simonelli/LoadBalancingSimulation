@@ -32,7 +32,7 @@
  * Latest Revision : 6-10-04
  * ------------------------------------------------------------------------- 
  */
-package it.pmcsn.lbsim.libs.random;
+package it.pmcsn.lbsim.utils.random;
 
 
 import java.io.BufferedReader;
@@ -149,8 +149,9 @@ public class Rngs {
       x = x % MODULUS;                            /* correct if x is too large  */
     if (x < 0) {
       Date now = new Date();
-      x = now.getTime();
-//      x = ((unsigned long) time((time_t *) NULL)) % MODULUS;
+      //x = now.getTime();
+      x = now.getTime() % MODULUS; // DEBUGGING
+      //x = ((unsigned long) time((time_t *) NULL)) % MODULUS;
     }
     if (x == 0)
       while (!ok) {
@@ -219,4 +220,9 @@ public class Rngs {
     else
       System.out.println("\n ERROR - the implementation of Rngs.java is not correct");
   }
+
+  //debugging
+    public long[] getSeedArray() {
+        return seed;
+    }
 }

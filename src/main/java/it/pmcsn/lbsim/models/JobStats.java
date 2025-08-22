@@ -4,6 +4,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 // TODO: alcuni job hanno arrival time = departure time, lo si osserva dal csv.
+// TODO: come gestiamo job diversi con lo stesso istante di arrivo?
 public class JobStats {
 
     // Constants
@@ -12,11 +13,11 @@ public class JobStats {
     // Instance variables
     private final Double arrivalTime;
     private Double estimatedDepartureTime;        // Estimated time when the job will depart according to the assigned server state
-    private  final Double size; // generated size of the job
+    private  final Double originalSize;           // generated size of the job
     private final Job job;                        // The job associated with these stats
 
     // Constructor
-    public JobStats(Job job, Double arrivalTime, Double size) {
+    public JobStats(Job job, Double arrivalTime, Double originalSize) {
         if (job == null) {
             logger.log(Level.SEVERE, "Job cannot be null");
             throw new IllegalArgumentException("Job cannot be null");
@@ -31,7 +32,7 @@ public class JobStats {
         }
         this.arrivalTime = arrivalTime;
         this.estimatedDepartureTime = null;
-        this.size = size;
+        this.originalSize = originalSize;
     }
 
     // Methods
@@ -83,7 +84,7 @@ public class JobStats {
         return estimatedDepartureTime;
     }
 
-    public Double getSize() {
-        return this.size;
+    public Double getOriginalSize() {
+        return this.originalSize;
     }
 }

@@ -3,10 +3,6 @@ package it.pmcsn.lbsim.models;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Represents a job in an event-driven processor sharing scheduling simulation.
- * Job state changes only through discrete events managed by the simulation scheduler.
- */
 public class Job {
 
     // Constants
@@ -22,6 +18,9 @@ public class Job {
      * to a WebServer with exclusive CPU access
      */
     private double remainingSize;
+
+    //debugging
+    public int jobErrorCount = 0;
 
     // Constructor
     public Job(int jobId, double size) {
@@ -56,10 +55,18 @@ public class Job {
 
         // Reduce remaining service demand by actual service received
         if (serviceReceived - remainingSize > EPSILON) {
-            logger.log(Level.SEVERE,
-                    "Service received {0} exceeds remaining service demand {1} for job {2}",
-                    new Object[]{serviceReceived, remainingSize, jobId});
-            throw new IllegalStateException("Service received exceeds remaining service demand");
+            if (serviceReceived - remainingSize < 10 * EPSILON) {
+                logger.log(Level.WARNING,
+                        "Rilevato piccolo errore numerico: serviceReceived {0} > remainingSize {1} per job {2}. Correggo a zero.",
+                        new Object[]{serviceReceived, remainingSize, jobId});
+                remainingSize = 0.0;
+                jobErrorCount++;
+            } else {
+                logger.log(Level.SEVERE,
+                        "Service received {0} exceeds remaining service demand {1} for job {2}",
+                        new Object[]{serviceReceived, remainingSize, jobId});
+                throw new IllegalStateException("Service received exceeds remaining service demand");
+            }
         } else {
             remainingSize -= serviceReceived;
             logger.log(Level.INFO,
@@ -89,5 +96,15 @@ public class Job {
             throw new IllegalArgumentException("Assigned server cannot be null");
         }
         this.assignedServer = selectedServer;
+    }
+
+    public void setRemainingSize(double v) {
+        if (v < 0) {
+            logger.log(Level.SEVERE,
+                    "Tentativo di impostare remainingSize negativo: {0} per job {1}",
+                    new Object[]{v, jobId});
+            throw new IllegalArgumentException("remainingSize non può essere negativo");
+        }
+        this.remainingSize = v;
     }
 }

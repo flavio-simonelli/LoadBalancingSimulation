@@ -13,9 +13,11 @@ public class RoundRobinPolicy implements SchedulingPolicy {
         if (servers.isEmpty()) {
             throw new IllegalStateException("No available web servers");
         }
+
         if (index >= servers.size()) {
             index = 0;
         }
+
         Server server = servers.get(index);
         index = (index + 1) % servers.size();
         return server;

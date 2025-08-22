@@ -3,13 +3,9 @@ package it.pmcsn.lbsim;
 import it.pmcsn.lbsim.config.SimConfiguration;
 import it.pmcsn.lbsim.config.YamlSimulationConfig;
 import it.pmcsn.lbsim.controller.SimulatorController;
-import it.pmcsn.lbsim.libs.csv.CsvAppender;
-
-import java.io.IOException;
-import java.nio.file.Path;
 
 public class Main {
-    private final static String configFilePath = "config.yaml"; // Default configuration file path
+    private static final String configFilePath = "config.yaml"; // Default configuration file path
 
     public static void main(String[] args) {
 

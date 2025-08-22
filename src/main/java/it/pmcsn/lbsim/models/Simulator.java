@@ -1,9 +1,9 @@
 package it.pmcsn.lbsim.models;
 
-import it.pmcsn.lbsim.libs.csv.CsvAppender;
-import it.pmcsn.lbsim.libs.random.HyperExponential;
-import it.pmcsn.lbsim.libs.random.Rngs;
-import it.pmcsn.lbsim.libs.random.Rvgs;
+import it.pmcsn.lbsim.utils.csv.CsvAppender;
+import it.pmcsn.lbsim.utils.random.HyperExponential;
+import it.pmcsn.lbsim.utils.random.Rngs;
+import it.pmcsn.lbsim.utils.random.Rvgs;
 import it.pmcsn.lbsim.models.schedulingpolicy.SchedulingType;
 
 
@@ -22,32 +22,27 @@ public class Simulator {
 
     // Instance variables - Simulation state
     private Double currentTime;                     // Current simulation time
-    private Double simulationDuration;              // Total duration of the simulation
     private int jobIdCounter = 0;                   // Counter for unique job IDs
-    private List<JobStats> jobStats;                // List of jobsStats
+    private final List<JobStats> jobStats;          // List of jobsStats
     private double nextArrivalTime;                 // Next arrival time for jobs
 
-    // Random number generators
-    private Rngs rngs;                              // Random Number Generator
-    private Rvgs rvgs;                              // Random Variate Generator
+    private final Rvgs rvgs;                        // Random Variate Generator
 
     // Load balancer
-    private LoadBalancer loadBalancer;              // Load Balancer instance
+    private final LoadBalancer loadBalancer;
 
     // Interarrival variate parameters
-    private HyperExponential interarrivalTime;
-    private int iStreamP = 0;
-    private int iStreamExp1 = 1;
-    private int iStreamExp2 = 2;
+    private final HyperExponential interarrivalTimeObj;
 
     // Service variate parameters
-    private HyperExponential serviceTime;
-    private int sStreamP = 3;
-    private int sStreamExp1 = 4;
-    private int sStreamExp2 = 5;
+    private final HyperExponential serviceTimeObj;
 
     // path variable
-    private CsvAppender csvJobs;
+    private final CsvAppender csvJobs;
+
+    //debugging
+    public int simErrorCount = 0;
+    public List<Job> errorJobs = new ArrayList<>();
 
     // Constructor
     public Simulator(int SImax,
@@ -68,7 +63,7 @@ public class Simulator {
 
         // initialize path csv
         try {
-            this.csvJobs = new CsvAppender(Path.of(csvJobsPath), "IdJob", "Arrival", "Departure", "ResponseTime", "size", "Isspike");
+            this.csvJobs = new CsvAppender(Path.of(csvJobsPath), "IdJob", "Arrival", "Departure", "ResponseTime", "size", "processedBySpike");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -78,15 +73,15 @@ public class Simulator {
         this.jobStats = new ArrayList<>();
 
         // Initialize random number generators
-        this.rngs = new Rngs();
-        rngs.plantSeeds(rngs.DEFAULT);
+        Rngs rngs = new Rngs();
+        rngs.plantSeeds(rngs.DEFAULT); // TODO: make it configurable
         this.rvgs = new Rvgs(rngs);
 
         // Initialize hyperexponential distribution
-        this.interarrivalTime = new HyperExponential(interarrivalCv, interarrivalMean);
-        logger.log(Level.INFO, "Hyperexponential interarrival with parameters {0} {1} {2}", new Object[]{this.interarrivalTime.getP(), this.interarrivalTime.getM1(), this.interarrivalTime.getM2()});
-        this.serviceTime = new HyperExponential(serviceCv, serviceMean);
-        logger.log(Level.INFO, "Hyperexponential service with parameters {0} {1} {2}", new Object[]{this.serviceTime.getP(), this.serviceTime.getM1(), this.serviceTime.getM2()});
+        this.interarrivalTimeObj = new HyperExponential(interarrivalCv, interarrivalMean);
+        logger.log(Level.INFO, "Hyperexponential interarrival with parameters {0} {1} {2}\n", new Object[]{this.interarrivalTimeObj.getP(), this.interarrivalTimeObj.getM1(), this.interarrivalTimeObj.getM2()});
+        this.serviceTimeObj = new HyperExponential(serviceCv, serviceMean);
+        logger.log(Level.INFO, "Hyperexponential service with parameters {0} {1} {2}\n", new Object[]{this.serviceTimeObj.getP(), this.serviceTimeObj.getM1(), this.serviceTimeObj.getM2()});
 
         // Initialize load balancer
         this.loadBalancer = new LoadBalancer(initialServerCount,
@@ -108,7 +103,6 @@ public class Simulator {
             throw new IllegalArgumentException("Simulation duration must be greater than zero");
         }
 
-        this.simulationDuration = simulationDuration;
         genNextInterarrivalTime();
 
         // Main simulation loop - process events until simulation duration
@@ -123,6 +117,15 @@ public class Simulator {
         } while (!jobStats.isEmpty());
 
         logger.log(Level.INFO, "Simulation completed at time {0}", currentTime);
+        //debugging
+        logger.log(Level.INFO, "Simulation encountered {0} numerical errors", simErrorCount);
+        if(!errorJobs.isEmpty()){
+            logger.log(Level.WARNING, "Jobs with numerical errors:");
+            for (Job job : errorJobs) {
+                logger.log(Level.WARNING, "Job ID: {0}, Error Count: {1}", new Object[]{job.getJobId(), job.jobErrorCount});
+            }
+        }
+        csvJobs.close();
     }
 
     private void guessNextEvent() {
@@ -150,6 +153,18 @@ public class Simulator {
         // Process elapsed time for all active jobs
         for (JobStats js : this.jobStats) {
             js.getJob().processForElapsedTime(nextArrivalTime - currentTime);
+            //debugging
+            if(js.getJob().jobErrorCount > 0){
+                int idx = errorJobs.indexOf(js.getJob());
+                if (idx == -1) {
+                    errorJobs.add(js.getJob());
+                } else {
+                    Job existingJob = errorJobs.get(idx);
+                    if (existingJob.jobErrorCount < js.getJob().jobErrorCount) {
+                        errorJobs.set(idx, js.getJob());
+                    }
+                }
+            }
         }
 
         // Update current time to arrival time
@@ -160,7 +175,10 @@ public class Simulator {
             logger.log(Level.SEVERE, "Random Variate Generator (Rvgs) is not initialized");
             throw new IllegalStateException("Rvgs must be initialized");
         }
-        double size = rvgs.hyperExponential(this.serviceTime.getP(), this.serviceTime.getM1(), this.serviceTime.getM2(), sStreamP, sStreamExp1, sStreamExp2);
+        int sStreamP = 3;
+        int sStreamExp1 = 4;
+        int sStreamExp2 = 5;
+        double size = rvgs.hyperExponential(this.serviceTimeObj.getP(), this.serviceTimeObj.getM1(), this.serviceTimeObj.getM2(), sStreamP, sStreamExp1, sStreamExp2);
         JobStats newJobStats = new JobStats(new Job(jobIdCounter++, size), this.currentTime, size);
         this.loadBalancer.jobAssignment(newJobStats.getJob());
         this.jobStats.add(newJobStats);
@@ -174,42 +192,67 @@ public class Simulator {
         genNextInterarrivalTime();
     }
 
-    private void departureHandler(JobStats departureJobStats) {
+    private void departureHandler(JobStats targetDepartureJobStats) {
         // Process elapsed time for all active jobs
         for (JobStats js : this.jobStats) {
-            js.getJob().processForElapsedTime(departureJobStats.getEstimatedDepartureTime() - currentTime);
+            js.getJob().processForElapsedTime(targetDepartureJobStats.getEstimatedDepartureTime() - currentTime);
+            //debugging
+            if(js.getJob().jobErrorCount > 0){
+                int idx = errorJobs.indexOf(js.getJob());
+                if (idx == -1) {
+                    errorJobs.add(js.getJob());
+                } else {
+                    Job existingJob = errorJobs.get(idx);
+                    if (existingJob.jobErrorCount < js.getJob().jobErrorCount) {
+                        errorJobs.set(idx, js.getJob());
+                    }
+                }
+            }
         }
 
         // Update current time to departure time
-        this.currentTime = departureJobStats.getEstimatedDepartureTime();
+        this.currentTime = targetDepartureJobStats.getEstimatedDepartureTime();
 
         // Validate that job is fully processed
-        if (Math.abs(departureJobStats.getJob().getRemainingSize()) > EPSILON) {
-            logger.log(Level.WARNING,
-                    "Remaining size of job {0} is not zero but {1,number,0.000}",
-                    new Object[]{
-                            departureJobStats.getJob().getJobId(),
-                            departureJobStats.getJob().getRemainingSize()
-                    });
-            throw new IllegalStateException("Job is departed, but his remaining size is not zero!!!");
+        double remSize = targetDepartureJobStats.getJob().getRemainingSize();
+        if (Math.abs(remSize) > EPSILON) {
+            if (Math.abs(remSize) < 10 * EPSILON) {
+                logger.log(Level.WARNING,
+                        "Piccolo errore numerico: remaining size di job {0} è {1,number,0.000} (correggo a zero)",
+                        new Object[]{
+                                targetDepartureJobStats.getJob().getJobId(),
+                                remSize
+                        });
+                // Correggi a zero
+                targetDepartureJobStats.getJob().setRemainingSize(0.0);
+                simErrorCount++;
+            } else {
+                logger.log(Level.WARNING,
+                        "Remaining size of job {0} is not zero but {1,number,0.000}",
+                        new Object[]{
+                                targetDepartureJobStats.getJob().getJobId(),
+                                remSize
+                        });
+                throw new IllegalStateException("Job is departed, but his remaining size is not zero!!!");
+            }
         }
 
         // Process job departure through load balancer
-        double responseTime = this.currentTime - departureJobStats.getArrivalTime();
+        double responseTime = this.currentTime - targetDepartureJobStats.getArrivalTime();
 
-        this.loadBalancer.departureJob(departureJobStats.getJob(), responseTime, this.currentTime);
+        this.loadBalancer.departureJob(targetDepartureJobStats.getJob(), responseTime, this.currentTime);
+
         // Add to the csv for forensics analysis
-
         this.csvJobs.writeRow(
-                    String.valueOf(departureJobStats.getJob().getJobId()),                                 // job id
-                    String.valueOf(departureJobStats.getArrivalTime()),                                    // arrival time
-                    String.valueOf(currentTime),                                                           // departure time
-                    String.valueOf(responseTime),                                                          // response time
-                    String.valueOf(departureJobStats.getSize()) ,                                           // original size
-                    String.valueOf(departureJobStats.getJob().getAssignedServer().getCpuMultiplier()>1) // isSpike
+                    String.valueOf(targetDepartureJobStats.getJob().getJobId()),                                 // job id
+                    String.valueOf(targetDepartureJobStats.getArrivalTime()),                                    // arrival time
+                    String.valueOf(currentTime),                                                                 // departure time
+                    String.valueOf(responseTime),                                                                // response time
+                    String.valueOf(targetDepartureJobStats.getOriginalSize()) ,                                  // original size
+                    String.valueOf(targetDepartureJobStats.getJob().getAssignedServer().getCpuMultiplier()>1) // processed by spike
                     );
 
-        this.jobStats.remove(departureJobStats);
+        this.jobStats.remove(targetDepartureJobStats);
 
         // Recalculate estimated departure times for remaining jobs
         for (JobStats js : this.jobStats) {
@@ -223,7 +266,10 @@ public class Simulator {
             throw new IllegalStateException("Rvgs must be initialized");
         }
 
-        double interarrivalTime = rvgs.hyperExponential(this.interarrivalTime.getP(), this.interarrivalTime.getM1(), this.interarrivalTime.getM2() , iStreamP, iStreamExp1, iStreamExp2);
+        int iStreamP = 0;
+        int iStreamExp1 = 1;
+        int iStreamExp2 = 2;
+        double interarrivalTime = rvgs.hyperExponential(this.interarrivalTimeObj.getP(), this.interarrivalTimeObj.getM1(), this.interarrivalTimeObj.getM2() , iStreamP, iStreamExp1, iStreamExp2);
         this.nextArrivalTime = this.currentTime + interarrivalTime;
     }
 }

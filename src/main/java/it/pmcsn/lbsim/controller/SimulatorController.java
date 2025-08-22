@@ -1,11 +1,8 @@
 package it.pmcsn.lbsim.controller;
 
 import it.pmcsn.lbsim.config.SimConfiguration;
-import it.pmcsn.lbsim.libs.csv.CsvAppender;
 import it.pmcsn.lbsim.models.Simulator;
 
-import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
