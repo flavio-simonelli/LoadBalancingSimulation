@@ -34,10 +34,10 @@ public class PlotCSV {
     }
 
     public static void main(String[] args) throws IOException {
-        PlotCSV plotter = new PlotCSV();
-        plotter.plotSizeVsArrivalTime();
-        plotter.plotIdVsSize();
-        plotter.plotResponseTimeVsArrivalTime();
+//        PlotCSV plotter = new PlotCSV();
+//        plotter.plotSizeVsArrivalTime();
+//        plotter.plotIdVsSize();
+//        plotter.plotResponseTimeVsArrivalTime();
     }
 
     public void plotIdVsSize() throws IOException {
