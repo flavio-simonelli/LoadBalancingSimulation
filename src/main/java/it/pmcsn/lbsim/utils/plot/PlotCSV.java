@@ -22,9 +22,9 @@ import java.util.logging.Logger;
 public class PlotCSV {
     private static final Logger logger = Logger.getLogger(PlotCSV.class.getName());
     private static final String CONFIG_FILE_PATH = "config.yaml";
-    private static final int CHART_WIDTH = 800;
-    private static final int CHART_HEIGHT = 600;
-    private static final int MARKER_SIZE = 4;
+    private static final int CHART_WIDTH = 1200;
+    private static final int CHART_HEIGHT = 800;
+    private static final int MARKER_SIZE = 2;
 
     private final Path csvPath;
 
@@ -34,8 +34,10 @@ public class PlotCSV {
     }
 
     public static void main(String[] args) throws IOException {
-        //PlotCSV plotter = new PlotCSV();
-        //plotter.plotSizeVsArrivalTime();
+        PlotCSV plotter = new PlotCSV();
+        plotter.plotSizeVsArrivalTime();
+        plotter.plotIdVsSize();
+        plotter.plotResponseTimeVsArrivalTime();
     }
 
     public void plotIdVsSize() throws IOException {
@@ -59,7 +61,7 @@ public class PlotCSV {
 
         XYChart chart = createChart("ID vs Size", "ID", "Size");
         addSeries(chart, "Job Size", ids, sizes, Color.BLUE);
-        displayAndSaveChart(chart, "id_vs_size.png");
+        displayAndSaveChart(chart, "id_vs_size.svg");
     }
 
     /**
@@ -71,17 +73,19 @@ public class PlotCSV {
 
         XYChart chart = createChart("Size vs Arrival Time", "Arrival Time", "Size");
 
-        // Add series for normal jobs (blue)
+        // Add series for normal jobs (blue with transparency)
         if (!jobData.normalArrivalTimes.isEmpty()) {
-            addSeries(chart, "Normal Jobs", jobData.normalArrivalTimes, jobData.normalSizes, Color.BLUE);
+            addSeries(chart, "Normal Jobs (" + jobData.normalArrivalTimes.size() + ")",
+                    jobData.normalArrivalTimes, jobData.normalSizes, new Color(0, 100, 200));
         }
 
-        // Add series for spike jobs (red)
+        // Add series for spike jobs (red with transparency)
         if (!jobData.spikeArrivalTimes.isEmpty()) {
-            addSeries(chart, "Spike Jobs", jobData.spikeArrivalTimes, jobData.spikeSizes, Color.RED);
+            addSeries(chart, "Spike Jobs (" + jobData.spikeArrivalTimes.size() + ")",
+                    jobData.spikeArrivalTimes, jobData.spikeSizes, new Color(200, 50, 50));
         }
 
-        displayAndSaveChart(chart, "size_vs_arrival.png");
+        displayAndSaveChart(chart, "size_vs_arrival.svg");
     }
 
     /**
@@ -92,17 +96,19 @@ public class PlotCSV {
 
         XYChart chart = createChart("Response Time vs Arrival Time", "Arrival Time", "Response Time");
 
-        // Add series for low current SI (blue)
+        // Add series for low current SI (blue with transparency)
         if (!data.lowSiArrivalTimes.isEmpty()) {
-            addSeries(chart, "CurrentSi < 10", data.lowSiArrivalTimes, data.lowSiResponseTimes, Color.BLUE);
+            addSeries(chart, "CurrentSi < 10 (" + data.lowSiArrivalTimes.size() + ")",
+                    data.lowSiArrivalTimes, data.lowSiResponseTimes, new Color(0, 100, 200));
         }
 
-        // Add series for high current SI (red)
+        // Add series for high current SI (red with transparency)
         if (!data.highSiArrivalTimes.isEmpty()) {
-            addSeries(chart, "CurrentSi >= 10", data.highSiArrivalTimes, data.highSiResponseTimes, Color.RED);
+            addSeries(chart, "CurrentSi >= 10 (" + data.highSiArrivalTimes.size() + ")",
+                    data.highSiArrivalTimes, data.highSiResponseTimes, new Color(200, 50, 50));
         }
 
-        displayChart(chart);
+        displayAndSaveChart(chart, "response_time_vs_arrival.svg");
     }
 
     private JobData readJobData() throws IOException {
@@ -145,9 +151,11 @@ public class PlotCSV {
                 // Skip header
                 if (values[0].equalsIgnoreCase("jobId")) continue;
 
-                double arrivalTime = Double.parseDouble(values[1]);
-                double responseTime = Double.parseDouble(values[3]);
-                boolean currentSiHigh = Boolean.parseBoolean(values[4]);
+                if (values.length < 5) continue;
+
+                double arrivalTime = Double.parseDouble(values[1].trim());
+                double responseTime = Double.parseDouble(values[3].trim());
+                boolean currentSiHigh = Boolean.parseBoolean(values[4].trim());
 
                 if (currentSiHigh) {
                     data.highSiArrivalTimes.add(arrivalTime);
@@ -174,6 +182,25 @@ public class PlotCSV {
         chart.getStyler().setDefaultSeriesRenderStyle(XYSeries.XYSeriesRenderStyle.Scatter);
         chart.getStyler().setMarkerSize(MARKER_SIZE);
 
+        // Enhanced readability settings
+        chart.getStyler().setChartTitleFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 16));
+        chart.getStyler().setAxisTitleFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 14));
+        chart.getStyler().setAxisTickLabelsFont(new java.awt.Font("Arial", java.awt.Font.PLAIN, 12));
+        chart.getStyler().setLegendFont(new java.awt.Font("Arial", java.awt.Font.PLAIN, 12));
+
+        // Better grid and colors for readability
+        chart.getStyler().setPlotGridLinesVisible(true);
+        chart.getStyler().setPlotGridLinesColor(Color.LIGHT_GRAY);
+        chart.getStyler().setPlotBackgroundColor(Color.WHITE);
+        chart.getStyler().setChartBackgroundColor(Color.WHITE);
+
+        // Better legend positioning
+        chart.getStyler().setLegendPosition(org.knowm.xchart.style.Styler.LegendPosition.OutsideE);
+        chart.getStyler().setLegendLayout(org.knowm.xchart.style.Styler.LegendLayout.Vertical);
+
+        // Add some padding
+        chart.getStyler().setPlotMargin(20);
+
         return chart;
     }
 
@@ -181,6 +208,13 @@ public class PlotCSV {
         XYSeries series = chart.addSeries(name, xData, yData);
         series.setMarker(SeriesMarkers.CIRCLE);
         series.setMarkerColor(color);
+
+        // Add transparency for overlapping points
+        Color transparentColor = new Color(color.getRed(), color.getGreen(), color.getBlue(), 180);
+        series.setMarkerColor(transparentColor);
+
+        // Remove fill to make dots more visible
+        series.setFillColor(Color.WHITE);
     }
 
     private void displayChart(XYChart chart) {
@@ -199,12 +233,29 @@ public class PlotCSV {
 
     private void saveChart(XYChart chart, String filename) {
         try {
-            Files.createDirectories(Path.of("target"));
+            Files.createDirectories(Path.of("results"));
             Path outputPath = Path.of("results/", filename);
+
             if (Files.exists(outputPath)) {
                 Files.delete(outputPath);
             }
-            BitmapEncoder.saveBitmap(chart, outputPath.toString(), BitmapEncoder.BitmapFormat.PNG);
+
+            if (filename.toLowerCase().endsWith(".svg")) {
+                // For SVG export, use the full path including extension
+                org.knowm.xchart.VectorGraphicsEncoder.saveVectorGraphic(
+                        chart,
+                        outputPath.toString(),
+                        org.knowm.xchart.VectorGraphicsEncoder.VectorGraphicsFormat.SVG
+                );
+            } else {
+                // PNG raster - remove extension as the encoder adds it
+                String baseName = outputPath.toString().replaceAll("\\.png$", "");
+                org.knowm.xchart.BitmapEncoder.saveBitmap(
+                        chart,
+                        baseName,
+                        org.knowm.xchart.BitmapEncoder.BitmapFormat.PNG
+                );
+            }
             logger.log(Level.INFO, "Chart saved to: {0}", outputPath.toAbsolutePath());
         } catch (IOException e) {
             logger.log(Level.SEVERE, "Failed to save chart", e);

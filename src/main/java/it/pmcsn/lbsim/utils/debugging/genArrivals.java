@@ -15,6 +15,7 @@ import java.util.Arrays;
 public class genArrivals {
     private final Rvgs rvgs;
     private final HyperExponential serviceTimeObj;
+    private static double mean;
 
     public genArrivals(double serviceCv, double serviceMean) {
         Rngs rngs = new Rngs();
@@ -43,6 +44,7 @@ public class genArrivals {
                             sStreamP, sStreamExp1, sStreamExp2
                     );
                     writer.println(i + "," + size);
+                    mean += size;
                 }
             }
         } catch (IOException e) {
@@ -51,9 +53,9 @@ public class genArrivals {
     }
 
     public static void main(String[] args) throws IOException {
-        double serviceCv = 4;
-        double serviceMean = 0.16;
-        int numArrivi = 100000;
+        double serviceCv = 1.0000001;
+        double serviceMean = 10;
+        int numArrivi = 10000;
         String csvPath = "results/genArrivals.csv";
 
         genArrivals generator = new genArrivals(serviceCv, serviceMean);
@@ -61,5 +63,7 @@ public class genArrivals {
 
         PlotCSV plotter = new PlotCSV();
         plotter.plotIdVsSize();
+        mean = mean / numArrivi;//TODO: this mean should be the same as serviceMean, so something is wrong!
+        System.out.println("Mean service time: " + mean);
     }
 }
