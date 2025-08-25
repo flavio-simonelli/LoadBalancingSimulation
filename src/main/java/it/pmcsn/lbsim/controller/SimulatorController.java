@@ -1,5 +1,6 @@
 package it.pmcsn.lbsim.controller;
 
+import it.pmcsn.lbsim.config.Config;
 import it.pmcsn.lbsim.config.SimConfiguration;
 import it.pmcsn.lbsim.models.Simulator;
 
@@ -23,14 +24,14 @@ public class SimulatorController {
         // Create a new simulator instance with the provided configuration
         Simulator simulator = new Simulator(config.getSImax(),
                                             config.getSImin(),
-                                            config.getR0max(),
-                                            config.getR0min(),
+                                            config.getR0max().getSeconds(),
+                                            config.getR0min().getSeconds(),
                                             config.getInitialServerCount(),
-                                            config.getCpuMultiplierSpike(),
-                                            config.getCpuPercentageSpike(),
+                                            config.getSpikeCpuMultiplier(),
+                                            config.getSpikeCpuPercentage(),
                                             config.getSlidingWindowSize(),
                                             config.getSchedulingType(),
-                                            config.getHorizonalScalingCoolDown(),
+                                            config.getHorizontalCoolDown().getSeconds(),
                                             config.getInterarrivalCv(),
                                             config.getInterarrivalMean(),
                                             config.getServiceCv(),
@@ -39,7 +40,7 @@ public class SimulatorController {
                                             );
 
         // Start the simulation
-        simulator.run(config.getDuration());
+        simulator.run(config.getDurationSeconds().getSeconds());
     }
 }
 

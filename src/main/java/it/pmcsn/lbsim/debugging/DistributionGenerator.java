@@ -1,7 +1,7 @@
 package it.pmcsn.lbsim.debugging;
 
+import it.pmcsn.lbsim.config.ConfigLoader;
 import it.pmcsn.lbsim.config.SimConfiguration;
-import it.pmcsn.lbsim.config.YamlSimulationConfig;
 import it.pmcsn.lbsim.utils.csv.CsvAppender;
 import it.pmcsn.lbsim.utils.plot.PlotCSV;
 import it.pmcsn.lbsim.utils.random.Rngs;
@@ -103,31 +103,30 @@ public class DistributionGenerator {
     }
 
     public static void main(String[] args) throws Exception {
-        SimConfiguration config = new YamlSimulationConfig(CONFIG_FILE_PATH);
+        SimConfiguration config = ConfigLoader.load(CONFIG_FILE_PATH);
         int numberOfSamples = 10000;
-        double exponentialMean = 5.0;
-
         String exponentialOutputPath = config.getCsvOutputDir() + "ExponentialGen.csv";
         String hyperExponentialOutputPath = config.getCsvOutputDir() + "HyperExponentialGen.csv";
 
         DistributionGenerator generator = new DistributionGenerator();
 
+        double exponentialMean = 5.0;
         double exponentialSampleMean = generator.generateExponentials(
                 numberOfSamples, exponentialMean, exponentialOutputPath);
         logger.log(Level.INFO,
                 "Exponential sample mean: {0} (theoretical: {1})\n",
                 new Object[]{exponentialSampleMean, exponentialMean});
 
-        /*
-        double hyperExponentialCv = 2.0;
-        double hyperExponentialMean = 10.0;
-        logger.info("Generating hyperexponential arrivals...");
+
+        double hyperExponentialCv = 4.0;
+        double hyperExponentialMean = 0.15;
         double hyperExponentialSampleMean = generator.generateHyperExponentials(
             numberOfSamples, hyperExponentialCv, hyperExponentialMean, hyperExponentialOutputPath);
-        logger.info("Hyperexponential sample mean: {} (theoretical: {})",
-                hyperExponentialSampleMean, hyperExponentialMean);
-        */
+        logger.log(Level.INFO, "Hyperexponential sample mean: {0} (theoretical: {1})\n",
+                new Object[]{hyperExponentialSampleMean, hyperExponentialMean});
+
 
         PlotCSV.plotScatter(exponentialOutputPath, config.getPlotOutputDir(), "id", "value");
+        PlotCSV.plotScatter(hyperExponentialOutputPath, config.getPlotOutputDir(), "id", "value");
     }
 }

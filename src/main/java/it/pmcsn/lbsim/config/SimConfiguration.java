@@ -2,22 +2,32 @@ package it.pmcsn.lbsim.config;
 
 import it.pmcsn.lbsim.models.schedulingpolicy.SchedulingType;
 
+import java.time.Duration;
+
 public interface SimConfiguration {
-    double getDuration();
+    Duration getDurationSeconds();
+    double getInterarrivalMean();
+    double getInterarrivalCv();
+    double getServiceMean();
+    double getServiceCv();
+
+    SchedulingType getSchedulingType();
+
+    boolean isSpikeEnabled();
     int getSImax();
     int getSImin();
-    double getR0max();
-    double getR0min();
+    int getSpikeCpuMultiplier();
+    double getSpikeCpuPercentage();
+    Duration getSpikeCoolDown();
+
+    boolean isHorizontalEnabled();
     int getSlidingWindowSize();
-    int getHorizonalScalingCoolDown();
+    Duration getR0max();
+    Duration getR0min();
+    Duration getHorizontalCoolDown();
     int getInitialServerCount();
-    int getCpuMultiplierSpike();
-    double getCpuPercentageSpike();
-    SchedulingType getSchedulingType();
-    double getInterarrivalCv();
-    double getInterarrivalMean();
-    double getServiceCv();
-    double getServiceMean();
+
     String getCsvOutputDir();
     String getPlotOutputDir();
 }
+

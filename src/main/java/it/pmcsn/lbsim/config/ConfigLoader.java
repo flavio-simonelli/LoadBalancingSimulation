@@ -1,0 +1,126 @@
+package it.pmcsn.lbsim.config;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import it.pmcsn.lbsim.controller.SimulatorController;
+import it.pmcsn.lbsim.models.schedulingpolicy.SchedulingType;
+
+import java.io.InputStream;
+import java.time.Duration;
+import java.util.logging.Logger;
+
+public class ConfigLoader {
+
+    private static final Logger logger = Logger.getLogger(ConfigLoader.class.getName());
+
+    public static SimConfiguration load(String filePath) {
+        try (InputStream input = ConfigLoader.class.getClassLoader().getResourceAsStream(filePath)) {
+            if (input == null) {
+                throw new IllegalArgumentException("File YAML non trovato: " + filePath);
+            }
+
+            ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+            mapper.registerModule(new JavaTimeModule());
+
+            Config raw = mapper.readValue(input, Config.class);
+
+            // Configura logging dal file
+            if (raw.logging != null && raw.logging.level != null) {
+                java.util.logging.Level level = java.util.logging.Level.parse(raw.logging.level.toUpperCase());
+                logger.setLevel(level);
+                for (var h : Logger.getLogger("").getHandlers()) {
+                    h.setLevel(level);
+                }
+                logger.info("Logger level impostato a: " + level);
+            }
+
+            SimConfiguration cfg = new ConfigAdapter(raw);
+
+            // stampa di debug (sarà mostrata solo se livello lo permette)
+            printDebug(cfg);
+
+            return cfg;
+
+        } catch (Exception e) {
+            throw new RuntimeException("Errore nel caricamento configurazione", e);
+        }
+    }
+
+
+    // --- Adapter che traduce Config -> SimConfiguration ---
+    private static class ConfigAdapter implements SimConfiguration {
+        private final Config cfg;
+
+        ConfigAdapter(Config cfg) {
+            this.cfg = cfg;
+        }
+
+        @Override public Duration getDurationSeconds() { return cfg.simulation.duration; }
+        @Override public double getInterarrivalMean() { return cfg.workload.interarrival.mean; }
+        @Override public double getInterarrivalCv() { return cfg.workload.interarrival.cv; }
+        @Override public double getServiceMean() { return cfg.workload.service.mean; }
+        @Override public double getServiceCv() { return cfg.workload.service.cv; }
+
+        @Override public SchedulingType getSchedulingType() {
+            return SchedulingType.fromString(cfg.scheduling.policy);
+        }
+
+        @Override public boolean isSpikeEnabled() { return cfg.scaling.spikeServer.enabled; }
+        @Override public int getSImax() { return cfg.scaling.spikeServer.SImax; }
+        @Override public int getSImin() { return cfg.scaling.spikeServer.SImin; }
+        @Override public int getSpikeCpuMultiplier() { return cfg.scaling.spikeServer.cpuMultiplier; }
+        @Override public double getSpikeCpuPercentage() { return cfg.scaling.spikeServer.cpuPercentage; }
+        @Override public Duration getSpikeCoolDown() { return cfg.scaling.spikeServer.coolDown; }
+
+        @Override public boolean isHorizontalEnabled() { return cfg.scaling.horizontal.enabled; }
+        @Override public int getSlidingWindowSize() { return cfg.scaling.horizontal.slidingWindowSize; }
+        @Override public Duration getR0max() { return cfg.scaling.horizontal.R0max; }
+        @Override public Duration getR0min() { return cfg.scaling.horizontal.R0min; }
+        @Override public Duration getHorizontalCoolDown() { return cfg.scaling.horizontal.coolDown; }
+        @Override public int getInitialServerCount() { return cfg.scaling.horizontal.initialServerCount; }
+
+        @Override public String getCsvOutputDir() { return cfg.output.csvDir; }
+        @Override public String getPlotOutputDir() { return cfg.output.plotDir; }
+    }
+
+    private static void printDebug(SimConfiguration cfg) {
+        if (logger.isLoggable(java.util.logging.Level.FINE)) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("\n=== Simulation Config ===\n")
+                    .append("Duration (s): ").append(cfg.getDurationSeconds()).append("\n")
+
+                    .append("\n--- Workload ---\n")
+                    .append("Interarrival mean: ").append(cfg.getInterarrivalMean()).append("\n")
+                    .append("Interarrival cv:   ").append(cfg.getInterarrivalCv()).append("\n")
+                    .append("Service mean:      ").append(cfg.getServiceMean()).append("\n")
+                    .append("Service cv:        ").append(cfg.getServiceCv()).append("\n")
+
+                    .append("\n--- Scheduling ---\n")
+                    .append("Policy: ").append(cfg.getSchedulingType()).append("\n")
+
+                    .append("\n--- Scaling: Spike Server ---\n")
+                    .append("Enabled:        ").append(cfg.isSpikeEnabled()).append("\n")
+                    .append("SImax:          ").append(cfg.getSImax()).append("\n")
+                    .append("SImin:          ").append(cfg.getSImin()).append("\n")
+                    .append("CPU Multiplier: ").append(cfg.getSpikeCpuMultiplier()).append("\n")
+                    .append("CPU Percentage: ").append(cfg.getSpikeCpuPercentage()).append("\n")
+                    .append("CoolDown:       ").append(cfg.getSpikeCoolDown()).append("\n")
+
+                    .append("\n--- Scaling: Horizontal ---\n")
+                    .append("Enabled:            ").append(cfg.isHorizontalEnabled()).append("\n")
+                    .append("SlidingWindowSize:  ").append(cfg.getSlidingWindowSize()).append("\n")
+                    .append("R0max:              ").append(cfg.getR0max()).append("\n")
+                    .append("R0min:              ").append(cfg.getR0min()).append("\n")
+                    .append("CoolDown:           ").append(cfg.getHorizontalCoolDown()).append("\n")
+                    .append("InitialServerCount: ").append(cfg.getInitialServerCount()).append("\n")
+
+                    .append("\n--- Output ---\n")
+                    .append("CSV Dir:  ").append(cfg.getCsvOutputDir()).append("\n")
+                    .append("Plot Dir: ").append(cfg.getPlotOutputDir()).append("\n")
+                    .append("===========================\n");
+
+            logger.fine(sb.toString());
+        }
+    }
+}

@@ -1,26 +1,37 @@
-simulazione:
-  duration: 1000000   # durata della simulazione in secondi
+simulation:
+  duration: "P2DT3H4M"   # P2DT3H4M → 2 giorni, 3 ore, 4 minuti
 
-  SImax: 20 # numero massimo di job correntemente in esecuzione in un server prima di far scattare la scalabilità verticale (scale up)
-  SImin: 1 # numero minimo di job correntemente in esecuzione in un server prima di far scattare la scalabilità verticale (scale down)
-  R0max: 20 # media del tempo di risposta per job in un server prima di far scattare la scalabilità orizzontale (scale in)
-  R0min: 10 # media del tempo di risposta per job in un server prima di far scattare la scalabilità orizzontale (scale out)
+workload:
+  interarrival:
+    mean: 0.15        # media dei tempi di interarrivo
+    cv: 4             # coefficiente di variazione
+  service:
+    mean: 0.16        # media della distribuzione del tempo di servizio
+    cv: 4             # coefficiente di variazione
 
-  slidingWindowSize: 10 # dimensione della finestra mobile per il calcolo della media del tempo di risposta
+scheduling:
+  policy: "least_load"   # valori possibili: least_load, round_robin
 
-  horizontalScalingCoolDown: 10 # ritardo fra una scalata orizzontale ed un altra in secondi
+scaling:
+  spikeServer:
+    enabled: true
+    SImax: 20        # max job nel web server prima di reindirizzare allo spike
+    SImin: 1         # min job nel web server prima di reindirizzare al web server
+    cpuMultiplier: 2  # moltiplicatore CPU spike
+    cpuPercentage: 0.4 # percentuale CPU assegnata all'app spike
+    coolDown: "PT5S" # tempo cooldown reindirizzamento (s)
 
-  initialServerCount: 1 # numero di server iniziali SENZA CONTARE LO SPIKE SERVER
+  horizontal:
+    enabled: true
+    slidingWindowSize: 10     # finestra mobile per media tempo risposta
+    R0max: "PT20S"        # media tempo di risposta per scale in
+    R0min: "PT10S"        # media tempo di risposta per scale out
+    coolDown: "PT10S"     # ritardo tra una scalata e l'altra
+    initialServerCount: 1   # server iniziali (senza spike)
 
-  cpuMultiplierSpike: 2 # moltiplicatore della CPU per il server spike
-  cpuPercentageSpike: 0.4 # percentuale di CPU assegnata alla applicazione del server spike
+output:
+  csvDir: "output/csv/"
+  plotDir: "output/plot/"
 
-  schedulingPolicy: "round_robin"   # valori possibili: least_load, round_robin
-
-  interarrivalCv: 4 # coefficiente di variazione per la distribuzione dei tempi di interarrivo
-  interarrivalMean: 0.15 # media dei tempi di interarrivo
-  serviceCv: 4 # coefficiente di variazione per la distribuzione del tempo di servizio
-  serviceMean: 0.16 # media della distribuzione del tempo di servizio
-
-  csvOutputDir: "output/csv/"
-  plotOutputDir: "output/plot/"
+logging:
+  level: "FINE"   # possibili valori: SEVERE, WARNING, INFO, FINE, FINER, FINEST
