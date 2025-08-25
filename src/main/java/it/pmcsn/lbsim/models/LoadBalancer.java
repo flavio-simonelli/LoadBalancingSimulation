@@ -202,4 +202,20 @@ public class LoadBalancer {
         job.assignServer(selectedServer);
         logger.log(Level.INFO,"Assigned job to Web Server. Current load: " + selectedServer.getCurrentSi() + "\n");
     }
+
+    public int getWebServerCount() {
+        return webServers.size();
+    }
+
+    public List<Integer> getJobCountsPerWebServer() {
+        List<Integer> jobCounts = new ArrayList<>();
+        for (Server server : webServers) {
+            jobCounts.add(server.getCurrentSi());
+        }
+        return jobCounts;
+    }
+
+    public int getSpikeServerJobCount() {
+        return spikeServer.getCurrentSi();
+    }
 }

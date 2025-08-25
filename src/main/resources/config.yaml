@@ -1,5 +1,5 @@
 simulation:
-  duration: "P2DT3H4M"   # P2DT3H4M → 2 giorni, 3 ore, 4 minuti
+  duration: "PT1H4M"   # P2DT3H4M → 2 giorni, 3 ore, 4 minuti
 
 workload:
   interarrival:
@@ -15,8 +15,8 @@ scheduling:
 scaling:
   spikeServer:
     enabled: true
-    SImax: 20        # max job nel web server prima di reindirizzare allo spike
-    SImin: 1         # min job nel web server prima di reindirizzare al web server
+    SImax: 10        # max job nel web server prima di reindirizzare allo spike
+    SImin: 6        # min job nel web server prima di reindirizzare al web server
     cpuMultiplier: 2  # moltiplicatore CPU spike
     cpuPercentage: 0.4 # percentuale CPU assegnata all'app spike
     coolDown: "PT5S" # tempo cooldown reindirizzamento (s)
@@ -24,8 +24,8 @@ scaling:
   horizontal:
     enabled: true
     slidingWindowSize: 10     # finestra mobile per media tempo risposta
-    R0max: "PT20S"        # media tempo di risposta per scale in
-    R0min: "PT10S"        # media tempo di risposta per scale out
+    R0max: "PT3S"        # media tempo di risposta per scale in
+    R0min: "PT1S"        # media tempo di risposta per scale out
     coolDown: "PT10S"     # ritardo tra una scalata e l'altra
     initialServerCount: 1   # server iniziali (senza spike)
 

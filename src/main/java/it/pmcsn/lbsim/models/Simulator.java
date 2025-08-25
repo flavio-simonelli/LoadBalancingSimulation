@@ -37,6 +37,8 @@ public class Simulator {
     // Service variate parameters
     private final HyperExponential serviceTimeObj;
 
+    private final CsvAppender csvAppenderServers;
+    private final CsvAppender csvAppenderDepartures;
     private final CsvAppender csvAppenderJobs;
 
     // Debug
@@ -62,6 +64,16 @@ public class Simulator {
         // initialize path csv
         try {
             this.csvAppenderJobs = new CsvAppender(Path.of(csvExportDir + "Jobs.csv"), "IdJob", "Arrival", "Departure", "ResponseTime","Response-(Departure-Arrival)", "OriginalSize", "processedBySpike");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        try {
+            this.csvAppenderServers = new CsvAppender(Path.of(csvExportDir + "Servers.csv"), "timestamp", "active_jobs_per_webserver", "active_web_servers", "active_jobs_spikeserver");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        try {
+            this.csvAppenderDepartures = new CsvAppender(Path.of(csvExportDir + "Departures.csv"), "timestamp", "jobs_per_server", "active_servers");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -174,6 +186,15 @@ public class Simulator {
             jobStat.estimateDepartureTime(this.currentTime);
         }
 
+        // csv logging
+        this.csvAppenderServers.writeRow(
+                this.currentTime.toString(),
+                String.valueOf(this.loadBalancer.getJobCountsPerWebServer()),
+                String.valueOf(this.loadBalancer.getWebServerCount()),
+                String.valueOf(this.loadBalancer.getSpikeServerJobCount())
+        );
+
+
         // Generate next arrival time
         genNextInterarrivalTime();
     }
@@ -206,6 +227,13 @@ public class Simulator {
                     String.valueOf(targetDepartureJobStats.getOriginalSize()) ,                                  // original size
                     String.valueOf(targetDepartureJobStats.getJob().getAssignedServer().getCpuMultiplier()>1) // processed by spike
                     );
+
+        this.csvAppenderServers.writeRow(
+                this.currentTime.toString(),
+                String.valueOf(this.loadBalancer.getJobCountsPerWebServer()),
+                String.valueOf(this.loadBalancer.getWebServerCount()),
+                String.valueOf(this.loadBalancer.getSpikeServerJobCount())
+        );
 
         this.jobStats.remove(targetDepartureJobStats);
 
