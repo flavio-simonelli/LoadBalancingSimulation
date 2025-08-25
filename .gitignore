@@ -41,4 +41,6 @@ build/
 /.idea/
 .idea/*
 .idea/
-/results/
+/output/
+output/*
+output/

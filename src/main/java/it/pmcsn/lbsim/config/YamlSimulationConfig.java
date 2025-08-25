@@ -22,8 +22,8 @@ public class YamlSimulationConfig implements SimConfiguration {
     private final double interarrivalMean;
     private final double serviceCv;
     private final double serviceMean;
-    private final String csvJobsPath;
-
+    private final String csvOutputDir;
+    private final String plotOutputDir;
 
     public YamlSimulationConfig(String filePath) {
         try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream(filePath)) {
@@ -32,32 +32,28 @@ public class YamlSimulationConfig implements SimConfiguration {
             }
             Yaml yaml = new Yaml();
             Map<String, Object> obj = yaml.load(inputStream);
-
-            // Legge la sezione "simulazione" dal YAML
             Map<String, Object> simConfig = (Map<String, Object>) obj.get("simulazione");
             if (simConfig == null) {
                 throw new RuntimeException("Chiave 'simulazione' non trovata nel file YAML");
             }
 
-            // Assegna il valore della durata
             this.duration = ((Number) simConfig.get("duration")).doubleValue();
             this.SImax = ((Number) simConfig.get("SImax")).intValue();
             this.SImin = ((Number) simConfig.get("SImin")).intValue();
             this.R0max = ((Number) simConfig.get("R0max")).doubleValue();
             this.R0min = ((Number) simConfig.get("R0min")).doubleValue();
             this.slidingWindowSize = ((Number) simConfig.get("slidingWindowSize")).intValue();
+            this.horizonalScalingCoolDown = ((Number) simConfig.get("horizontalScalingCoolDown")).intValue();
             this.initialServerCount = ((Number) simConfig.get("initialServerCount")).intValue();
             this.cpuMultiplierSpike = ((Number) simConfig.get("cpuMultiplierSpike")).intValue();
             this.cpuPercentageSpike = ((Number) simConfig.get("cpuPercentageSpike")).doubleValue();
             this.schedulingType = SchedulingType.fromString((String) simConfig.get("schedulingPolicy"));
-            this.horizonalScalingCoolDown = ((Number) simConfig.get("horizontalScalingCoolDown")).intValue();
             this.interarrivalCv = ((Number) simConfig.get("interarrivalCv")).doubleValue();
             this.interarrivalMean = ((Number) simConfig.get("interarrivalMean")).doubleValue();
             this.serviceCv = ((Number) simConfig.get("serviceCv")).doubleValue();
             this.serviceMean = ((Number) simConfig.get("serviceMean")).doubleValue();
-            this.csvJobsPath = (String) simConfig.get("csvJobsPath");
-
-
+            this.csvOutputDir = (String) simConfig.get("csvOutputDir");
+            this.plotOutputDir = (String) simConfig.get("plotOutputDir");
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException("Errore nel caricamento della configurazione YAML", e);
@@ -65,59 +61,37 @@ public class YamlSimulationConfig implements SimConfiguration {
     }
 
     @Override
-    public double getDuration() {
-        return duration;
-    }
+    public double getDuration() { return duration; }
     @Override
-    public int getSImax() {
-        return SImax;
-    }
+    public int getSImax() { return SImax; }
     @Override
-    public int getSImin() {
-        return SImin;
-    }
+    public int getSImin() { return SImin; }
     @Override
-    public double getR0max() {
-        return R0max;
-    }
+    public double getR0max() { return R0max; }
     @Override
-    public double getR0min() {
-        return R0min;
-    }
+    public double getR0min() { return R0min; }
     @Override
-    public int getSlidingWindowSize() {
-        return slidingWindowSize;
-    }
-    @Override
-    public int getInitialServerCount() {
-        return initialServerCount;
-    }
-    @Override
-    public int getCpuMultiplierSpike() {
-        return cpuMultiplierSpike;
-    }
-    @Override
-    public double getCpuPercentageSpike() {
-        return cpuPercentageSpike;
-    }
-    @Override
-    public SchedulingType getSchedulingType() { return schedulingType; }
+    public int getSlidingWindowSize() { return slidingWindowSize; }
     @Override
     public int getHorizonalScalingCoolDown() { return horizonalScalingCoolDown; }
     @Override
-    public double getInterarrivalCv() {return interarrivalCv;}
+    public int getInitialServerCount() { return initialServerCount; }
     @Override
-    public double getInterarrivalMean() {return interarrivalMean; }
+    public int getCpuMultiplierSpike() { return cpuMultiplierSpike; }
     @Override
-    public double getServiceCv() { return serviceCv;
-    }
+    public double getCpuPercentageSpike() { return cpuPercentageSpike; }
     @Override
-    public double getServiceMean() {return serviceMean;}
+    public SchedulingType getSchedulingType() { return schedulingType; }
     @Override
-    public String getCsvJobsPath() {
-        return csvJobsPath;
-    }
-
-
-
+    public double getInterarrivalCv() { return interarrivalCv; }
+    @Override
+    public double getInterarrivalMean() { return interarrivalMean; }
+    @Override
+    public double getServiceCv() { return serviceCv; }
+    @Override
+    public double getServiceMean() { return serviceMean; }
+    @Override
+    public String getCsvOutputDir() { return csvOutputDir; }
+    @Override
+    public String getPlotOutputDir() { return plotOutputDir; }
 }

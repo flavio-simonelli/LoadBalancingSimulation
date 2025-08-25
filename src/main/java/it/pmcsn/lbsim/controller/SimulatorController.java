@@ -35,7 +35,7 @@ public class SimulatorController {
                                             config.getInterarrivalMean(),
                                             config.getServiceCv(),
                                             config.getServiceMean(),
-                                            config.getCsvJobsPath()
+                                            config.getCsvOutputDir()
                                             );
 
         // Start the simulation

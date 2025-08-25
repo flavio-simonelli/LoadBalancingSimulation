@@ -14,9 +14,10 @@ public interface SimConfiguration {
     int getCpuMultiplierSpike();
     double getCpuPercentageSpike();
     SchedulingType getSchedulingType();
-    String getCsvJobsPath();
     double getInterarrivalCv();
     double getInterarrivalMean();
     double getServiceCv();
     double getServiceMean();
+    String getCsvOutputDir();
+    String getPlotOutputDir();
 }

@@ -1,17 +1,26 @@
 simulazione:
   duration: 500   # durata della simulazione in secondi
+
   SImax: 20 # numero massimo di job correntemente in esecuzione in un server prima di far scattare la scalabilità verticale (scale up)
   SImin: 1 # numero minimo di job correntemente in esecuzione in un server prima di far scattare la scalabilità verticale (scale down)
   R0max: 20 # media del tempo di risposta per job in un server prima di far scattare la scalabilità orizzontale (scale in)
   R0min: 10 # media del tempo di risposta per job in un server prima di far scattare la scalabilità orizzontale (scale out)
+
   slidingWindowSize: 10 # dimensione della finestra mobile per il calcolo della media del tempo di risposta
+
   horizontalScalingCoolDown: 10 # ritardo fra una scalata orizzontale ed un altra in secondi
+
   initialServerCount: 1 # numero di server iniziali SENZA CONTARE LO SPIKE SERVER
+
   cpuMultiplierSpike: 2 # moltiplicatore della CPU per il server spike
   cpuPercentageSpike: 0.4 # percentuale di CPU assegnata alla applicazione del server spike
+
   schedulingPolicy: "round_robin"   # valori possibili: least_load, round_robin
-  csvJobsPath: "results/Jobs.csv" # path del csv prodotto per i jobs
+
   interarrivalCv: 4 # coefficiente di variazione per la distribuzione dei tempi di interarrivo
   interarrivalMean: 0.15 # media dei tempi di interarrivo
   serviceCv: 4 # coefficiente di variazione per la distribuzione del tempo di servizio
   serviceMean: 0.16 # media della distribuzione del tempo di servizio
+
+  csvOutputDir: "output/csv/"
+  plotOutputDir: "output/plot/"

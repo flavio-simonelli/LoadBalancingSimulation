@@ -13,13 +13,13 @@ import java.nio.file.StandardOpenOption;
 public class CsvAppender implements AutoCloseable {
     private final ICSVWriter csv;
 
-    public CsvAppender(Path path, String... header) throws IOException {
-        Files.deleteIfExists(path);
-        if (path.getParent() != null) {
-            Files.createDirectories(path.getParent());
+    public CsvAppender(Path savingPath, String... header) throws IOException {
+        Files.deleteIfExists(savingPath);
+        if (savingPath.getParent() != null) {
+            Files.createDirectories(savingPath.getParent());
         }
         Writer writer = Files.newBufferedWriter(
-                path,
+                savingPath,
                 StandardCharsets.UTF_8,
                 StandardOpenOption.CREATE,
                 StandardOpenOption.TRUNCATE_EXISTING,

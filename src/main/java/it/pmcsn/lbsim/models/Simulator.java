@@ -37,8 +37,7 @@ public class Simulator {
     // Service variate parameters
     private final HyperExponential serviceTimeObj;
 
-    // path variable
-    private final CsvAppender csvJobs;
+    private final CsvAppender csvAppenderJobs;
 
     //debugging
     public int simErrorCount = 0;
@@ -59,11 +58,11 @@ public class Simulator {
                      double interarrivalMean,
                      double serviceCv,
                      double serviceMean,
-                     String csvJobsPath) {
+                     String csvExportDir) {
 
         // initialize path csv
         try {
-            this.csvJobs = new CsvAppender(Path.of(csvJobsPath), "IdJob", "Arrival", "Departure", "ResponseTime", "size", "processedBySpike");
+            this.csvAppenderJobs = new CsvAppender(Path.of(csvExportDir + "Jobs.csv"), "IdJob", "Arrival", "Departure", "ResponseTime", "size", "processedBySpike");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -125,7 +124,7 @@ public class Simulator {
                 logger.log(Level.WARNING, "Job ID: {0}, Error Count: {1}", new Object[]{job.getJobId(), job.jobErrorCount});
             }
         }
-        csvJobs.close();
+        csvAppenderJobs.close();
     }
 
     private void guessNextEvent() {
@@ -243,7 +242,7 @@ public class Simulator {
         this.loadBalancer.departureJob(targetDepartureJobStats.getJob(), responseTime, this.currentTime);
 
         // Add to the csv for forensics analysis
-        this.csvJobs.writeRow(
+        this.csvAppenderJobs.writeRow(
                     String.valueOf(targetDepartureJobStats.getJob().getJobId()),                                 // job id
                     String.valueOf(targetDepartureJobStats.getArrivalTime()),                                    // arrival time
                     String.valueOf(currentTime),                                                                 // departure time
