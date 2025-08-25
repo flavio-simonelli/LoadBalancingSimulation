@@ -39,7 +39,7 @@ public class HyperExponential {
 
     private double calculateMHyper(double m, double p){
         double mu = 1/m;
-        return 2*p*mu;
+        return 1/(2*p*mu);
     }
 
     public double getM1() {
