@@ -13,14 +13,14 @@ public class Job {
     private final int jobId;
     private Server assignedServer;
 
+    // Debug
+    public boolean hadNegativeRemainingSize = false;
+
     /**
      * This is UNCORRELATED from the assigned server, but coincides numerically with the job service demand
      * to a WebServer with exclusive CPU access
      */
     private double remainingSize;
-
-    //debugging
-    public int jobErrorCount = 0;
 
     // Constructor
     public Job(int jobId, double size) {
@@ -53,25 +53,17 @@ public class Job {
 
         double serviceReceived = elapsedTime * effectiveProcessingRate;
 
-        // Reduce remaining service demand by actual service received
-        if (serviceReceived - remainingSize > EPSILON) {
-            if (serviceReceived - remainingSize < 10 * EPSILON) {
-                logger.log(Level.WARNING,
-                        "Rilevato piccolo errore numerico: serviceReceived {0} > remainingSize {1} per job {2}. Correggo a zero.",
-                        new Object[]{serviceReceived, remainingSize, jobId});
-                remainingSize = 0.0;
-                jobErrorCount++;
-            } else {
-                logger.log(Level.SEVERE,
-                        "Service received {0} exceeds remaining service demand {1} for job {2}",
-                        new Object[]{serviceReceived, remainingSize, jobId});
-                throw new IllegalStateException("Service received exceeds remaining service demand");
-            }
-        } else {
-            remainingSize -= serviceReceived;
-            logger.log(Level.INFO,
-                    "Job {0} processed for {1} seconds, remaining service demand: {2}\n",
-                    new Object[]{jobId, elapsedTime, remainingSize});
+        // Update remaining size
+        remainingSize -= serviceReceived;
+        logger.log(Level.INFO,
+                "Job {0} processed for {1} seconds, remaining service demand: {2}\n",
+                new Object[]{jobId, Double.toString(elapsedTime), Double.toString(remainingSize)});
+        if (remainingSize < 0) {
+            logger.log(Level.WARNING,
+                    "Job {0} has negative remaining size: {1}. Setting to zero.\n",
+                    new Object[]{jobId, Double.toString(remainingSize)});
+            hadNegativeRemainingSize = true;
+            remainingSize = 0;
         }
     }
 

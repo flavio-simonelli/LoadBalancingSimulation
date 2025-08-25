@@ -39,9 +39,8 @@ public class Simulator {
 
     private final CsvAppender csvAppenderJobs;
 
-    //debugging
-    public int simErrorCount = 0;
-    public List<Job> errorJobs = new ArrayList<>();
+    // Debug
+    public int jobWithNegativeRemainingSize = 0;
 
     // Constructor
     public Simulator(int SImax,
@@ -62,7 +61,7 @@ public class Simulator {
 
         // initialize path csv
         try {
-            this.csvAppenderJobs = new CsvAppender(Path.of(csvExportDir + "Jobs.csv"), "IdJob", "Arrival", "Departure", "ResponseTime", "size", "processedBySpike");
+            this.csvAppenderJobs = new CsvAppender(Path.of(csvExportDir + "Jobs.csv"), "IdJob", "Arrival", "Departure", "ResponseTime","Response-(Departure-Arrival)", "OriginalSize", "processedBySpike");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -73,7 +72,7 @@ public class Simulator {
 
         // Initialize random number generators
         Rngs rngs = new Rngs();
-        rngs.plantSeeds(rngs.DEFAULT); // TODO: make it configurable
+        rngs.plantSeeds(-1); // TODO: make it configurable
         this.rvgs = new Rvgs(rngs);
 
         // Initialize hyperexponential distribution
@@ -115,15 +114,11 @@ public class Simulator {
             guessNextEvent();
         } while (!jobStats.isEmpty());
 
-        logger.log(Level.INFO, "Simulation completed at time {0}", currentTime);
-        //debugging
-        logger.log(Level.INFO, "Simulation encountered {0} numerical errors", simErrorCount);
-        if(!errorJobs.isEmpty()){
-            logger.log(Level.WARNING, "Jobs with numerical errors:");
-            for (Job job : errorJobs) {
-                logger.log(Level.WARNING, "Job ID: {0}, Error Count: {1}", new Object[]{job.getJobId(), job.jobErrorCount});
-            }
-        }
+        logger.log(Level.INFO, "Simulation completed at time {0}\n", currentTime);
+        logger.log(Level.INFO, "Total jobs processed: {0}\n", jobIdCounter);
+        logger.log(Level.INFO, "Total jobs with negative remaining size: {0}\n", jobWithNegativeRemainingSize);
+        logger.log(Level.INFO, "Negative percentage is {0,number,0.000}%\n", (100.0 * jobWithNegativeRemainingSize) / jobIdCounter);
+
         csvAppenderJobs.close();
     }
 
@@ -153,16 +148,8 @@ public class Simulator {
         for (JobStats js : this.jobStats) {
             js.getJob().processForElapsedTime(nextArrivalTime - currentTime);
             //debugging
-            if(js.getJob().jobErrorCount > 0){
-                int idx = errorJobs.indexOf(js.getJob());
-                if (idx == -1) {
-                    errorJobs.add(js.getJob());
-                } else {
-                    Job existingJob = errorJobs.get(idx);
-                    if (existingJob.jobErrorCount < js.getJob().jobErrorCount) {
-                        errorJobs.set(idx, js.getJob());
-                    }
-                }
+            if (js.getJob().hadNegativeRemainingSize) {
+                jobWithNegativeRemainingSize++;
             }
         }
 
@@ -196,45 +183,13 @@ public class Simulator {
         for (JobStats js : this.jobStats) {
             js.getJob().processForElapsedTime(targetDepartureJobStats.getEstimatedDepartureTime() - currentTime);
             //debugging
-            if(js.getJob().jobErrorCount > 0){
-                int idx = errorJobs.indexOf(js.getJob());
-                if (idx == -1) {
-                    errorJobs.add(js.getJob());
-                } else {
-                    Job existingJob = errorJobs.get(idx);
-                    if (existingJob.jobErrorCount < js.getJob().jobErrorCount) {
-                        errorJobs.set(idx, js.getJob());
-                    }
-                }
+            if (js.getJob().hadNegativeRemainingSize) {
+                jobWithNegativeRemainingSize++;
             }
         }
 
         // Update current time to departure time
         this.currentTime = targetDepartureJobStats.getEstimatedDepartureTime();
-
-        // Validate that job is fully processed
-        double remSize = targetDepartureJobStats.getJob().getRemainingSize();
-        if (Math.abs(remSize) > EPSILON) {
-            if (Math.abs(remSize) < 10 * EPSILON) {
-                logger.log(Level.WARNING,
-                        "Piccolo errore numerico: remaining size di job {0} è {1,number,0.000} (correggo a zero)",
-                        new Object[]{
-                                targetDepartureJobStats.getJob().getJobId(),
-                                remSize
-                        });
-                // Correggi a zero
-                targetDepartureJobStats.getJob().setRemainingSize(0.0);
-                simErrorCount++;
-            } else {
-                logger.log(Level.WARNING,
-                        "Remaining size of job {0} is not zero but {1,number,0.000}",
-                        new Object[]{
-                                targetDepartureJobStats.getJob().getJobId(),
-                                remSize
-                        });
-                throw new IllegalStateException("Job is departed, but his remaining size is not zero!!!");
-            }
-        }
 
         // Process job departure through load balancer
         double responseTime = this.currentTime - targetDepartureJobStats.getArrivalTime();
@@ -247,6 +202,7 @@ public class Simulator {
                     String.valueOf(targetDepartureJobStats.getArrivalTime()),                                    // arrival time
                     String.valueOf(currentTime),                                                                 // departure time
                     String.valueOf(responseTime),                                                                // response time
+                    String.valueOf(responseTime - (currentTime - targetDepartureJobStats.getArrivalTime())),                   // response - (departure - arrival)
                     String.valueOf(targetDepartureJobStats.getOriginalSize()) ,                                  // original size
                     String.valueOf(targetDepartureJobStats.getJob().getAssignedServer().getCpuMultiplier()>1) // processed by spike
                     );
