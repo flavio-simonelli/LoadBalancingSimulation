@@ -147,9 +147,9 @@ public class Simulator {
 
         // Drain remaining jobs after simulation ends
         this.nextArrivalTime = Double.POSITIVE_INFINITY;
-        do {
+        while (!jobStats.isEmpty()){
             guessNextEvent();
-        } while (!jobStats.isEmpty());
+        }
 
         logger.log(Level.INFO, "Simulation completed at time {0}\n", currentTime);
         logger.log(Level.INFO, "Total jobs processed: {0}\n", jobIdCounter);
@@ -175,10 +175,6 @@ public class Simulator {
 
             // Process the next event (arrival or departure)
         if (nextArrivalTime >= nextDepartureTime) {
-                //debug
-            if (jobStat == null) {
-                logger.log(Level.SEVERE, "Next event is departure but no job found for departure at time {0}\n", currentTime);
-            }
             departureHandler(jobStat);
         } else {
             arrivalHandler();
