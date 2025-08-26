@@ -22,7 +22,13 @@ public class SimulatorController {
         // create the output csv file
 
         // Create a new simulator instance with the provided configuration
-        Simulator simulator = new Simulator(config.getSImax(),
+        Simulator simulator = new Simulator(config.isFirstSimulation(),
+                                            config.getSeed0(),
+                                            config.getSeed1(),
+                                            config.getSeed2(),
+                                            config.getSeed3(),
+                config.getSeed4(), config.getSeed5(),
+                                            config.getSImax(),
                                             config.getSImin(),
                                             config.getR0max().getSeconds(),
                                             config.getR0min().getSeconds(),

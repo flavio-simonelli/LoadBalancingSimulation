@@ -1,5 +1,12 @@
 simulation:
-  duration: "PT1H4M"   # P2DT3H4M → 2 giorni, 3 ore, 4 minuti
+  isFirstSimulation: false   # true se è la prima esecuzione della simulazione ( i seed 1, ..., 5 verranno presi tramite plant seed del seed 0)
+  seed0: 238280651        # seed per il generatore di numeri casuali
+  seed1: 882129760        # seed per il generatore di numeri casuali
+  seed2: 2094228380        # seed per il generatore di numeri casuali
+  seed3: 1560038108        # seed per il generatore di numeri casuali
+  seed4: 1629169463       # seed per il generatore di numeri
+  seed5: 810213420       # seed per il generatore di numeri
+  duration: "PT20H"   # P2DT3H4M → 2 giorni, 3 ore, 4 minuti
 
 workload:
   interarrival:
@@ -35,4 +42,4 @@ output:
   plotDir: "output/plot/"
 
 logging:
-  level: "FINE"   # possibili valori: SEVERE, WARNING, INFO, FINE, FINER, FINEST
+  level: "SEVERE"   # possibili valori: SEVERE, WARNING, INFO, FINE, FINER, FINEST

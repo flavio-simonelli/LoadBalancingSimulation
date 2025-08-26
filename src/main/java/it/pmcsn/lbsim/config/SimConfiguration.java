@@ -5,6 +5,13 @@ import it.pmcsn.lbsim.models.schedulingpolicy.SchedulingType;
 import java.time.Duration;
 
 public interface SimConfiguration {
+    boolean isFirstSimulation();
+    long getSeed0();
+    long getSeed1();
+    long getSeed2();
+    long getSeed3();
+    long getSeed4();
+    long getSeed5();
     Duration getDurationSeconds();
     double getInterarrivalMean();
     double getInterarrivalCv();

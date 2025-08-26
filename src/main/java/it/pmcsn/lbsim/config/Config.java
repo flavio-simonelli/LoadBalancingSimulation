@@ -12,6 +12,13 @@ public class Config {
     public Logging logging;
 
     public static class Simulation {
+        public boolean isFirstSimulation;
+        public long seed0;
+        public long seed1;
+        public long seed2;
+        public long seed3;
+        public long seed4;
+        public long seed5;
         public Duration duration;
     }
 

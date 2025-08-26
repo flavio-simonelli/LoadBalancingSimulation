@@ -56,6 +56,13 @@ public class ConfigLoader {
             this.cfg = cfg;
         }
 
+        @Override public boolean isFirstSimulation() { return cfg.simulation.isFirstSimulation; }
+        @Override public long getSeed0() { return cfg.simulation.seed0; }
+        @Override public long getSeed1() { return cfg.simulation.seed1; }
+        @Override public long getSeed2() { return cfg.simulation.seed2; }
+        @Override public long getSeed3() { return cfg.simulation.seed3; }
+        @Override public long getSeed4() { return cfg.simulation.seed4; }
+        @Override public long getSeed5() { return cfg.simulation.seed5; }
         @Override public Duration getDurationSeconds() { return cfg.simulation.duration; }
         @Override public double getInterarrivalMean() { return cfg.workload.interarrival.mean; }
         @Override public double getInterarrivalCv() { return cfg.workload.interarrival.cv; }
@@ -88,6 +95,12 @@ public class ConfigLoader {
         if (logger.isLoggable(java.util.logging.Level.FINE)) {
             StringBuilder sb = new StringBuilder();
             sb.append("\n=== Simulation Config ===\n")
+                    .append("Seed0: ").append(cfg.getSeed0()).append("\n")
+                    .append("Seed1: ").append(cfg.getSeed1()).append("\n")
+                    .append("Seed2: ").append(cfg.getSeed2()).append("\n")
+                    .append("Seed3: ").append(cfg.getSeed3()).append("\n")
+                    .append("Seed4: ").append(cfg.getSeed4()).append("\n")
+                    .append("Seed5: ").append(cfg.getSeed5()).append("\n")
                     .append("Duration (s): ").append(cfg.getDurationSeconds()).append("\n")
 
                     .append("\n--- Workload ---\n")

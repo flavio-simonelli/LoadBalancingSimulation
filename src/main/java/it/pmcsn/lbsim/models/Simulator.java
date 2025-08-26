@@ -10,12 +10,12 @@ import it.pmcsn.lbsim.models.schedulingpolicy.SchedulingType;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Simulator {
-
     // Constants
     private static final Logger logger = Logger.getLogger(Simulator.class.getName());
     private static final double EPSILON = 1e-9;
@@ -25,7 +25,7 @@ public class Simulator {
     private int jobIdCounter = 0;                   // Counter for unique job IDs
     private final List<JobStats> jobStats;          // List of jobsStats
     private double nextArrivalTime;                 // Next arrival time for jobs
-
+    private final Rngs rngs;
     private final Rvgs rvgs;                        // Random Variate Generator
 
     // Load balancer
@@ -45,7 +45,14 @@ public class Simulator {
     public int jobWithNegativeRemainingSize = 0;
 
     // Constructor
-    public Simulator(int SImax,
+    public Simulator(boolean isFirstSimulation,
+                     long seed0,
+                     long seed1,
+                     long seed2,
+                     long seed3,
+                     long seed4,
+                     long seed5,
+                     int SImax,
                      int SImin,
                      double R0max,
                      double R0min,
@@ -83,9 +90,27 @@ public class Simulator {
         this.jobStats = new ArrayList<>();
 
         // Initialize random number generators
-        Rngs rngs = new Rngs();
-        rngs.plantSeeds(-1); // TODO: make it configurable
+        this.rngs = new Rngs();
         this.rvgs = new Rvgs(rngs);
+
+        if (isFirstSimulation) {
+            rngs.plantSeeds(seed0);
+        } else {
+            rngs.plantSeeds(-1); // only for initialize
+            rngs.selectStream(0);
+            rngs.putSeed(seed0);
+            rngs.selectStream(1);
+            rngs.putSeed(seed1);
+            rngs.selectStream(2);
+            rngs.putSeed(seed2);
+            rngs.selectStream(3);
+            rngs.putSeed(seed3);
+            rngs.selectStream(4);
+            rngs.putSeed(seed4);
+            rngs.selectStream(5);
+            rngs.putSeed(seed5);
+        }
+        logger.log(Level.SEVERE, "Initial seeds: {0}\n", Arrays.toString(rngs.getSeedArray()));
 
         // Initialize hyperexponential distribution
         this.interarrivalTimeObj = new HyperExponential(interarrivalCv, interarrivalMean);
@@ -104,7 +129,7 @@ public class Simulator {
                 R0min,
                 schedulingType,
                 horizontalScalingCoolDown);
-    }
+     }
 
     // Methods
     public void run(double simulationDuration) {
@@ -130,6 +155,7 @@ public class Simulator {
         logger.log(Level.INFO, "Total jobs processed: {0}\n", jobIdCounter);
         logger.log(Level.INFO, "Total jobs with negative remaining size: {0}\n", jobWithNegativeRemainingSize);
         logger.log(Level.INFO, "Negative percentage is {0,number,0.000}%\n", (100.0 * jobWithNegativeRemainingSize) / jobIdCounter);
+        logger.log(Level.SEVERE, "Final seeds: {0}\n", Arrays.toString(rngs.getSeedArray()));
 
         csvAppenderJobs.close();
     }
@@ -138,7 +164,7 @@ public class Simulator {
         double nextDepartureTime = Double.POSITIVE_INFINITY;
         JobStats jobStat = null;
 
-        // Find the next job to depart
+            // Find the next job to depart
         for (JobStats stats : jobStats) {
             double depTime = stats.getEstimatedDepartureTime();
             if (depTime < nextDepartureTime) {
@@ -147,12 +173,17 @@ public class Simulator {
             }
         }
 
-        // Process the next event (arrival or departure)
+            // Process the next event (arrival or departure)
         if (nextArrivalTime >= nextDepartureTime) {
+                //debug
+            if (jobStat == null) {
+                logger.log(Level.SEVERE, "Next event is departure but no job found for departure at time {0}\n", currentTime);
+            }
             departureHandler(jobStat);
         } else {
             arrivalHandler();
         }
+
     }
 
     private void arrivalHandler() {
