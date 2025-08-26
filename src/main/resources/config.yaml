@@ -27,6 +27,7 @@ scaling:
     R0max: "PT3S"        # media tempo di risposta per scale in
     R0min: "PT1S"        # media tempo di risposta per scale out
     coolDown: "PT10S"     # ritardo tra una scalata e l'altra
+
     initialServerCount: 1   # server iniziali (senza spike)
 
 output:
