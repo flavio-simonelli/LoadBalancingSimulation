@@ -3,6 +3,7 @@ package it.pmcsn.lbsim.models.simulation;
 
 import it.pmcsn.lbsim.models.domain.Job;
 import it.pmcsn.lbsim.models.domain.LoadBalancer;
+import it.pmcsn.lbsim.models.simulation.workloadgenerator.TraceWorkloadGenerator;
 import it.pmcsn.lbsim.models.simulation.workloadgenerator.WorkloadGenerator;
 import it.pmcsn.lbsim.utils.csv.CsvAppender;
 
@@ -21,6 +22,7 @@ public class Simulator {
 
     private final CsvAppender csvAppenderServers;
     private final CsvAppender csvAppenderJobs;
+
 
     // Constructor
     public Simulator(WorkloadGenerator workloadGenerator,
@@ -44,13 +46,15 @@ public class Simulator {
 
         this.futureEventList.setNextArrivalTime(this.workload.nextArrival(currentTime));
         // Main simulation loop - process events until simulation duration
-        do {
+        int i = 0;
+        do  {
             FutureEventList.Event event = this.futureEventList.nextEvent();
             if(event == FutureEventList.Event.ARRIVAL) {
                 double nextArrivalTime = this.futureEventList.getnextArrivalTime();
                 double elapsedTime = nextArrivalTime - this.currentTime;
                 this.currentTime = nextArrivalTime;
                 arrivalHandler(elapsedTime, this.currentTime);
+                i++;
             } else {
                 JobStats nextDepartureJob = this.futureEventList.nextDepartureJob();
                 double nextDepartureTime = nextDepartureJob.getEstimatedDepartureTime();
@@ -58,7 +62,8 @@ public class Simulator {
                 this.currentTime = nextDepartureTime;
                 departureHandler(elapsedTime,nextDepartureJob);
             }
-        } while (this.currentTime < simulationDuration);
+
+        } while ((workload instanceof TraceWorkloadGenerator traceWorkloadGenerator) ? i < traceWorkloadGenerator.getSizeArrival() : this.currentTime < simulationDuration);
 
         //TODO: gestire nel caso trace driven se non ci sono più arrivi o altri eventi ma il tempo di simulazione non è ancora finito
 
@@ -71,16 +76,15 @@ public class Simulator {
                 this.currentTime = nextDepartureTime;
                 departureHandler(elapsedTime,nextDepartureJob);
         }
-        //TODO: azzerare server per riportare allo stato inziale
-        /*
-        logger.log(Level.INFO, "Simulation completed at time {0}\n", currentTime);
-        logger.log(Level.INFO, "Total jobs processed: {0}\n", jobIdCounter);
-        logger.log(Level.INFO, "Total jobs with negative remaining size: {0}\n", jobWithNegativeRemainingSize);
-        logger.log(Level.INFO, "Negative percentage is {0,number,0.000}%\n", (100.0 * jobWithNegativeRemainingSize) / jobIdCounter);
-        logger.log(Level.SEVERE, "Final seeds: {0}\n", Arrays.toString(rngs.getSeedArray()));
-         */
+        // Remove the servers added
+        loadBalancer.getWebServers().backToInitialState();
 
-        csvAppenderJobs.close();
+        this.csvAppenderServers.writeRow(
+                this.currentTime.toString(),
+                String.valueOf(this.loadBalancer.getJobCountsForWebServer()),
+                String.valueOf(this.loadBalancer.getWebServerCount()),
+                String.valueOf(this.loadBalancer.getSpikeServerJobCount())
+        );
     }
 
 

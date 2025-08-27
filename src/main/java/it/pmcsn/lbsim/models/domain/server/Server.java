@@ -67,7 +67,7 @@ public class Server {
         for (Job job : new java.util.ArrayList<>(activeJobs)) {
             job.process(amountToProcess);
             if (job.getRemainingSize() <= 0) {
-                logger.log(Level.SEVERE, "Job {0} completed and removed from server", job.getJobId()); //TODO: metti in fine il log
+                logger.log(Level.INFO, "Job {0} completed and removed from server\n", job.getJobId()); //TODO: metti in fine il log
             }
         }
     }

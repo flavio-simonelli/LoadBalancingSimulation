@@ -64,4 +64,8 @@ public class TraceWorkloadGenerator implements WorkloadGenerator {
                 .map(Double::parseDouble)
                 .toList();
     }
+
+    public int getSizeArrival() {
+        return arrivals.size();
+    }
 }

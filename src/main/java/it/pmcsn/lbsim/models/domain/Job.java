@@ -60,7 +60,7 @@ public class Job {
             throw new IllegalArgumentException("Processing amount cannot be negative");
         }
         if (amount > remainingSize) {
-            logger.log(Level.SEVERE, "Processing amount {0} exceeds remaining size {1} for job {2}. Setting remaining size to zero.", new Object[]{amount, remainingSize, jobId});
+            logger.log(Level.FINE, "Processing amount {0} exceeds remaining size {1} for job {2}. Setting remaining size to zero.\n", new Object[]{amount, remainingSize, jobId});
             remainingSize = 0;
         } else {
             remainingSize -= amount;

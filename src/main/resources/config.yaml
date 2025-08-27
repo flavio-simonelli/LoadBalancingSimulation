@@ -9,7 +9,7 @@ simulation:
   duration: "PT1H"   # P2DT3H4M → 2 giorni, 3 ore, 4 minuti
 
 workload:
-  isTracedriven: false   # true se il carico di lavoro è trace-driven, false se è generato tramite distribuzioni
+  isTracedriven: true   # true se il carico di lavoro è trace-driven, false se è generato tramite distribuzioni
   interarrival:
     mean: 0.15        # media dei tempi di interarrivo
     cv: 4             # coefficiente di variazione
@@ -28,7 +28,7 @@ scheduling:
 
 scaling:
   spikeServer:
-    enabled: false
+    enabled: true
     SImax: 10        # max job nel web server prima di reindirizzare allo spike
     SImin: 6        # min job nel web server prima di reindirizzare al web server
     cpuMultiplier: 2  # moltiplicatore CPU spike
@@ -36,13 +36,13 @@ scaling:
     coolDown: "PT5S" # tempo cooldown reindirizzamento (s)
 
   horizontal:
-    enabled: false
+    enabled: true
     slidingWindowSize: 10     # finestra mobile per media tempo risposta
     R0max: "PT3S"        # media tempo di risposta per scale in
     R0min: "PT1S"        # media tempo di risposta per scale out
     coolDown: "PT10S"     # ritardo tra una scalata e l'altra
 
-    initialServerCount: 3   # server iniziali (senza spike)
+    initialServerCount: 1   # server iniziali (senza spike)
 
 output:
   csvDir: "output/csv/"
@@ -52,5 +52,5 @@ logging:
   level: "FINE"   # possibili valori: SEVERE, WARNING, INFO, FINE, FINER, FINEST
 
 path:
-  traceArrivalsPath: "resources/arrivals.txt"
-  traceSizePath: "resources/sizes.txt"
+  traceArrivalsPath: "src/main/resources/arrivals.txt"
+  traceSizePath: "src/main/resources/sizes.txt"

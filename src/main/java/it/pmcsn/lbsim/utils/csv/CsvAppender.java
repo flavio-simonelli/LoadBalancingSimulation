@@ -43,7 +43,8 @@ public class CsvAppender implements AutoCloseable {
         try {
             csv.close();
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();   // stampa stacktrace completo con la causa
+            throw new RuntimeException("Errore nella chiusura del CSV", e);
         }
     }
 }

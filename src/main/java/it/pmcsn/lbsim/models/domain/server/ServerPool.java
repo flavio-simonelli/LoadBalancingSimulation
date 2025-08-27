@@ -10,6 +10,7 @@ import java.util.logging.Logger;
 public class ServerPool {
     public final static Logger logger = Logger.getLogger(ServerPool.class.getName());
     private final double cpuMultiplier;
+    private final int initialServerCount;
     private final List<Server> webServers;
     private final List<Server> removingServers;
     private final RemovalPolicy removalPolicy;
@@ -21,6 +22,7 @@ public class ServerPool {
         if (cpuMultiplier <= 0) throw new IllegalArgumentException("CPU Multiplier must be > 0");
         this.removalPolicy = removalPolicy;
         this.cpuMultiplier = cpuMultiplier;
+        this.initialServerCount = initialServerCount;
         webServers = new ArrayList<>();
         for (int i = 0; i < initialServerCount; i++) {
             Server server = new Server(cpuMultiplier, 1, idAllocator.allocate());
@@ -36,7 +38,7 @@ public class ServerPool {
     // return true if scale-in request accepted, false otherwise
     public boolean requestScaleIn() {
         if (webServers.size() <= 1) {
-            logger.log(Level.WARNING,"Cannot scale in. At least one Web Server must remain.");
+            logger.log(Level.WARNING,"Cannot scale in. At least one Web Server must remain.\n");
             return false;
         }
         Server toRemove = removalPolicy.chooseServerToRemove(webServers);
@@ -114,6 +116,35 @@ public class ServerPool {
             res = result;
         }
         return res;
+    }
+
+    public void backToInitialState() {
+        // 1) Pulisci i server in draining
+        for (Server s : new ArrayList<>(removingServers)) {
+            removingServers.remove(s);
+            idAllocator.release(s.getId());
+            logger.log(Level.INFO, "BackToInitialState: removed draining server id={0}", s.getId());
+        }
+
+        // 2) Rimuovi server attivi se ce ne sono troppi
+        while (webServers.size() > initialServerCount) {
+            Server toRemove = removalPolicy.chooseServerToRemove(webServers);
+            if (toRemove == null && !webServers.isEmpty()) {
+                toRemove = webServers.get(webServers.size() - 1);
+            }
+            if (toRemove == null) break;
+
+            webServers.remove(toRemove);
+            idAllocator.release(toRemove.getId());
+            logger.log(Level.INFO, "BackToInitialState: removed extra server id={0}", toRemove.getId());
+        }
+
+        // 3) Aggiungi nuovi server se ce ne sono troppo pochi
+        while (webServers.size() < initialServerCount) {
+            Server newServer = new Server(cpuMultiplier, 1, idAllocator.allocate());
+            webServers.add(newServer);
+            logger.log(Level.INFO, "BackToInitialState: added new server id={0}", newServer.getId());
+        }
     }
 
 
