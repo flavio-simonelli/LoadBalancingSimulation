@@ -49,7 +49,7 @@ public class JobStats {
             throw new IllegalStateException("Job must be assigned to a server before recalculating remaining service demand");
         }
 
-        if (assignedServer.getCurrentSi() <= 0) {
+        if (assignedServer.getCurrentSI() <= 0) {
             logger.log(Level.SEVERE,
                     "Current server SI is zero or negative for job {0}",
                     job.getJobId());
@@ -59,7 +59,7 @@ public class JobStats {
         // In processor sharing, each job gets 1/n of the CPU time
         double effectiveProcessingRate = assignedServer.getCpuPercentage() *
                 assignedServer.getCpuMultiplier() /
-                assignedServer.getCurrentSi();
+                assignedServer.getCurrentSI();
 
         estimatedDepartureTime = currentTime + (job.getRemainingSize() / effectiveProcessingRate);
     }

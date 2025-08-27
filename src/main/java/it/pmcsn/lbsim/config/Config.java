@@ -10,6 +10,7 @@ public class Config {
     public Scaling scaling;
     public Output output;
     public Logging logging;
+    public Path path;
 
     public static class Simulation {
         public boolean isFirstSimulation;
@@ -23,6 +24,7 @@ public class Config {
     }
 
     public static class Workload {
+        public boolean isTracedriven;
         public Dist interarrival;
         public Dist service;
     }
@@ -69,5 +71,10 @@ public class Config {
 
     public static class Logging {
         public String level; // es: "INFO", "FINE", "WARNING"
+    }
+
+    public static class Path {
+        public String traceArrivalsPath;
+        public String traceSizePath;
     }
 }

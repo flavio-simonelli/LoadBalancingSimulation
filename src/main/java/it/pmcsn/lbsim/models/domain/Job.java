@@ -7,12 +7,12 @@ import java.util.logging.Logger;
 
 public class Job {
     private static final Logger logger = Logger.getLogger(Job.class.getName());
-    private static long jobCounter = 0;
+    private static long jobCounter = 0; // TODO: same as jobId???
     private final long jobId; // Unique identifier for the job
     private Server assignedServer; // The server to which this job is assigned
     private double remainingSize; // Remaining service demand in seconds to execute
 
-    public Job(int jobId, double size) {
+    public Job(double size) {
         this.jobId = jobCounter++;
         this.assignedServer = null;
         this.remainingSize = size;

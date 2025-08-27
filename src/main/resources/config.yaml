@@ -9,6 +9,7 @@ simulation:
   duration: "PT20H"   # P2DT3H4M → 2 giorni, 3 ore, 4 minuti
 
 workload:
+  isTracedriven: false   # true se il carico di lavoro è trace-driven, false se è generato tramite distribuzioni
   interarrival:
     mean: 0.15        # media dei tempi di interarrivo
     cv: 4             # coefficiente di variazione
@@ -49,3 +50,7 @@ output:
 
 logging:
   level: "FINE"   # possibili valori: SEVERE, WARNING, INFO, FINE, FINER, FINEST
+
+path:
+  arrivalsPath: "resources/arrivals.txt"
+  servicesPath: "resources/sizes.txt"

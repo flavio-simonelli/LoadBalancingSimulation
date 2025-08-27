@@ -13,6 +13,8 @@ public interface SimConfiguration {
     long getSeed4();
     long getSeed5();
     Duration getDurationSeconds();
+
+    boolean getIsTracedriven();
     double getInterarrivalMean();
     double getInterarrivalCv();
     int getInterarrivalStreamP();
@@ -43,5 +45,10 @@ public interface SimConfiguration {
 
     String getCsvOutputDir();
     String getPlotOutputDir();
+
+    String getTraceArrivalsPath();
+    String getTraceSizePath();
+
+
 }
 

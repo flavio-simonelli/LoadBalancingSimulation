@@ -33,9 +33,15 @@ public class LoadBalancer {
         this.horizontalScaler = horizontalScaler;
     }
 
-    public void assignJob(Job job, double currentTime, double elapsedTime) {
-        // process jobs
-        this.webServers.processJobs(elapsedTime);
+    public ServerPool getWebServers() {
+        return webServers;
+    }
+
+    public Server getSpikeServer() {
+        return spikeServer;
+    }
+
+    public void assignJob(Job job, double currentTime) {
         if (job == null) {
             logger.log(Level.SEVERE, "Job cannot be null");
             throw new IllegalArgumentException("Job cannot be null");

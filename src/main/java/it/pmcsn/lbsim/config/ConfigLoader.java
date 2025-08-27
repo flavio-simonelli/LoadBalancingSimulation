@@ -63,6 +63,7 @@ public class ConfigLoader {
         @Override public long getSeed3() { return cfg.simulation.seed3; }
         @Override public long getSeed4() { return cfg.simulation.seed4; }
         @Override public long getSeed5() { return cfg.simulation.seed5; }
+        @Override public boolean getIsTracedriven() {return cfg.workload.isTracedriven;}
         @Override public Duration getDurationSeconds() { return cfg.simulation.duration; }
         @Override public double getInterarrivalMean() { return cfg.workload.interarrival.mean; }
         @Override public double getInterarrivalCv() { return cfg.workload.interarrival.cv; }
@@ -95,6 +96,9 @@ public class ConfigLoader {
 
         @Override public String getCsvOutputDir() { return cfg.output.csvDir; }
         @Override public String getPlotOutputDir() { return cfg.output.plotDir; }
+
+        @Override public String getTraceArrivalsPath() { return cfg.path.traceArrivalsPath; }
+        @Override public String getTraceSizePath() { return cfg.path.traceSizePath; }
     }
 
     private static void printDebug(SimConfiguration cfg) {

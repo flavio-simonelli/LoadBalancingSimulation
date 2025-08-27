@@ -1,18 +1,32 @@
 package it.pmcsn.lbsim.models.simulation;
 
+
 import java.util.List;
+
+import java.util.logging.Logger;
 
 public class FutureEventList {
     private static final Logger logger = Logger.getLogger(FutureEventList.class.getName());
 
     private double nextArrivalTime;                 // Next arrival time for jobs
-    private final List<JobStats> jobStats;          // List of jobsStats
+    private final List<JobStats> jobStats;
+
+    enum Event { DEPARTURE, ARRIVAL }
 
     public FutureEventList() {
         this.nextArrivalTime = Double.POSITIVE_INFINITY;
         this.jobStats = new java.util.ArrayList<>();
     }
 
+
+    public Event nextEvent() {
+        JobStats bestJob = findNextDepartureJob();
+        double nextDepartureTime = bestJob.getEstimatedDepartureTime();
+        return (nextArrivalTime >= nextDepartureTime) ? Event.DEPARTURE : Event.ARRIVAL;
+    }
+    public double nextArrivalTime() {
+        return this.nextArrivalTime;
+    }
     public double getNextArrivalTime() {
         return nextArrivalTime;
     }
@@ -24,6 +38,25 @@ public class FutureEventList {
     public List<JobStats> getJobStats() {
         return jobStats;
     }
+    private JobStats findNextDepartureJob() {
+        double nextDepartureTime = Double.POSITIVE_INFINITY;
+        JobStats bestJob = null;
 
-    public void
+        for (JobStats stats : jobStats) {
+            double depTime = stats.getEstimatedDepartureTime();
+            if (depTime < nextDepartureTime) {
+                nextDepartureTime = depTime;
+                bestJob = stats;
+            }
+        }
+        return bestJob;
+    }
+    public JobStats nextDepartureJob() {
+        return findNextDepartureJob();
+    }
+
+    public void addJobStats(JobStats jobStat) {
+        jobStats.add(jobStat);
+    }
+
 }
