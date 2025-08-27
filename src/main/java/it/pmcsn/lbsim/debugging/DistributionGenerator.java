@@ -61,7 +61,7 @@ public class DistributionGenerator {
         validateCoefficientOfVariation(coefficientOfVariation);
 
         double cumulativeSum = 0.0;
-        HyperExponential hyperExponentialParams = new HyperExponential(coefficientOfVariation, meanValue);
+        HyperExponential hyperExponentialParams = new HyperExponential(coefficientOfVariation, meanValue, 1, 2, 3);
         Path path = Paths.get(outputPath);
 
         try (CsvAppender csvAppender = new CsvAppender(path, "id", "value")) {

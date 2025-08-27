@@ -8,6 +8,7 @@ import java.util.logging.Level;
 
 public class Server {
     private static final Logger logger = Logger.getLogger(Server.class.getName());
+    private static final double EPSILON = 1e-9;
 
     private final int id;
     private final List<Job> activeJobs;         // List of jobs currently being processed by this server
@@ -44,7 +45,7 @@ public class Server {
             logger.log(Level.WARNING, "Attempted to remove a job that is not present in the server's active job list. jobId={0}", job.getJobId());
             throw new IllegalArgumentException("Job not found in the server's active job list");
         }
-        if (job.getRemainingSize()!= 0) {
+        if (job.getRemainingSize()> EPSILON ||job.getRemainingSize()< -EPSILON ) {
             logger.log(Level.WARNING, "Attempted to remove a job that is not yet completed. jobId={0}, remainingSize={1}", new Object[]{job.getJobId(), job.getRemainingSize()});
             throw new IllegalStateException("Cannot remove a job that is not yet completed");
         }
@@ -60,15 +61,17 @@ public class Server {
             return; // No jobs to process
         }
 
-        double effectiveProcessingRate = (cpuPercentage * cpuMultiplier) / activeJobs.size(); //TODO: check if the formula is correct PROCESSOR SHARING
+        double effectiveProcessingRate = (cpuPercentage * cpuMultiplier) / activeJobs.size();
         double amountToProcess = effectiveProcessingRate * timeInterval;
 
         for (Job job : new java.util.ArrayList<>(activeJobs)) {
             job.process(amountToProcess);
             if (job.getRemainingSize() <= 0) {
-                logger.log(Level.FINE, "Job {0} completed and removed from server", job.getJobId());
+                logger.log(Level.SEVERE, "Job {0} completed and removed from server", job.getJobId()); //TODO: metti in fine il log
             }
         }
     }
 
 }
+
+

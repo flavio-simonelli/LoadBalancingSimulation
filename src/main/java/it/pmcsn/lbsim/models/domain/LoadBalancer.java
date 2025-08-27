@@ -6,11 +6,14 @@ import it.pmcsn.lbsim.models.domain.schedulingpolicy.SchedulingPolicy;
 import it.pmcsn.lbsim.models.domain.server.Server;
 import it.pmcsn.lbsim.models.domain.server.ServerPool;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class LoadBalancer {
-
+    private static final double EPSILON = 1e-9;
     // Constants
     private static final Logger logger = Logger.getLogger(LoadBalancer.class.getName());
 
@@ -61,13 +64,12 @@ public class LoadBalancer {
         } else {
             selectedServer.addJob(job);
             job.assignServer(selectedServer);
-            logger.log(Level.INFO,"Assigned job to Web Server. Current load: " + selectedServer.getCurrentSI() + "\n");
+            logger.log(Level.FINE,"Assigned job to Web Server. Current load: " + selectedServer.getCurrentSI() + "\n");
         }
     }
 
-    public void completeJob(Job job, double currentTime, double responseTime, double elapsedTime) {
-        // process jobs
-        this.webServers.processJobs(elapsedTime);
+    public void completeJob(Job job, double currentTime, double responseTime) {
+
         if (job == null) {
             logger.log(Level.SEVERE, "Job cannot be null");
             throw new IllegalArgumentException("Job cannot be null");
@@ -76,7 +78,7 @@ public class LoadBalancer {
             logger.log(Level.SEVERE, "Completion time must be non-negative");
             throw new IllegalArgumentException("Completion time must be non-negative");
         }
-        if (job.getRemainingSize() > 0) {
+        if (job.getRemainingSize() > EPSILON) {
             logger.log(Level.SEVERE, "Job is not yet completed. Remaining size: " + job.getRemainingSize());
             throw new IllegalStateException("Job is not yet completed");
         }
@@ -105,4 +107,15 @@ public class LoadBalancer {
         }
     }
 
+    public int getWebServerCount() {
+        return webServers.getWebServerCount();
+    }
+
+    public int getSpikeServerJobCount() {
+        return getSpikeServer().getCurrentSI();
+    }
+
+    public List<Integer> getJobCountsForWebServer(){
+        return webServers.getJobsCountForServer();
+    }
 }

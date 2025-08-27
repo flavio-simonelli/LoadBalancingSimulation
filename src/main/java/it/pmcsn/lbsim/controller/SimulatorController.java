@@ -42,6 +42,7 @@ public class SimulatorController {
         }
 
         WorkloadGenerator wg;
+        Rngs rngs = new Rngs();
 
         if (config.getIsTracedriven()){
             try {
@@ -50,10 +51,6 @@ public class SimulatorController {
                 throw new RuntimeException(e);
             }
         } else {
-
-            Rngs rngs = new Rngs();
-            Rvgs rvgs = new Rvgs(rngs);
-
             // Initialize random number generators
             if (config.isFirstSimulation()) {
                 rngs.plantSeeds(config.getSeed0());
@@ -72,6 +69,7 @@ public class SimulatorController {
                 rngs.selectStream(5);
                 rngs.putSeed(config.getSeed5());
             }
+            Rvgs rvgs = new Rvgs(rngs);
             logger.log(Level.INFO, "Initial seeds: {0}\n", Arrays.toString(rngs.getSeedArray()));
 
             HyperExponential interarrivalTimeObj; // Hyperexponential distribution for interarrival times
@@ -132,6 +130,9 @@ public class SimulatorController {
 
         // Start the simulation
         simulator.run(config.getDurationSeconds().getSeconds());
+
+        // print final seed
+        logger.log(Level.INFO, "Final seeds: {0}\n", Arrays.toString(rngs.getSeedArray()));
     }
 }
 

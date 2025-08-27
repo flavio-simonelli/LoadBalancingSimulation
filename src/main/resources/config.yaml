@@ -52,5 +52,5 @@ logging:
   level: "FINE"   # possibili valori: SEVERE, WARNING, INFO, FINE, FINER, FINEST
 
 path:
-  arrivalsPath: "resources/arrivals.txt"
-  servicesPath: "resources/sizes.txt"
+  traceArrivalsPath: "resources/arrivals.txt"
+  traceSizePath: "resources/sizes.txt"

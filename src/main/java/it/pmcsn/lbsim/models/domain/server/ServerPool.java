@@ -3,8 +3,7 @@ package it.pmcsn.lbsim.models.domain.server;
 import it.pmcsn.lbsim.models.domain.Job;
 import it.pmcsn.lbsim.models.domain.removalPolicy.RemovalPolicy;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -44,13 +43,12 @@ public class ServerPool {
         webServers.remove(toRemove);
         if (toRemove.getCurrentSI() == 0) {
             idAllocator.release(toRemove.getId());
-            logger.info("Scaled in immediately. Removed server id=" + toRemove.getId());
-            return true;
+            logger.log(Level.INFO,"Scaled in immediately. Removed server id=" + toRemove.getId());
         } else {
             removingServers.add(toRemove);
-            logger.info("Server id=" + toRemove.getId() + " draining...");
-            return true;
+            logger.log(Level.INFO,"Server id=" + toRemove.getId() + " draining...");
         }
+        return true;
     }
 
     // return true if scale-out request accepted, false otherwise
@@ -85,6 +83,41 @@ public class ServerPool {
         for (Server server : new ArrayList<>(removingServers)) {
             server.processJobs(timeInterval);
         }
+    }
+
+    public int getWebServerCount() {
+        return webServers.size();
+    }
+
+
+
+    public List<Integer> getJobsCountForServer() {
+        List<Integer> res;
+        Map<Integer, Integer> idToSI = new HashMap<>();
+        // Unisci tutti i server attivi e in draining
+        List<Server> allServers = new ArrayList<>();
+        allServers.addAll(webServers);
+        allServers.addAll(removingServers);
+        // Costruisci la mappa ID -> SI
+        for (Server server : allServers) {
+            idToSI.put(server.getId(), server.getCurrentSI());
+        }
+        // Trova min e max id
+        if (idToSI.isEmpty()) {
+            res = new ArrayList<>();
+        } else {
+            int maxId = Collections.max(idToSI.keySet());
+            List<Integer> result = new ArrayList<>();
+            for (int id = 0; id <= maxId; id++) {
+                if (idToSI.containsKey(id)) {
+                    result.add(idToSI.get(id));
+                } else {
+                    result.add(null);
+                }
+            }
+            res = result;
+        }
+        return res;
     }
 
 

@@ -5,7 +5,7 @@ import it.pmcsn.lbsim.models.domain.Job;
 import it.pmcsn.lbsim.models.domain.LoadBalancer;
 import it.pmcsn.lbsim.models.simulation.workloadgenerator.WorkloadGenerator;
 import it.pmcsn.lbsim.utils.csv.CsvAppender;
-import java.util.Arrays;
+
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -13,8 +13,8 @@ public class Simulator {
     private static final Logger logger = Logger.getLogger(Simulator.class.getName());
 
     private Double currentTime;                     // Current simulation time
-    private FutureEventList futureEventList; // Future Event List
-    private WorkloadGenerator workload; // Workload generator
+    private final FutureEventList futureEventList; // Future Event List
+    private final WorkloadGenerator workload; // Workload generator
 
     private final LoadBalancer loadBalancer; // System under simulation
 
@@ -47,14 +47,16 @@ public class Simulator {
         do {
             FutureEventList.Event event = this.futureEventList.nextEvent();
             if(event == FutureEventList.Event.ARRIVAL) {
-                double nextArrivalTime = this.futureEventList.nextArrivalTime();
+                double nextArrivalTime = this.futureEventList.getnextArrivalTime();
                 double elapsedTime = nextArrivalTime - this.currentTime;
                 this.currentTime = nextArrivalTime;
                 arrivalHandler(elapsedTime, this.currentTime);
-                // ricordare di passare anche il tempo del prossimo arrivo per eventuale continuo del codice
             } else {
                 JobStats nextDepartureJob = this.futureEventList.nextDepartureJob();
-                departureHandler(nextDepartureJob);
+                double nextDepartureTime = nextDepartureJob.getEstimatedDepartureTime();
+                double elapsedTime = nextDepartureTime - this.currentTime;
+                this.currentTime = nextDepartureTime;
+                departureHandler(elapsedTime,nextDepartureJob);
             }
         } while (this.currentTime < simulationDuration);
 
@@ -64,7 +66,10 @@ public class Simulator {
         this.futureEventList.setNextArrivalTime(Double.POSITIVE_INFINITY); //sicuro da modificare
         while (!this.futureEventList.getJobStats().isEmpty()){
                 JobStats nextDepartureJob = futureEventList.nextDepartureJob();
-                departureHandler(nextDepartureJob);
+                double nextDepartureTime = nextDepartureJob.getEstimatedDepartureTime();
+                double elapsedTime =  nextDepartureTime - this.currentTime;
+                this.currentTime = nextDepartureTime;
+                departureHandler(elapsedTime,nextDepartureJob);
         }
         /*
         logger.log(Level.INFO, "Simulation completed at time {0}\n", currentTime);
@@ -97,29 +102,29 @@ public class Simulator {
         }
 
         // csv logging
-        /*
+
         this.csvAppenderServers.writeRow(
                 this.currentTime.toString(),
-                String.valueOf(this.loadBalancer.getJobCountsPerWebServer()),
+                String.valueOf(this.loadBalancer.getJobCountsForWebServer()),
                 String.valueOf(this.loadBalancer.getWebServerCount()),
                 String.valueOf(this.loadBalancer.getSpikeServerJobCount())
         );
-        */
+
+        this.csvAppenderServers.writeRow(
+                this.currentTime.toString(),
+                String.valueOf(this.loadBalancer));
 
 
         // Generate next arrival time
-        workload.nextArrival(currentTime);
+        //this.workload.nextArrival(currentTime);
+        this.futureEventList.setNextArrivalTime(this.workload.nextArrival(currentTime));
+
     }
 
-    private void departureHandler(JobStats targetDepartureJobStats) {
-        // Process elapsed time for all active jobs
-        for (JobStats js : this.futureEventList.getJobStats()) {
-            js.getJob().processForElapsedTime(targetDepartureJobStats.getEstimatedDepartureTime() - currentTime);
-            //debugging
-            if (js.getJob().hadNegativeRemainingSize) {
-                jobWithNegativeRemainingSize++;
-            }
-        }
+    private void departureHandler(double elapsedTime, JobStats targetDepartureJobStats) {
+        //Process elapsed time for all active jobs
+        this.loadBalancer.getWebServers().processJobs(elapsedTime);
+        this.loadBalancer.getSpikeServer().processJobs(elapsedTime);
 
         // Update current time to departure time
         this.currentTime = targetDepartureJobStats.getEstimatedDepartureTime();
@@ -127,10 +132,10 @@ public class Simulator {
         // Process job departure through load balancer
         double responseTime = this.currentTime - targetDepartureJobStats.getArrivalTime();
 
-        this.loadBalancer.departureJob(targetDepartureJobStats.getJob(), responseTime, this.currentTime);
+        this.loadBalancer.completeJob(targetDepartureJobStats.getJob(),this.currentTime, responseTime);
 
         // Add to the csv for forensics analysis
-        /*
+
         this.csvAppenderJobs.writeRow(
                 String.valueOf(targetDepartureJobStats.getJob().getJobId()),                                 // job id
                 String.valueOf(targetDepartureJobStats.getArrivalTime()),                                    // arrival time
@@ -143,16 +148,16 @@ public class Simulator {
 
         this.csvAppenderServers.writeRow(
                 this.currentTime.toString(),
-                String.valueOf(this.loadBalancer.getJobCountsPerWebServer()),
+                String.valueOf(this.loadBalancer.getJobCountsForWebServer()),
                 String.valueOf(this.loadBalancer.getWebServerCount()),
                 String.valueOf(this.loadBalancer.getSpikeServerJobCount())
         );
-        */
 
-        this.jobStats.remove(targetDepartureJobStats);
+
+        this.futureEventList.removeJobStats(targetDepartureJobStats);
 
         // Recalculate estimated departure times for remaining jobs
-        for (JobStats js : this.jobStats) {
+        for (JobStats js : this.futureEventList.getJobStats()) {
             js.estimateDepartureTime(this.currentTime);
         }
     }

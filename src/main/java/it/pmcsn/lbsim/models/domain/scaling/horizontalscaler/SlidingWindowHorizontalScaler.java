@@ -44,8 +44,6 @@ public class SlidingWindowHorizontalScaler implements HorizontalScaler {
     public Action notifyJobDeparture(double rt, double now) {
         if (rt < 0) throw new IllegalArgumentException("response time must be >= 0");
         window.add(rt);
-
-        // Se la finestra non è ancora “piena”, possiamo comunque agire, ma è comune attendere qualche campione.
         double mean = window.getAverage();
 
         // Rispetta il cooldown tra azioni

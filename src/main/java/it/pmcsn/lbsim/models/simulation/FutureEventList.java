@@ -21,14 +21,18 @@ public class FutureEventList {
 
     public Event nextEvent() {
         JobStats bestJob = findNextDepartureJob();
-        double nextDepartureTime = bestJob.getEstimatedDepartureTime();
+        double nextDepartureTime;
+        if (bestJob != null) {
+            nextDepartureTime = bestJob.getEstimatedDepartureTime();
+        } else {
+            nextDepartureTime = Double.POSITIVE_INFINITY;
+        }
         return (nextArrivalTime >= nextDepartureTime) ? Event.DEPARTURE : Event.ARRIVAL;
     }
-    public double nextArrivalTime() {
+
+
+    public double getnextArrivalTime() {
         return this.nextArrivalTime;
-    }
-    public double getNextArrivalTime() {
-        return nextArrivalTime;
     }
 
     public void setNextArrivalTime(double nextArrivalTime) {
@@ -38,8 +42,11 @@ public class FutureEventList {
     public List<JobStats> getJobStats() {
         return jobStats;
     }
+
+
+
     private JobStats findNextDepartureJob() {
-        double nextDepartureTime = Double.POSITIVE_INFINITY;
+    double nextDepartureTime = Double.POSITIVE_INFINITY;
         JobStats bestJob = null;
 
         for (JobStats stats : jobStats) {
@@ -58,5 +65,6 @@ public class FutureEventList {
     public void addJobStats(JobStats jobStat) {
         jobStats.add(jobStat);
     }
+    public void removeJobStats(JobStats jobStat) {jobStats.remove(jobStat);}
 
 }
