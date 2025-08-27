@@ -4,7 +4,7 @@ import java.util.PriorityQueue;
 import java.util.Queue;
 
 public class ServerIdAllocator {
-    private int nextId = 1;  // prossimo id se non ci sono slot liberi
+    private int nextId = 0;  // prossimo id se non ci sono slot liberi
     private final Queue<Integer> freeIds = new PriorityQueue<>();
 
     /**

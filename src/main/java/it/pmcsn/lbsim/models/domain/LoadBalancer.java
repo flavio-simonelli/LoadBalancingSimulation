@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public class LoadBalancer {
     private static final double EPSILON = 1e-9;
@@ -112,10 +113,13 @@ public class LoadBalancer {
     }
 
     public int getSpikeServerJobCount() {
-        return getSpikeServer().getCurrentSI();
+        return spikeServer.getCurrentSI();
     }
 
-    public List<Integer> getJobCountsForWebServer(){
-        return webServers.getJobsCountForServer();
+    public String getJobCountsForWebServer(){
+        List<Integer> jobs = webServers.getJobsCountForServer();
+        return jobs.stream()
+                .map(v -> v == null ? "null" : v.toString())
+                .collect(Collectors.joining(",", "[", "]"));
     }
 }

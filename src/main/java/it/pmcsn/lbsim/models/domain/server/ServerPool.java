@@ -109,11 +109,7 @@ public class ServerPool {
             int maxId = Collections.max(idToSI.keySet());
             List<Integer> result = new ArrayList<>();
             for (int id = 0; id <= maxId; id++) {
-                if (idToSI.containsKey(id)) {
-                    result.add(idToSI.get(id));
-                } else {
-                    result.add(null);
-                }
+                result.add(idToSI.getOrDefault(id, null));
             }
             res = result;
         }

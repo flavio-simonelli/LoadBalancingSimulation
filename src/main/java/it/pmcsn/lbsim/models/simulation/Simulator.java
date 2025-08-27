@@ -71,6 +71,7 @@ public class Simulator {
                 this.currentTime = nextDepartureTime;
                 departureHandler(elapsedTime,nextDepartureJob);
         }
+        //TODO: azzerare server per riportare allo stato inziale
         /*
         logger.log(Level.INFO, "Simulation completed at time {0}\n", currentTime);
         logger.log(Level.INFO, "Total jobs processed: {0}\n", jobIdCounter);
@@ -109,10 +110,6 @@ public class Simulator {
                 String.valueOf(this.loadBalancer.getWebServerCount()),
                 String.valueOf(this.loadBalancer.getSpikeServerJobCount())
         );
-
-        this.csvAppenderServers.writeRow(
-                this.currentTime.toString(),
-                String.valueOf(this.loadBalancer));
 
 
         // Generate next arrival time
