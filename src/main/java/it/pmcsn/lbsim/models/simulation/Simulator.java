@@ -2,6 +2,16 @@ package it.pmcsn.lbsim.models.simulation;
 
 import it.pmcsn.lbsim.models.domain.Job;
 import it.pmcsn.lbsim.models.domain.LoadBalancer;
+import it.pmcsn.lbsim.models.domain.removalPolicy.RemovalPolicy;
+import it.pmcsn.lbsim.models.domain.removalPolicy.RemovalPolicyLeastUsed;
+import it.pmcsn.lbsim.models.domain.scaling.horizontalscaler.HorizontalScaler;
+import it.pmcsn.lbsim.models.domain.scaling.horizontalscaler.SlidingWindowHorizontalScaler;
+import it.pmcsn.lbsim.models.domain.scaling.spikerouter.SimpleSpikeRouter;
+import it.pmcsn.lbsim.models.domain.scaling.spikerouter.SpikeRouter;
+import it.pmcsn.lbsim.models.domain.schedulingpolicy.LeastLoadPolicy;
+import it.pmcsn.lbsim.models.domain.schedulingpolicy.SchedulingPolicy;
+import it.pmcsn.lbsim.models.domain.server.Server;
+import it.pmcsn.lbsim.models.domain.server.ServerPool;
 import it.pmcsn.lbsim.utils.csv.CsvAppender;
 import it.pmcsn.lbsim.utils.random.HyperExponential;
 import it.pmcsn.lbsim.utils.random.Rngs;
@@ -21,6 +31,8 @@ public class Simulator {
     private static final Logger logger = Logger.getLogger(Simulator.class.getName());
 
     private Double currentTime;                     // Current simulation time
+    private FutureEventList futureEventList; // Future Event List
+
     private final Rvgs rvgs;                        // Random Variate Generator
 
     private final LoadBalancer loadBalancer; // System under simulation
@@ -105,22 +117,24 @@ public class Simulator {
         logger.log(Level.FINE, "Hyperexponential service with parameters {0} {1} {2}\n", new Object[]{this.serviceTimeObj.getP(), this.serviceTimeObj.getM1(), this.serviceTimeObj.getM2()});
 
         // Initialize Future Event List (FEL)
+        this.futureEventList = new FutureEventList();
 
-
-        // Initialize load balancer
-        this.loadBalancer = new LoadBalancer(initialServerCount,
-                cpuMultiplierSpike,
-                cpuPercentageSpike,
-                slidingWindowSize,
-                SImax,
-                SImin,
-                R0max,
-                R0min,
-                schedulingType,
-                horizontalScalingCoolDown);
+        // create the system under simulation
+        // create server pool
+        RemovalPolicy removalPolicy = new RemovalPolicyLeastUsed();
+        ServerPool serverPool = new ServerPool(initialServerCount, 1.0, removalPolicy);
+        Server spikeServer = new Server(cpuMultiplierSpike, cpuPercentageSpike, -1);
+        SchedulingPolicy schedulingPolicy = new LeastLoadPolicy();
+        SpikeRouter spikeRouter = new SimpleSpikeRouter(SImax);
+        HorizontalScaler horizontalScaler = new SlidingWindowHorizontalScaler(slidingWindowSize, R0min, R0max, horizontalScalingCoolDown);
+        this.loadBalancer = new LoadBalancer(serverPool,
+                spikeServer,
+                schedulingPolicy,
+                spikeRouter,
+                horizontalScaler
+        );
      }
 
-    // Methods
     public void run(double simulationDuration) {
         if (simulationDuration <= 0.0) {
             logger.log(Level.SEVERE, "Simulation Duration must be greater than zero");
@@ -151,8 +165,7 @@ public class Simulator {
     private void guessNextEvent() {
         double nextDepartureTime = Double.POSITIVE_INFINITY;
         JobStats jobStat = null;
-
-            // Find the next job to depart
+        // Find the next job to depart
         for (JobStats stats : jobStats) {
             double depTime = stats.getEstimatedDepartureTime();
             if (depTime < nextDepartureTime) {
@@ -160,8 +173,7 @@ public class Simulator {
                 jobStat = stats;
             }
         }
-
-            // Process the next event (arrival or departure)
+        // Process the next event (arrival or departure)
         if (nextArrivalTime >= nextDepartureTime) {
                 //debug
             if (jobStat == null) {
@@ -171,7 +183,6 @@ public class Simulator {
         } else {
             arrivalHandler();
         }
-
     }
 
     private void arrivalHandler() {

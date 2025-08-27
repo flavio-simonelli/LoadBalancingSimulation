@@ -6,6 +6,8 @@ package it.pmcsn.lbsim.models.domain.scaling.horizontalscaler;
  */
 public interface HorizontalScaler {
 
+    void setLastActionAt(double time);
+
     enum Action { NONE, SCALE_OUT, SCALE_IN }
 
     /**

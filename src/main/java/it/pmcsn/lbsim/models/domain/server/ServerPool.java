@@ -34,25 +34,30 @@ public class ServerPool {
         return webServers;
     }
 
-    public void requestScaleIn() {
+    // return true if scale-in request accepted, false otherwise
+    public boolean requestScaleIn() {
         if (webServers.size() <= 1) {
             logger.log(Level.WARNING,"Cannot scale in. At least one Web Server must remain.");
-            return;
+            return false;
         }
         Server toRemove = removalPolicy.chooseServerToRemove(webServers);
         webServers.remove(toRemove);
         if (toRemove.getCurrentSI() == 0) {
             idAllocator.release(toRemove.getId());
             logger.info("Scaled in immediately. Removed server id=" + toRemove.getId());
+            return true;
         } else {
             removingServers.add(toRemove);
             logger.info("Server id=" + toRemove.getId() + " draining...");
+            return true;
         }
     }
 
-    public void requestScaleOut() {
+    // return true if scale-out request accepted, false otherwise
+    public boolean requestScaleOut() {
         Server server = new Server(cpuMultiplier, 1, idAllocator.allocate());
         webServers.add(server);
+        return true;
     }
 
     public void completeJob(Job job) {
@@ -67,6 +72,18 @@ public class ServerPool {
         if (removingServers.contains(assignedServer) && assignedServer.getActiveJobs().isEmpty()) {
             removingServers.remove(assignedServer);
             idAllocator.release(assignedServer.getId());
+        }
+    }
+
+    public void processJobs(double timeInterval) {
+        if (timeInterval < 0) {
+            throw new IllegalArgumentException("Time interval cannot be negative");
+        }
+        for (Server server : webServers) {
+            server.processJobs(timeInterval);
+        }
+        for (Server server : new ArrayList<>(removingServers)) {
+            server.processJobs(timeInterval);
         }
     }
 

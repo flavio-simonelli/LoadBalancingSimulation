@@ -3,10 +3,13 @@ package it.pmcsn.lbsim.utils.random;
 
 public class HyperExponential {
     private final double p;
+    private final int streamP;
     private final double m1;
+    private final int streamExp1;
     private final double m2;
+    private final int streamExp2;
 
-    public HyperExponential(double cv, double m) {
+    public HyperExponential(double cv, double m, int streamP, int streamExp1, int streamExp2) {
         if (m <= 0.0) {
             throw new IllegalArgumentException("Mean must be > 0");
         }
@@ -16,12 +19,18 @@ public class HyperExponential {
         this.p= calculateP(cv);
         this.m1 = calculateMHyper(m, this.p);
         this.m2 = calculateMHyper(m, (1 - this.p));
+        this.streamP = streamP;
+        this.streamExp1 = streamExp1;
+        this.streamExp2 = streamExp2;
     }
 
-    public HyperExponential(double p, double m1, double m2) {
+    public HyperExponential(double p, double m1, double m2, int streamP, int streamExp1, int streamExp2) {
         this.p = p;
         this.m1 = m1;
         this.m2 = m2;
+        this.streamP = streamP;
+        this.streamExp1 = streamExp1;
+        this.streamExp2 = streamExp2;
     }
 
     private double calculateP(double cv) {
@@ -52,5 +61,17 @@ public class HyperExponential {
 
     public double getP() {
         return p;
+    }
+
+    public int getStreamP() {
+        return streamP;
+    }
+
+    public int getStreamExp1() {
+        return streamExp1;
+    }
+
+    public int getStreamExp2() {
+        return streamExp2;
     }
 }

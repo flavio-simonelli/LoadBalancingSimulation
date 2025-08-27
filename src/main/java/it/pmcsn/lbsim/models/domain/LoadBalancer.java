@@ -33,7 +33,9 @@ public class LoadBalancer {
         this.horizontalScaler = horizontalScaler;
     }
 
-    public void assignJob(Job job, double currentTime) {
+    public void assignJob(Job job, double currentTime, double elapsedTime) {
+        // process jobs
+        this.webServers.processJobs(elapsedTime);
         if (job == null) {
             logger.log(Level.SEVERE, "Job cannot be null");
             throw new IllegalArgumentException("Job cannot be null");
@@ -57,7 +59,9 @@ public class LoadBalancer {
         }
     }
 
-    public void completeJob(Job job, double currentTime, double responseTime) {
+    public void completeJob(Job job, double currentTime, double responseTime, double elapsedTime) {
+        // process jobs
+        this.webServers.processJobs(elapsedTime);
         if (job == null) {
             logger.log(Level.SEVERE, "Job cannot be null");
             throw new IllegalArgumentException("Job cannot be null");
@@ -79,8 +83,16 @@ public class LoadBalancer {
         // notify the horizontal scaler
         HorizontalScaler.Action action = this.horizontalScaler.notifyJobDeparture(responseTime, currentTime);
         switch (action) {
-            case SCALE_OUT -> this.webServers.requestScaleOut();
-            case SCALE_IN -> this.webServers.requestScaleIn();
+            case SCALE_OUT -> {
+                if (this.webServers.requestScaleOut()) {
+                    this.horizontalScaler.setLastActionAt(currentTime);
+                }
+            }
+            case SCALE_IN -> {
+                if(this.webServers.requestScaleIn()) {
+                    this.horizontalScaler.setLastActionAt(currentTime);
+                }
+            }
             case NONE -> {
                 // No action needed
             }

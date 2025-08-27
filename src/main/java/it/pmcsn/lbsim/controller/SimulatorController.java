@@ -18,7 +18,19 @@ public class SimulatorController {
             throw new IllegalArgumentException("Simulation configuration cannot be null");
         }
 
-        // create the output csv file
+        final HyperExponential interarrivalTimeObj; // Hyperexponential distribution for interarrival times
+        final HyperExponential serviceTimeObj; // Hyperexponential distribution for service times
+
+        // Initialize hyperexponential distribution
+        interarrivalTimeObj = new HyperExponential(config.getInterarrivalCv(), config.getInterarrivalMean(),
+                config.getInterarrivalStreamP(), config.getInterarrivalStreamHexp1(), config.getInterarrivalStreamHexp2());
+        logger.log(Level.FINE, "Hyperexponential interarrival with parameters {0} {1} {2}\n",
+                new Object[]{interarrivalTimeObj.getP(), interarrivalTimeObj.getM1(), interarrivalTimeObj.getM2()});
+
+        serviceTimeObj = new HyperExponential(config.getServiceCv(), config.getServiceMean(),
+                config.getServiceStreamP(), config.getServiceStreamHexp1(), config.getServiceStreamHexp2());
+        logger.log(Level.FINE, "Hyperexponential service with parameters {0} {1} {2}\n",
+                new Object[]{serviceTimeObj.getP(), serviceTimeObj.getM1(), serviceTimeObj.getM2()});
 
         // Create a new simulator instance with the provided configuration
         Simulator simulator = new Simulator(config.isFirstSimulation(),

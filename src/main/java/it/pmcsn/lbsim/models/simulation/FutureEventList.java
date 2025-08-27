@@ -3,6 +3,8 @@ package it.pmcsn.lbsim.models.simulation;
 import java.util.List;
 
 public class FutureEventList {
+    private static final Logger logger = Logger.getLogger(FutureEventList.class.getName());
+
     private double nextArrivalTime;                 // Next arrival time for jobs
     private final List<JobStats> jobStats;          // List of jobsStats
 

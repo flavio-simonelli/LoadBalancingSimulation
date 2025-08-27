@@ -54,13 +54,16 @@ public class SlidingWindowHorizontalScaler implements HorizontalScaler {
         }
 
         if (mean > r0max) {
-            lastActionAt = now;
             return Action.SCALE_OUT;
         }
         if (mean < r0min) {
-            lastActionAt = now;
             return Action.SCALE_IN;
         }
         return Action.NONE;
+    }
+
+    @Override
+    public void setLastActionAt(double time) {
+        this.lastActionAt = time;
     }
 }
