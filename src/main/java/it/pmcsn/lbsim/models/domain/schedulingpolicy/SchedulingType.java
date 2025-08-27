@@ -1,4 +1,4 @@
-package it.pmcsn.lbsim.models.schedulingpolicy;
+package it.pmcsn.lbsim.models.domain.schedulingpolicy;
 
 public enum SchedulingType {
     LEAST_LOAD,

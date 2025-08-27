@@ -3,11 +3,11 @@ package it.pmcsn.lbsim.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import it.pmcsn.lbsim.controller.SimulatorController;
-import it.pmcsn.lbsim.models.schedulingpolicy.SchedulingType;
+import it.pmcsn.lbsim.models.domain.schedulingpolicy.SchedulingType;
 
 import java.io.InputStream;
 import java.time.Duration;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class ConfigLoader {
@@ -66,8 +66,14 @@ public class ConfigLoader {
         @Override public Duration getDurationSeconds() { return cfg.simulation.duration; }
         @Override public double getInterarrivalMean() { return cfg.workload.interarrival.mean; }
         @Override public double getInterarrivalCv() { return cfg.workload.interarrival.cv; }
+        @Override public int getInterarrivalStreamP() { return cfg.workload.interarrival.streamp; }
+        @Override public int getInterarrivalStreamHexp1() { return cfg.workload.interarrival.streamhexp1; }
+        @Override public int getInterarrivalStreamHexp2() { return cfg.workload.interarrival.streamhexp2; }
         @Override public double getServiceMean() { return cfg.workload.service.mean; }
         @Override public double getServiceCv() { return cfg.workload.service.cv; }
+        @Override public int getServiceStreamP() { return cfg.workload.service.streamp; }
+        @Override public int getServiceStreamHexp1() { return cfg.workload.service.streamhexp1; }
+        @Override public int getServiceStreamHexp2() { return cfg.workload.service.streamhexp2; }
 
         @Override public SchedulingType getSchedulingType() {
             return SchedulingType.fromString(cfg.scheduling.policy);
@@ -92,7 +98,7 @@ public class ConfigLoader {
     }
 
     private static void printDebug(SimConfiguration cfg) {
-        if (logger.isLoggable(java.util.logging.Level.FINE)) {
+        if (logger.isLoggable(Level.CONFIG)) {
             StringBuilder sb = new StringBuilder();
             sb.append("\n=== Simulation Config ===\n")
                     .append("Seed0: ").append(cfg.getSeed0()).append("\n")
@@ -106,8 +112,14 @@ public class ConfigLoader {
                     .append("\n--- Workload ---\n")
                     .append("Interarrival mean: ").append(cfg.getInterarrivalMean()).append("\n")
                     .append("Interarrival cv:   ").append(cfg.getInterarrivalCv()).append("\n")
+                    .append("Interarrival stream p:    ").append(cfg.getInterarrivalStreamP()).append("\n")
+                    .append("Interarrival stream hexp1: ").append(cfg.getInterarrivalStreamHexp1()).append("\n")
+                    .append("Interarrival stream hexp2: ").append(cfg.getInterarrivalStreamHexp2()).append("\n")
                     .append("Service mean:      ").append(cfg.getServiceMean()).append("\n")
                     .append("Service cv:        ").append(cfg.getServiceCv()).append("\n")
+                    .append("Service stream p:    ").append(cfg.getServiceStreamP()).append("\n")
+                    .append("Service stream hexp1: ").append(cfg.getServiceStreamHexp1()).append("\n")
+                    .append("Service stream hexp2: ").append(cfg.getServiceStreamHexp2()).append("\n")
 
                     .append("\n--- Scheduling ---\n")
                     .append("Policy: ").append(cfg.getSchedulingType()).append("\n")
@@ -133,7 +145,7 @@ public class ConfigLoader {
                     .append("Plot Dir: ").append(cfg.getPlotOutputDir()).append("\n")
                     .append("===========================\n");
 
-            logger.fine(sb.toString());
+            logger.log(Level.CONFIG,sb.toString());
         }
     }
 }

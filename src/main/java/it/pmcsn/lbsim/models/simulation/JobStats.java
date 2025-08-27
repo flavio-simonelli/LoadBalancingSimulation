@@ -1,4 +1,7 @@
-package it.pmcsn.lbsim.models;
+package it.pmcsn.lbsim.models.simulation;
+
+import it.pmcsn.lbsim.models.domain.server.Server;
+import it.pmcsn.lbsim.models.domain.Job;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;

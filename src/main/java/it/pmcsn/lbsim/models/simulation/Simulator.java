@@ -1,10 +1,12 @@
-package it.pmcsn.lbsim.models;
+package it.pmcsn.lbsim.models.simulation;
 
+import it.pmcsn.lbsim.models.domain.Job;
+import it.pmcsn.lbsim.models.domain.LoadBalancer;
 import it.pmcsn.lbsim.utils.csv.CsvAppender;
 import it.pmcsn.lbsim.utils.random.HyperExponential;
 import it.pmcsn.lbsim.utils.random.Rngs;
 import it.pmcsn.lbsim.utils.random.Rvgs;
-import it.pmcsn.lbsim.models.schedulingpolicy.SchedulingType;
+import it.pmcsn.lbsim.models.domain.schedulingpolicy.SchedulingType;
 
 
 import java.io.IOException;
@@ -16,33 +18,19 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Simulator {
-    // Constants
     private static final Logger logger = Logger.getLogger(Simulator.class.getName());
-    private static final double EPSILON = 1e-9;
 
-    // Instance variables - Simulation state
     private Double currentTime;                     // Current simulation time
-    private int jobIdCounter = 0;                   // Counter for unique job IDs
-    private final List<JobStats> jobStats;          // List of jobsStats
-    private double nextArrivalTime;                 // Next arrival time for jobs
-    private final Rngs rngs;
     private final Rvgs rvgs;                        // Random Variate Generator
 
-    // Load balancer
-    private final LoadBalancer loadBalancer;
+    private final LoadBalancer loadBalancer; // System under simulation
 
-    // Interarrival variate parameters
-    private final HyperExponential interarrivalTimeObj;
-
-    // Service variate parameters
-    private final HyperExponential serviceTimeObj;
+    private final HyperExponential interarrivalTimeObj; // Hyperexponential distribution for interarrival times
+    private final HyperExponential serviceTimeObj; // Hyperexponential distribution for service times
 
     private final CsvAppender csvAppenderServers;
     private final CsvAppender csvAppenderDepartures;
     private final CsvAppender csvAppenderJobs;
-
-    // Debug
-    public int jobWithNegativeRemainingSize = 0;
 
     // Constructor
     public Simulator(boolean isFirstSimulation,
@@ -86,13 +74,10 @@ public class Simulator {
         }
 
         // Initialize simulation state
-        this.currentTime = 0.0;
-        this.jobStats = new ArrayList<>();
+        this.currentTime = 0.0; // start at time 0
 
         // Initialize random number generators
-        this.rngs = new Rngs();
-        this.rvgs = new Rvgs(rngs);
-
+        Rngs rngs = new Rngs();
         if (isFirstSimulation) {
             rngs.plantSeeds(seed0);
         } else {
@@ -110,13 +95,17 @@ public class Simulator {
             rngs.selectStream(5);
             rngs.putSeed(seed5);
         }
-        logger.log(Level.SEVERE, "Initial seeds: {0}\n", Arrays.toString(rngs.getSeedArray()));
+        logger.log(Level.INFO, "Initial seeds: {0}\n", Arrays.toString(rngs.getSeedArray()));
+        this.rvgs = new Rvgs(rngs);
 
         // Initialize hyperexponential distribution
         this.interarrivalTimeObj = new HyperExponential(interarrivalCv, interarrivalMean);
-        logger.log(Level.INFO, "Hyperexponential interarrival with parameters {0} {1} {2}\n", new Object[]{this.interarrivalTimeObj.getP(), this.interarrivalTimeObj.getM1(), this.interarrivalTimeObj.getM2()});
+        logger.log(Level.FINE, "Hyperexponential interarrival with parameters {0} {1} {2}\n", new Object[]{this.interarrivalTimeObj.getP(), this.interarrivalTimeObj.getM1(), this.interarrivalTimeObj.getM2()});
         this.serviceTimeObj = new HyperExponential(serviceCv, serviceMean);
-        logger.log(Level.INFO, "Hyperexponential service with parameters {0} {1} {2}\n", new Object[]{this.serviceTimeObj.getP(), this.serviceTimeObj.getM1(), this.serviceTimeObj.getM2()});
+        logger.log(Level.FINE, "Hyperexponential service with parameters {0} {1} {2}\n", new Object[]{this.serviceTimeObj.getP(), this.serviceTimeObj.getM1(), this.serviceTimeObj.getM2()});
+
+        // Initialize Future Event List (FEL)
+
 
         // Initialize load balancer
         this.loadBalancer = new LoadBalancer(initialServerCount,
@@ -137,7 +126,6 @@ public class Simulator {
             logger.log(Level.SEVERE, "Simulation Duration must be greater than zero");
             throw new IllegalArgumentException("Simulation duration must be greater than zero");
         }
-
         genNextInterarrivalTime();
 
         // Main simulation loop - process events until simulation duration

@@ -1,8 +1,7 @@
 package it.pmcsn.lbsim.controller;
 
-import it.pmcsn.lbsim.config.Config;
 import it.pmcsn.lbsim.config.SimConfiguration;
-import it.pmcsn.lbsim.models.Simulator;
+import it.pmcsn.lbsim.models.simulation.Simulator;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -27,7 +26,8 @@ public class SimulatorController {
                                             config.getSeed1(),
                                             config.getSeed2(),
                                             config.getSeed3(),
-                config.getSeed4(), config.getSeed5(),
+                                            config.getSeed4(),
+                                            config.getSeed5(),
                                             config.getSImax(),
                                             config.getSImin(),
                                             config.getR0max().getSeconds(),

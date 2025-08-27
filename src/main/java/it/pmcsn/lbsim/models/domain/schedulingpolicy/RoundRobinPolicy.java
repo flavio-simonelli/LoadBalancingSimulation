@@ -1,6 +1,6 @@
-package it.pmcsn.lbsim.models.schedulingpolicy;
+package it.pmcsn.lbsim.models.domain.schedulingpolicy;
 
-import it.pmcsn.lbsim.models.Server;
+import it.pmcsn.lbsim.models.domain.server.Server;
 
 import java.util.List;
 

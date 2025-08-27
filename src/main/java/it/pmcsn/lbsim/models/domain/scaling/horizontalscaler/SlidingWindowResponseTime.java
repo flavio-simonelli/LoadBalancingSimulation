@@ -1,4 +1,4 @@
-package it.pmcsn.lbsim.models;
+package it.pmcsn.lbsim.models.domain.scaling.horizontalscaler;
 
 import java.util.LinkedList;
 import java.util.Queue;

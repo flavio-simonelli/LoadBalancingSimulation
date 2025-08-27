@@ -1,6 +1,6 @@
 package it.pmcsn.lbsim.config;
 
-import it.pmcsn.lbsim.models.schedulingpolicy.SchedulingType;
+import it.pmcsn.lbsim.models.domain.schedulingpolicy.SchedulingType;
 
 import java.time.Duration;
 
@@ -15,8 +15,15 @@ public interface SimConfiguration {
     Duration getDurationSeconds();
     double getInterarrivalMean();
     double getInterarrivalCv();
+    int getInterarrivalStreamP();
+    int getInterarrivalStreamHexp1();
+    int getInterarrivalStreamHexp2();
     double getServiceMean();
     double getServiceCv();
+    int getServiceStreamP();
+    int getServiceStreamHexp1();
+    int getServiceStreamHexp2();
+
 
     SchedulingType getSchedulingType();
 

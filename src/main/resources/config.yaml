@@ -12,9 +12,15 @@ workload:
   interarrival:
     mean: 0.15        # media dei tempi di interarrivo
     cv: 4             # coefficiente di variazione
+    streamp: 1
+    streamhexp1: 2
+    streamhexp2: 3
   service:
     mean: 0.16        # media della distribuzione del tempo di servizio
     cv: 4             # coefficiente di variazione
+    streamp: 4
+    streamhexp1: 5
+    streamhexp2: 6
 
 scheduling:
   policy: "least_load"   # valori possibili: least_load, round_robin
@@ -42,4 +48,4 @@ output:
   plotDir: "output/plot/"
 
 logging:
-  level: "SEVERE"   # possibili valori: SEVERE, WARNING, INFO, FINE, FINER, FINEST
+  level: "FINE"   # possibili valori: SEVERE, WARNING, INFO, FINE, FINER, FINEST

@@ -30,6 +30,9 @@ public class Config {
     public static class Dist {
         public double mean;
         public double cv;
+        public int streamp;
+        public int streamhexp1;
+        public int streamhexp2;
     }
 
     public static class Scheduling {
