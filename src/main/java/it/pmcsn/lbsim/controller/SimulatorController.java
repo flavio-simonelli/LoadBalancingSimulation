@@ -1,12 +1,13 @@
 package it.pmcsn.lbsim.controller;
 
 import it.pmcsn.lbsim.config.SimConfiguration;
-import it.pmcsn.lbsim.debugging.DistributionGenerator;
 import it.pmcsn.lbsim.models.domain.LoadBalancer;
 import it.pmcsn.lbsim.models.domain.removalPolicy.RemovalPolicy;
 import it.pmcsn.lbsim.models.domain.removalPolicy.RemovalPolicyLeastUsed;
 import it.pmcsn.lbsim.models.domain.scaling.horizontalscaler.HorizontalScaler;
+import it.pmcsn.lbsim.models.domain.scaling.horizontalscaler.NoneHorizontalScaler;
 import it.pmcsn.lbsim.models.domain.scaling.horizontalscaler.SlidingWindowHorizontalScaler;
+import it.pmcsn.lbsim.models.domain.scaling.spikerouter.NoneSpikeRouter;
 import it.pmcsn.lbsim.models.domain.scaling.spikerouter.SimpleSpikeRouter;
 import it.pmcsn.lbsim.models.domain.scaling.spikerouter.SpikeRouter;
 import it.pmcsn.lbsim.models.domain.schedulingpolicy.LeastLoadPolicy;
@@ -32,8 +33,6 @@ import java.util.logging.Logger;
 public class SimulatorController {
 
     private static final Logger logger = Logger.getLogger(SimulatorController.class.getName());
-
-    public SimulatorController() {}
 
     public void startSimulation(SimConfiguration config) {
         if (config == null) {
@@ -94,8 +93,24 @@ public class SimulatorController {
         ServerPool serverPool = new ServerPool(config.getInitialServerCount(), 1.0, removalPolicy);
         Server spikeServer = new Server(config.getSpikeCpuMultiplier(), config.getSpikeCpuPercentage(), -1);
         SchedulingPolicy schedulingPolicy = new LeastLoadPolicy();
-        SpikeRouter spikeRouter = new SimpleSpikeRouter(config.getSImax());
-        HorizontalScaler horizontalScaler = new SlidingWindowHorizontalScaler(config.getSlidingWindowSize(), config.getR0min().getSeconds(), config.getR0max().getSeconds(), config.getHorizontalCoolDown().getSeconds());
+        SpikeRouter spikeRouter;
+        if (config.isSpikeEnabled()){
+            spikeRouter = new SimpleSpikeRouter(config.getSImax());
+        }
+        else {
+            spikeRouter = new NoneSpikeRouter();
+        }
+
+        HorizontalScaler horizontalScaler;
+        if (config.isHorizontalEnabled()){
+            horizontalScaler = new SlidingWindowHorizontalScaler(
+                    config.getSlidingWindowSize(),
+                    config.getR0min().getSeconds(),
+                    config.getR0max().getSeconds(),
+                    config.getHorizontalCoolDown().getSeconds());
+        }else {
+            horizontalScaler = new NoneHorizontalScaler();
+        }
         LoadBalancer loadBalancer = new LoadBalancer(
                 serverPool,
                 spikeServer,

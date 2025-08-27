@@ -10,7 +10,6 @@ import java.util.List;
  * Workload generator che legge arrivi e job size da due file.
  * - Il file arrivi contiene una lista di timestamp (uno per riga).
  * - Il file size contiene una lista di dimensioni (uno per riga).
- *
  * Vincolo: sizes.size() >= arrivals.size()
  */
 public class TraceWorkloadGenerator implements WorkloadGenerator {
@@ -20,7 +19,7 @@ public class TraceWorkloadGenerator implements WorkloadGenerator {
     private final Iterator<Double> arrivalIt;
     private final Iterator<Double> sizeIt;
 
-    private double lastArrival = Double.NEGATIVE_INFINITY;
+    private double lastArrival = Double.NaN;
     private double lastSize = Double.NaN;
 
     public TraceWorkloadGenerator(Path arrivalsFile, Path sizesFile) throws IOException {
