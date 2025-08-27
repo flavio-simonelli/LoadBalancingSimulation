@@ -1,9 +1,9 @@
 package it.pmcsn.lbsim;
 
-import it.pmcsn.lbsim.config.Config;
 import it.pmcsn.lbsim.config.ConfigLoader;
 import it.pmcsn.lbsim.config.SimConfiguration;
 import it.pmcsn.lbsim.controller.SimulatorController;
+
 
 public class Main {
     private static final String configFilePath = "config.yaml"; // Default configuration file path
@@ -18,7 +18,6 @@ public class Main {
 
         // start the simulation
         controller.startSimulation(config);
-
     }
 
 }

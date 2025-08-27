@@ -6,7 +6,7 @@ simulation:
   seed3: 1560038108        # seed per il generatore di numeri casuali
   seed4: 1629169463       # seed per il generatore di numeri
   seed5: 810213420       # seed per il generatore di numeri
-  duration: "PT20H"   # P2DT3H4M → 2 giorni, 3 ore, 4 minuti
+  duration: "PT1H"   # P2DT3H4M → 2 giorni, 3 ore, 4 minuti
 
 workload:
   isTracedriven: false   # true se il carico di lavoro è trace-driven, false se è generato tramite distribuzioni
@@ -42,7 +42,7 @@ scaling:
     R0min: "PT1S"        # media tempo di risposta per scale out
     coolDown: "PT10S"     # ritardo tra una scalata e l'altra
 
-    initialServerCount: 2   # server iniziali (senza spike)
+    initialServerCount: 3   # server iniziali (senza spike)
 
 output:
   csvDir: "output/csv/"

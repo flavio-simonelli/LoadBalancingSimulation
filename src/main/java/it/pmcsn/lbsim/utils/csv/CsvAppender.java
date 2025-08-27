@@ -42,8 +42,8 @@ public class CsvAppender implements AutoCloseable {
     public void close() {
         try {
             csv.close();
-        } catch (IOException e) {
-            // ignoriamo o logghiamo se necessario
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 }
