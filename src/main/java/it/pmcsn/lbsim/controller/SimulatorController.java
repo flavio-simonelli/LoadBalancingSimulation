@@ -148,6 +148,9 @@ public class SimulatorController {
 
         // print final seed
         logger.log(Level.INFO, "Final seeds: {0}\n", Arrays.toString(rngs.getSeedArray()));
+
+        csvAppenderJobs.close();
+        csvAppenderServers.close();
     }
 }
 
