@@ -744,4 +744,31 @@ public class Rvms{
 	    return (factor * f);
     }
 
+    public static double pdfHyperexponential(double mean, double cv, double x)
+        /* =========================================================================
+         * NOTE: use mean > 0, cv > 1.0, and x >= 0
+         *
+         * Returns the probability density function for a 2-stage hyperexponential
+         * distribution with given mean and coefficient of variation.
+         * The coefficient of variation must be greater than 1.0 for hyperexponential.
+         * =========================================================================
+         */
+    {
+        if (x < 0.0)
+            return 0.0;
+
+        // Calculate parameters from mean and coefficient of variation
+        double cv2 = cv * cv;
+        double p1 = (1.0 + Math.sqrt((cv2 - 1.0) / (cv2 + 1.0))) / 2.0;
+        double p2 = 1.0 - p1;
+        double lambda1 = 2.0 * p1 / mean;
+        double lambda2 = 2.0 * p2 / mean;
+
+        // Calculate PDF
+        double term1 = p1 * lambda1 * Math.exp(-lambda1 * x);
+        double term2 = p2 * lambda2 * Math.exp(-lambda2 * x);
+
+        return (term1 + term2);
+    }
+
 }

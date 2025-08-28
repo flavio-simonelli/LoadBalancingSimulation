@@ -7,6 +7,7 @@ import it.pmcsn.lbsim.utils.plot.PlotCSV;
 import it.pmcsn.lbsim.utils.random.Rngs;
 import it.pmcsn.lbsim.utils.random.Rvgs;
 import it.pmcsn.lbsim.utils.random.HyperExponential;
+import it.pmcsn.lbsim.utils.random.Rvms;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -104,29 +105,94 @@ public class DistributionGenerator {
 
     public static void main(String[] args) throws Exception {
         SimConfiguration config = ConfigLoader.load(CONFIG_FILE_PATH);
-        int numberOfSamples = 10000;
-        String exponentialOutputPath = config.getCsvOutputDir() + "ExponentialGen.csv";
+        double mean = 0.15;
+        double cv = 4.0;
+        String pdfOutputPath = config.getCsvOutputDir() + "HyperExponentialPDF.csv";
+        Path pdfPath = Paths.get(pdfOutputPath);
+
+        double totalArea = 0.0;
+        double stepSize = 0.001;
+
+        try (CsvAppender csvAppender = new CsvAppender(pdfPath, "value", "probability")) {
+            for (int i = 0; i <= 1000; i++) {
+                double value = i / 1000.0;
+                double probability = Rvms.pdfHyperexponential(mean, cv, value);
+                csvAppender.writeRow(String.valueOf(value), String.valueOf(probability));
+
+                totalArea += probability * stepSize;
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to write PDF CSV file: " + e.getMessage(), e);
+        }
+
+        System.out.println("Area totale sotto la curva: " + totalArea);
+        PlotCSV.plotScatter(String.valueOf(pdfPath), config.getPlotOutputDir(), "value", "probability");
+
+        int numberOfSamples = 1000;
+        //String exponentialOutputPath = config.getCsvOutputDir() + "ExponentialGen.csv";
         String hyperExponentialOutputPath = config.getCsvOutputDir() + "HyperExponentialGen.csv";
 
         DistributionGenerator generator = new DistributionGenerator();
 
+        // Exponential distribution
         double exponentialMean = 5.0;
-        double exponentialSampleMean = generator.generateExponentials(
-                numberOfSamples, exponentialMean, exponentialOutputPath);
-        logger.log(Level.INFO,
-                "Exponential sample mean: {0} (theoretical: {1})\n",
-                new Object[]{exponentialSampleMean, exponentialMean});
+//        double exponentialSampleMean = generator.generateExponentials(
+//                numberOfSamples, exponentialMean, exponentialOutputPath);
+//        double exponentialTheoreticalStd = exponentialMean; // Per esponenziale: std = mean
+//        SampleStats exponentialStats = calculateStatistics(exponentialOutputPath, exponentialSampleMean);
 
+//        logger.log(Level.INFO,
+//                "Exponential - Sample mean: {0} (theoretical: {1}), Sample std: {2} (theoretical: {3}), Min: {4}, Max: {5}\n",
+//                new Object[]{exponentialSampleMean, exponentialMean, exponentialStats.standardDeviation, exponentialTheoreticalStd, exponentialStats.minValue, exponentialStats.maxValue});
 
+        // Hyperexponential distribution
         double hyperExponentialCv = 4.0;
         double hyperExponentialMean = 0.15;
         double hyperExponentialSampleMean = generator.generateHyperExponentials(
-            numberOfSamples, hyperExponentialCv, hyperExponentialMean, hyperExponentialOutputPath);
-        logger.log(Level.INFO, "Hyperexponential sample mean: {0} (theoretical: {1})\n",
-                new Object[]{hyperExponentialSampleMean, hyperExponentialMean});
+                numberOfSamples, hyperExponentialCv, hyperExponentialMean, hyperExponentialOutputPath);
+        double hyperExponentialTheoreticalStd = hyperExponentialCv * hyperExponentialMean; // std = cv * mean
+        SampleStats hyperExponentialStats = calculateStatistics(hyperExponentialOutputPath, hyperExponentialSampleMean);
 
+        logger.log(Level.INFO,
+                "Hyperexponential - Sample mean: {0} (theoretical: {1}), Sample std: {2} (theoretical: {3}), Min: {4}, Max: {5}\n",
+                new Object[]{hyperExponentialSampleMean, hyperExponentialMean, hyperExponentialStats.standardDeviation, hyperExponentialTheoreticalStd, hyperExponentialStats.minValue, hyperExponentialStats.maxValue});
 
-        PlotCSV.plotScatter(exponentialOutputPath, config.getPlotOutputDir(), "id", "value");
+        //PlotCSV.plotScatter(exponentialOutputPath, config.getPlotOutputDir(), "id", "value");
         PlotCSV.plotScatter(hyperExponentialOutputPath, config.getPlotOutputDir(), "id", "value");
+    }
+
+    private static class SampleStats {
+        double standardDeviation;
+        double minValue;
+        double maxValue;
+
+        SampleStats(double standardDeviation, double minValue, double maxValue) {
+            this.standardDeviation = standardDeviation;
+            this.minValue = minValue;
+            this.maxValue = maxValue;
+        }
+    }
+
+    private static SampleStats calculateStatistics(String csvPath, double sampleMean) throws IOException {
+        double sumSquaredDifferences = 0.0;
+        int count = 0;
+        double minValue = Double.MAX_VALUE;
+        double maxValue = Double.MIN_VALUE;
+
+        try (java.io.BufferedReader reader = java.nio.file.Files.newBufferedReader(Paths.get(csvPath))) {
+            reader.readLine(); // Skip header
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(",");
+                double value = Double.parseDouble(parts[1]);
+                sumSquaredDifferences += Math.pow(value - sampleMean, 2);
+                minValue = Math.min(minValue, value);
+                maxValue = Math.max(maxValue, value);
+                count++;
+            }
+        }
+
+        double standardDeviation = Math.sqrt(sumSquaredDifferences / (count - 1));
+        return new SampleStats(standardDeviation, minValue, maxValue);
     }
 }
