@@ -27,7 +27,7 @@ public class HyperExponentialTest {
 
     public static void main(String[] args) {
         // read the configuration from a YAML file
-        int n = 1000; // numero di campioni
+        int n = 1000000; // numero di campioni
         SimConfiguration config = ConfigLoader.load(configFilePath);
 
         double theoreticalMean = config.getInterarrivalMean();
@@ -65,11 +65,12 @@ public class HyperExponentialTest {
         }
 
         // Scelta di range [a,b] per l'istogramma
-        double min = samples.stream().mapToDouble(Double::doubleValue).min().orElse(0.0);
-        double max = samples.stream().mapToDouble(Double::doubleValue).max().orElse(0.0);
+        double alpha = 0.05; // 5%
 
-        double a = Math.ceil(min * 1_000_000.0) / 1_000_000.0;
-        double b = Math.floor(max * 1_000_000.0) / 1_000_000.0;
+        double[] range = HistogramUtils.quantileRange(samples, alpha);
+
+        double a = range[0];
+        double b = range[1];
 
         // Media campionaria
         double sampleMean = samples.stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
@@ -83,7 +84,7 @@ public class HyperExponentialTest {
 
         for (Double sample : samples){
             if (sample >= a && sample < b){
-                int binIndex = (int) (Math.floor(sample - a) / gamma);
+                int binIndex = (int) Math.floor((sample - a) / gamma);
                 count[binIndex]++;
             }
         }

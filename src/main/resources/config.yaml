@@ -1,6 +1,6 @@
 simulation:
   isFirstSimulation: false   # true se è la prima esecuzione della simulazione ( i seed 1, ..., 5 verranno presi tramite plant seed del seed 0)
-  seed0: 238280651        # seed per il generatore di numeri casuali
+  seed0: -1        # seed per il generatore di numeri casuali
   seed1: 882129760        # seed per il generatore di numeri casuali
   seed2: 2094228380        # seed per il generatore di numeri casuali
   seed3: 1560038108        # seed per il generatore di numeri casuali

@@ -1,5 +1,8 @@
 package it.pmcsn.lbsim.debugging;
 
+import java.util.Arrays;
+import java.util.List;
+
 public class HistogramUtils {
 
     // Regola di Sturges
@@ -32,6 +35,7 @@ public class HistogramUtils {
     }
 
     public static int chooseDefinitiveK (int n){
+        /*
         int chooseK = chooseK(n);
         int kmin = kMin(n);
         int kmax = kMax(n);
@@ -48,6 +52,8 @@ public class HistogramUtils {
                 return kmin;
             }
         }
+        */
+        return wandRule(n);
     }
 
     private static void printStats(int chooseK) {
@@ -125,6 +131,43 @@ public class HistogramUtils {
 
     public static double theoreticalVariance(double cv, double mean){
         return (cv * cv) * (mean * mean);
+    }
+
+    /**
+     * Calcola il percentile P (in [0,1]) dei dati (non ordinati).
+     * Usa il metodo "nearest-rank": posizione = ceil(P * N).
+     */
+    public static double percentile(List<Double> data, double p) {
+        if (data == null || data.isEmpty()) {
+            throw new IllegalArgumentException("Array must not be null or empty");
+        }
+        if (p < 0.0 || p > 1.0) {
+            throw new IllegalArgumentException("Percentile p must be between 0 and 1");
+        }
+
+        // converto List<Double> in array di double
+        double[] sorted = data.stream().mapToDouble(Double::doubleValue).toArray();
+        Arrays.sort(sorted);
+
+        int N = sorted.length;
+        if (p == 0.0) {
+            return sorted[0];
+        }
+        if (p == 1.0) {
+            return sorted[N - 1];
+        }
+
+        int index = (int) Math.ceil(p * N) - 1;
+        return sorted[index];
+    }
+
+    /**
+     * Calcola a e b come quantili alpha e (1 - alpha).
+     */
+    public static double[] quantileRange(List<Double> data, double alpha) {
+        double a = percentile(data, alpha);
+        double b = percentile(data, 1.0 - alpha);
+        return new double[] { a, b };
     }
 
 }
