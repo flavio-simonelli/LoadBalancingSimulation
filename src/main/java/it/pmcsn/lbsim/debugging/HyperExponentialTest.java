@@ -27,7 +27,7 @@ public class HyperExponentialTest {
 
     public static void main(String[] args) {
         // read the configuration from a YAML file
-        int n = 1000000; // numero di campioni
+        int n = 100000; // numero di campioni
         SimConfiguration config = ConfigLoader.load(configFilePath);
 
         double theoreticalMean = config.getInterarrivalMean();
@@ -65,7 +65,7 @@ public class HyperExponentialTest {
         }
 
         // Scelta di range [a,b] per l'istogramma
-        double alpha = 0.05; // 5%
+        double alpha = 0.00; // 5%
 
         double[] range = HistogramUtils.quantileRange(samples, alpha);
 
