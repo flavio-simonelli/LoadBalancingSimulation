@@ -128,7 +128,7 @@ public class DistributionGenerator {
         System.out.println("Area totale sotto la curva: " + totalArea);
         PlotCSV.plotScatter(String.valueOf(pdfPath), config.getPlotOutputDir(), "value", "probability");
 
-        int numberOfSamples = 1000;
+        int numberOfSamples = 10000;
         //String exponentialOutputPath = config.getCsvOutputDir() + "ExponentialGen.csv";
         String hyperExponentialOutputPath = config.getCsvOutputDir() + "HyperExponentialGen.csv";
 

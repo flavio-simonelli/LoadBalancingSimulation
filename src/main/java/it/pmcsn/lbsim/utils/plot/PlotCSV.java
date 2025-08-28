@@ -1,3 +1,4 @@
+
 package it.pmcsn.lbsim.utils.plot;
 
 import com.opencsv.CSVReader;
@@ -60,6 +61,26 @@ public class PlotCSV {
         series.setMarkerColor(Color.BLACK);
         series.setLineStyle(org.knowm.xchart.style.lines.SeriesLines.NONE);
 
+        // Highlight min and max Y points in red
+        int minIdx = 0, maxIdx = 0;
+        for (int i = 1; i < yData.size(); i++) {
+            if (yData.get(i) < yData.get(minIdx)) minIdx = i;
+            if (yData.get(i) > yData.get(maxIdx)) maxIdx = i;
+        }
+
+        XYSeries minSeries = chart.addSeries("Min " + yCol,
+                Collections.singletonList(xData.get(minIdx)),
+                Collections.singletonList(yData.get(minIdx)));
+        minSeries.setMarker(SeriesMarkers.CIRCLE);
+        minSeries.setMarkerColor(Color.RED);
+        minSeries.setLineStyle(org.knowm.xchart.style.lines.SeriesLines.NONE);
+
+        XYSeries maxSeries = chart.addSeries("Max " + yCol,
+                Collections.singletonList(xData.get(maxIdx)),
+                Collections.singletonList(yData.get(maxIdx)));
+        maxSeries.setMarker(SeriesMarkers.CIRCLE);
+        maxSeries.setMarkerColor(Color.RED);
+        maxSeries.setLineStyle(org.knowm.xchart.style.lines.SeriesLines.NONE);
 
         String csvFileName = Paths.get(csvPath).getFileName().toString().replaceAll("\\.csv$", "");
         String outputFileName = csvFileName + "_" + xCol + "_VS_" + yCol + ".svg";
