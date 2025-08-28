@@ -85,36 +85,6 @@ public class DistributionGenerator {
         return cumulativeSum / sampleCount;
     }
 
-    /**
-     * Genera la PDF della distribuzione hyper-esponenziale per un range di valori configurabile
-     * @param mean Media della distribuzione
-     * @param cv Coefficiente di variazione
-     * @param a Valore iniziale del range
-     * @param b Valore finale del range
-     * @param gamma Passo tra i valori
-     * @param outputPath Percorso del file CSV di output
-     * @return Area totale sotto la curva (approssimazione dell'integrale)
-     */
-    public double generateHyperExponentialPDF(double mean, double cv, double a, double b,
-                                              double gamma, String outputPath) {
-        validatePDFInputs(mean, cv, a, b, gamma, outputPath);
-
-        double totalArea = 0.0;
-        Path path = Paths.get(outputPath);
-
-        try (CsvAppender csvAppender = new CsvAppender(path, "value", "probability")) {
-            for (double value = a; value <= b; value += gamma) {
-                double probability = Rvms.pdfHyperexponential(mean, cv, value);
-                csvAppender.writeRow(String.valueOf(value), String.valueOf(probability));
-                totalArea += probability * gamma;
-            }
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to write PDF CSV file: " + e.getMessage(), e);
-        }
-
-        return totalArea;
-    }
-
     private void validateInputs(int sampleCount, double meanValue, String outputPath) {
         if (sampleCount <= 0) {
             throw new IllegalArgumentException("Sample count must be positive");
@@ -133,52 +103,47 @@ public class DistributionGenerator {
         }
     }
 
-    private void validatePDFInputs(double mean, double cv, double a, double b,
-                                   double gamma, String outputPath) {
-        if (mean <= 0) {
-            throw new IllegalArgumentException("Mean must be positive");
-        }
-        if (cv <= 0) {
-            throw new IllegalArgumentException("Coefficient of variation must be positive");
-        }
-        if (a < 0) {
-            throw new IllegalArgumentException("Start value 'a' must be non-negative");
-        }
-        if (b <= a) {
-            throw new IllegalArgumentException("End value 'b' must be greater than start value 'a'");
-        }
-        if (gamma <= 0) {
-            throw new IllegalArgumentException("Step size 'gamma' must be positive");
-        }
-        if (outputPath == null || outputPath.trim().isEmpty()) {
-            throw new IllegalArgumentException("Output path cannot be null or empty");
-        }
-    }
-
     public static void main(String[] args) throws Exception {
         SimConfiguration config = ConfigLoader.load(CONFIG_FILE_PATH);
         double mean = 0.15;
         double cv = 4.0;
         String pdfOutputPath = config.getCsvOutputDir() + "HyperExponentialPDF.csv";
+        Path pdfPath = Paths.get(pdfOutputPath);
 
-        // Parametri configurabili per la PDF
-        double a = 0.0;      // Valore iniziale
-        double b = 2.0;      // Valore finale
-        double gamma = 0.01; // Passo
+        double totalArea = 0.0;
+        double stepSize = 0.001;
+
+        try (CsvAppender csvAppender = new CsvAppender(pdfPath, "value", "probability")) {
+            for (int i = 0; i <= 1000; i++) {
+                double value = i / 1000.0;
+                double probability = Rvms.pdfHyperexponential(mean, cv, value);
+                csvAppender.writeRow(String.valueOf(value), String.valueOf(probability));
+
+                totalArea += probability * stepSize;
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to write PDF CSV file: " + e.getMessage(), e);
+        }
+
+        System.out.println("Area totale sotto la curva: " + totalArea);
+        PlotCSV.plotScatter(String.valueOf(pdfPath), config.getPlotOutputDir(), "value", "probability");
+
+        int numberOfSamples = 1000;
+        //String exponentialOutputPath = config.getCsvOutputDir() + "ExponentialGen.csv";
+        String hyperExponentialOutputPath = config.getCsvOutputDir() + "HyperExponentialGen.csv";
 
         DistributionGenerator generator = new DistributionGenerator();
 
-        // Genera la PDF con parametri configurabili
-        double totalArea = generator.generateHyperExponentialPDF(mean, cv, a, b, gamma, pdfOutputPath);
+        // Exponential distribution
+        double exponentialMean = 5.0;
+//        double exponentialSampleMean = generator.generateExponentials(
+//                numberOfSamples, exponentialMean, exponentialOutputPath);
+//        double exponentialTheoreticalStd = exponentialMean; // Per esponenziale: std = mean
+//        SampleStats exponentialStats = calculateStatistics(exponentialOutputPath, exponentialSampleMean);
 
-        System.out.println("Area totale sotto la curva: " + totalArea);
-        System.out.println("Range PDF: da " + a + " a " + b + " con passo " + gamma);
-        System.out.println("Numero di punti generati: " + (int)((b - a) / gamma + 1));
-
-        PlotCSV.plotScatter(pdfOutputPath, config.getPlotOutputDir(), "value", "probability");
-
-        int numberOfSamples = 1000;
-        String hyperExponentialOutputPath = config.getCsvOutputDir() + "HyperExponentialGen.csv";
+//        logger.log(Level.INFO,
+//                "Exponential - Sample mean: {0} (theoretical: {1}), Sample std: {2} (theoretical: {3}), Min: {4}, Max: {5}\n",
+//                new Object[]{exponentialSampleMean, exponentialMean, exponentialStats.standardDeviation, exponentialTheoreticalStd, exponentialStats.minValue, exponentialStats.maxValue});
 
         // Hyperexponential distribution
         double hyperExponentialCv = 4.0;
@@ -192,6 +157,7 @@ public class DistributionGenerator {
                 "Hyperexponential - Sample mean: {0} (theoretical: {1}), Sample std: {2} (theoretical: {3}), Min: {4}, Max: {5}\n",
                 new Object[]{hyperExponentialSampleMean, hyperExponentialMean, hyperExponentialStats.standardDeviation, hyperExponentialTheoreticalStd, hyperExponentialStats.minValue, hyperExponentialStats.maxValue});
 
+        //PlotCSV.plotScatter(exponentialOutputPath, config.getPlotOutputDir(), "id", "value");
         PlotCSV.plotScatter(hyperExponentialOutputPath, config.getPlotOutputDir(), "id", "value");
     }
 
