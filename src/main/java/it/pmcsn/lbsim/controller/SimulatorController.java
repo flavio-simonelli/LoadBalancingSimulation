@@ -44,30 +44,9 @@ public class SimulatorController {
         WorkloadGenerator wg;
         Rngs rngs = new Rngs();
 
-        if (config.getIsTracedriven()){
-            try {
-                wg = new TraceWorkloadGenerator(Path.of(config.getTraceArrivalsPath()), Path.of(config.getTraceSizePath()));
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        } else {
-            // Initialize random number generators
-            if (config.isFirstSimulation()) {
+        for (int i=0; i< config.getReplications(); i++) {
+            if (i == 0) {
                 rngs.plantSeeds(config.getSeed0());
-            } else {
-                rngs.plantSeeds(-1); // only for initialize
-                rngs.selectStream(0);
-                rngs.putSeed(config.getSeed0());
-                rngs.selectStream(1);
-                rngs.putSeed(config.getSeed1());
-                rngs.selectStream(2);
-                rngs.putSeed(config.getSeed2());
-                rngs.selectStream(3);
-                rngs.putSeed(config.getSeed3());
-                rngs.selectStream(4);
-                rngs.putSeed(config.getSeed4());
-                rngs.selectStream(5);
-                rngs.putSeed(config.getSeed5());
             }
             Rvgs rvgs = new Rvgs(rngs);
             logger.log(Level.INFO, "Initial seeds: {0}\n", Arrays.toString(rngs.getSeedArray()));
@@ -88,71 +67,77 @@ public class SimulatorController {
             //TODO: rimetti bene iperesponenziale
             //wg = new DistributionWorkloadGenerator(rvgs, interarrivalTimeObj, serviceTimeObj);
             wg = new VerifyWorkloadGenerator(rvgs, 0.17, serviceTimeObj);
+
+            // create the system under simulation
+            RemovalPolicy removalPolicy = new RemovalPolicyLeastUsed();
+            ServerPool serverPool = new ServerPool(config.getInitialServerCount(), 1.0, removalPolicy);
+            Server spikeServer = new Server(config.getSpikeCpuMultiplier(), config.getSpikeCpuPercentage(), -1);
+            SchedulingPolicy schedulingPolicy = new LeastLoadPolicy();
+            SpikeRouter spikeRouter;
+            if (config.isSpikeEnabled()) {
+                spikeRouter = new SimpleSpikeRouter(config.getSImax());
+            } else {
+                spikeRouter = new NoneSpikeRouter();
+            }
+
+            HorizontalScaler horizontalScaler;
+            if (config.isHorizontalEnabled()) {
+                horizontalScaler = new SlidingWindowHorizontalScaler(
+                        config.getSlidingWindowSize(),
+                        config.getR0min().getSeconds(),
+                        config.getR0max().getSeconds(),
+                        config.getHorizontalCoolDown().getSeconds());
+            } else {
+                horizontalScaler = new NoneHorizontalScaler();
+            }
+            LoadBalancer loadBalancer = new LoadBalancer(
+                    serverPool,
+                    spikeServer,
+                    schedulingPolicy,
+                    spikeRouter,
+                    horizontalScaler
+            );
+
+            // initialize csv appender
+            CsvAppender csvAppenderJobs;
+            CsvAppender csvAppenderServers;
+            CsvAppender welfordCsv;
+            rngs.selectStream(0);
+            try {
+                csvAppenderJobs = new CsvAppender(Path.of(config.getCsvOutputDir() + "Jobs" + rngs.getSeed() + ".csv"), "IdJob", "Arrival", "Departure", "ResponseTime", "Response-(Departure-Arrival)", "OriginalSize", "processedBySpike");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            try {
+                csvAppenderServers = new CsvAppender(Path.of(config.getCsvOutputDir() + "Servers"+ rngs.getSeed() +".csv"), "timestamp", "active_jobs_per_webserver", "active_web_servers", "active_jobs_spikeserver");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            try {
+                welfordCsv = new CsvAppender(Path.of("output/csv/Welford"+rngs.getSeed()+".csv"),"Type","N","Mean","StdDev");
+
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+
+            // Create a new simulator instance with the provided configuration
+            Simulator simulator = new Simulator(
+                    wg,
+                    loadBalancer,
+                    csvAppenderServers,
+                    csvAppenderJobs,
+                    welfordCsv);
+
+            // Start the simulation
+            simulator.run(config.getDurationSeconds().getSeconds());
+
+            // print final seed
+            logger.log(Level.INFO, "Final seeds: {0}\n", Arrays.toString(rngs.getSeedArray()));
+
+            csvAppenderJobs.close();
+            csvAppenderServers.close();
         }
-
-        // create the system under simulation
-        RemovalPolicy removalPolicy = new RemovalPolicyLeastUsed();
-        ServerPool serverPool = new ServerPool(config.getInitialServerCount(), 1.0, removalPolicy);
-        Server spikeServer = new Server(config.getSpikeCpuMultiplier(), config.getSpikeCpuPercentage(), -1);
-        SchedulingPolicy schedulingPolicy = new LeastLoadPolicy();
-        SpikeRouter spikeRouter;
-        if (config.isSpikeEnabled()){
-            spikeRouter = new SimpleSpikeRouter(config.getSImax());
-        }
-        else {
-            spikeRouter = new NoneSpikeRouter();
-        }
-
-        HorizontalScaler horizontalScaler;
-        if (config.isHorizontalEnabled()){
-            horizontalScaler = new SlidingWindowHorizontalScaler(
-                    config.getSlidingWindowSize(),
-                    config.getR0min().getSeconds(),
-                    config.getR0max().getSeconds(),
-                    config.getHorizontalCoolDown().getSeconds());
-        }else {
-            horizontalScaler = new NoneHorizontalScaler();
-        }
-        LoadBalancer loadBalancer = new LoadBalancer(
-                serverPool,
-                spikeServer,
-                schedulingPolicy,
-                spikeRouter,
-                horizontalScaler
-        );
-
-        // initialize csv appender
-        CsvAppender csvAppenderJobs;
-        CsvAppender csvAppenderServers;
-
-        try {
-            csvAppenderJobs = new CsvAppender(Path.of(config.getCsvOutputDir() + "Jobs.csv"), "IdJob", "Arrival", "Departure", "ResponseTime","Response-(Departure-Arrival)", "OriginalSize", "processedBySpike");
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        try {
-            csvAppenderServers = new CsvAppender(Path.of(config.getCsvOutputDir() + "Servers.csv"), "timestamp", "active_jobs_per_webserver", "active_web_servers", "active_jobs_spikeserver");
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-
-
-        // Create a new simulator instance with the provided configuration
-        Simulator simulator = new Simulator(
-                wg,
-                loadBalancer,
-                csvAppenderServers,
-                csvAppenderJobs);
-
-        // Start the simulation
-        simulator.run(config.getDurationSeconds().getSeconds());
-
-        // print final seed
-        logger.log(Level.INFO, "Final seeds: {0}\n", Arrays.toString(rngs.getSeedArray()));
-
-        csvAppenderJobs.close();
-        csvAppenderServers.close();
     }
 }
 

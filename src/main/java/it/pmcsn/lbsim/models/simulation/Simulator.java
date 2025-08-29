@@ -35,18 +35,21 @@ public class Simulator {
 
     private final CsvAppender csvAppenderServers;
     private final CsvAppender csvAppenderJobs;
+    private final CsvAppender welfordCsv;
 
 
     // Constructor
     public Simulator(WorkloadGenerator workloadGenerator,
                      LoadBalancer loadBalancer,
                      CsvAppender csvAppenderServers,
-                     CsvAppender csvAppenderJobs) {
+                     CsvAppender csvAppenderJobs,
+                     CsvAppender csvWelford) {
 
         this.currentTime = 0.0;
         this.loadBalancer = loadBalancer;
         this.csvAppenderServers = csvAppenderServers;
         this.csvAppenderJobs = csvAppenderJobs;
+        this.welfordCsv = csvWelford;
         this.workload = workloadGenerator;
         this.futureEventList = new FutureEventList();
     }
@@ -107,7 +110,6 @@ public class Simulator {
 
         //Welford csv
         try {
-            CsvAppender welfordCsv = new CsvAppender(Path.of("output/csv/Welford.csv"),"Type","N","Mean","StdDev");
             welfordCsv.writeRow("OriginalSize",String.valueOf(welfordArrivalN),String.valueOf(welfordArrivalAvg),String.valueOf(welfordArrivalS));
             welfordCsv.writeRow("ResponseTime",String.valueOf(welfordDepartureN),String.valueOf(welfordDepartureAvg),String.valueOf(welfordDepartureS));
             welfordCsv.close();
