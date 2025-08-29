@@ -1,42 +1,43 @@
 simulation:
-  isFirstSimulation: false   # true se è la prima esecuzione della simulazione ( i seed 1, ..., 5 verranno presi tramite plant seed del seed 0)
+  replication: 6        # numero di repliche della simulazione
+  isFirstSimulation: true   # true se è la prima esecuzione della simulazione ( i seed 1, ..., 5 verranno presi tramite plant seed del seed 0)
   seed0: -1        # seed per il generatore di numeri casuali
-  seed1: 882129760        # seed per il generatore di numeri casuali
-  seed2: 2094228380        # seed per il generatore di numeri casuali
-  seed3: 1560038108        # seed per il generatore di numeri casuali
-  seed4: 1629169463       # seed per il generatore di numeri
-  seed5: 810213420       # seed per il generatore di numeri
-  duration: "PT1H"   # P2DT3H4M → 2 giorni, 3 ore, 4 minuti
+  seed1: 0        # seed per il generatore di numeri casuali
+  seed2: 0        # seed per il generatore di numeri casuali
+  seed3: 0        # seed per il generatore di numeri casuali
+  seed4: 0       # seed per il generatore di numeri
+  seed5: 0       # seed per il generatore di numeri
+  duration: "P2DT3H4M"   # P2DT3H4M → 2 giorni, 3 ore, 4 minuti
 
 workload:
-  isTracedriven: true   # true se il carico di lavoro è trace-driven, false se è generato tramite distribuzioni
+  isTracedriven: false   # true se il carico di lavoro è trace-driven, false se è generato tramite distribuzioni
   interarrival:
     mean: 0.15        # media dei tempi di interarrivo
     cv: 4             # coefficiente di variazione
-    streamp: 1
-    streamhexp1: 2
-    streamhexp2: 3
+    streamp: 0
+    streamhexp1: 1
+    streamhexp2: 2
   service:
     mean: 0.16        # media della distribuzione del tempo di servizio
     cv: 4             # coefficiente di variazione
-    streamp: 4
-    streamhexp1: 5
-    streamhexp2: 6
+    streamp: 3
+    streamhexp1: 4
+    streamhexp2: 5
 
 scheduling:
   policy: "least_load"   # valori possibili: least_load, round_robin
 
 scaling:
   spikeServer:
-    enabled: true
-    SImax: 10        # max job nel web server prima di reindirizzare allo spike
+    enabled: false
+    SImax: 40        # max job nel web server prima di reindirizzare allo spike
     SImin: 6        # min job nel web server prima di reindirizzare al web server
     cpuMultiplier: 2  # moltiplicatore CPU spike
     cpuPercentage: 0.4 # percentuale CPU assegnata all'app spike
-    coolDown: "PT5S" # tempo cooldown reindirizzamento (s)
+    coolDown: "PT0S" # tempo cooldown reindirizzamento (s)
 
   horizontal:
-    enabled: true
+    enabled: false
     slidingWindowSize: 10     # finestra mobile per media tempo risposta
     R0max: "PT3S"        # media tempo di risposta per scale in
     R0min: "PT1S"        # media tempo di risposta per scale out
@@ -49,7 +50,7 @@ output:
   plotDir: "output/plot/"
 
 logging:
-  level: "FINE"   # possibili valori: SEVERE, WARNING, INFO, FINE, FINER, FINEST
+  level: "INFO"   # possibili valori: SEVERE, WARNING, INFO, FINE, FINER, FINEST
 
 path:
   traceArrivalsPath: "src/main/resources/arrivals.txt"

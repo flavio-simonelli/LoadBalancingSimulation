@@ -35,7 +35,6 @@ public class HistogramUtils {
     }
 
     public static int chooseDefinitiveK (int n){
-        /*
         int chooseK = chooseK(n);
         int kmin = kMin(n);
         int kmax = kMax(n);
@@ -52,8 +51,6 @@ public class HistogramUtils {
                 return kmin;
             }
         }
-        */
-        return wandRule(n);
     }
 
     private static void printStats(int chooseK) {
@@ -82,7 +79,7 @@ public class HistogramUtils {
         return relativeFrequency / binWidth;
     }
 
-    public static double stimatedStdDev(double a, double binWidth, int k,int[] binCounts, int totalCount, double mean) {
+    public static double  stimatedStdDev(double a, double binWidth, int k,int[] binCounts, int totalCount, double mean) {
         return Math.sqrt(stimatedVariance(a, binWidth, k, binCounts, totalCount, mean));
     }
 

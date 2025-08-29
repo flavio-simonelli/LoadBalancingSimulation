@@ -17,6 +17,7 @@ import it.pmcsn.lbsim.models.domain.server.ServerPool;
 import it.pmcsn.lbsim.models.simulation.Simulator;
 import it.pmcsn.lbsim.models.simulation.workloadgenerator.DistributionWorkloadGenerator;
 import it.pmcsn.lbsim.models.simulation.workloadgenerator.TraceWorkloadGenerator;
+import it.pmcsn.lbsim.models.simulation.workloadgenerator.VerifyWorkloadGenerator;
 import it.pmcsn.lbsim.models.simulation.workloadgenerator.WorkloadGenerator;
 import it.pmcsn.lbsim.utils.csv.CsvAppender;
 import it.pmcsn.lbsim.utils.random.HyperExponential;
@@ -84,8 +85,9 @@ public class SimulatorController {
                     config.getServiceStreamP(), config.getServiceStreamHexp1(), config.getServiceStreamHexp2());
             logger.log(Level.FINE, "Hyperexponential service with parameters {0} {1} {2}\n",
                     new Object[]{serviceTimeObj.getP(), serviceTimeObj.getM1(), serviceTimeObj.getM2()});
-
-            wg = new DistributionWorkloadGenerator(rvgs, interarrivalTimeObj, serviceTimeObj);
+            //TODO: rimetti bene iperesponenziale
+            //wg = new DistributionWorkloadGenerator(rvgs, interarrivalTimeObj, serviceTimeObj);
+            wg = new VerifyWorkloadGenerator(rvgs, 0.17, serviceTimeObj);
         }
 
         // create the system under simulation

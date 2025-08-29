@@ -5,6 +5,7 @@ import it.pmcsn.lbsim.models.domain.schedulingpolicy.SchedulingType;
 import java.time.Duration;
 
 public interface SimConfiguration {
+    int getReplications();
     boolean isFirstSimulation();
     long getSeed0();
     long getSeed1();

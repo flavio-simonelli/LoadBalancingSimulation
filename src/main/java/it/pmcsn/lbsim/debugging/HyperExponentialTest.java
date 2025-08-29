@@ -27,7 +27,7 @@ public class HyperExponentialTest {
 
     public static void main(String[] args) {
         // read the configuration from a YAML file
-        int n = 100000; // numero di campioni
+        int n = 10000000; // numero di campioni
         SimConfiguration config = ConfigLoader.load(configFilePath);
 
         double theoreticalMean = config.getInterarrivalMean();
@@ -143,21 +143,6 @@ public class HyperExponentialTest {
         System.out.println("Intervallo [a,b] : [" + a + "," + b + "]");
         System.out.println("Larghezza bin γ  : " + gamma);
 
-        try {
-            PlotCSV.plotDualCurves(outputStimatedResult, outputTheoreticalResult, "output/plot", "a_i", "density");
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        try {
-            PlotCSV.plotScatter(outputStimatedResult, "output/plot", "a_i", "density");
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        try {
-            PlotCSV.plotScatter(outputTheoreticalResult, "output/plot", "a_i", "density");
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
     }
 
 

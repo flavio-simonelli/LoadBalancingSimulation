@@ -13,6 +13,7 @@ public class Config {
     public Path path;
 
     public static class Simulation {
+        public int replications;
         public boolean isFirstSimulation;
         public long seed0;
         public long seed1;

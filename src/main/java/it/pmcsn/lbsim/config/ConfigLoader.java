@@ -56,6 +56,7 @@ public class ConfigLoader {
             this.cfg = cfg;
         }
 
+        @Override public int getReplications() { return cfg.simulation.replications; }
         @Override public boolean isFirstSimulation() { return cfg.simulation.isFirstSimulation; }
         @Override public long getSeed0() { return cfg.simulation.seed0; }
         @Override public long getSeed1() { return cfg.simulation.seed1; }
