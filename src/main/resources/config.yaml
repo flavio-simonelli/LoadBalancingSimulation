@@ -1,5 +1,5 @@
 simulation:
-  replication: 6        # numero di repliche della simulazione
+  replications: 6        # numero di repliche della simulazione
   isFirstSimulation: true   # true se è la prima esecuzione della simulazione ( i seed 1, ..., 5 verranno presi tramite plant seed del seed 0)
   seed0: -1        # seed per il generatore di numeri casuali
   seed1: 0        # seed per il generatore di numeri casuali
