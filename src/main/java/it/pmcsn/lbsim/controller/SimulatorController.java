@@ -104,17 +104,17 @@ public class SimulatorController {
             CsvAppender welfordCsv;
             rngs.selectStream(0);
             try {
-                csvAppenderJobs = new CsvAppender(Path.of(config.getCsvOutputDir() + "Jobs" + rngs.getSeed() + ".csv"), "IdJob", "Arrival", "Departure", "ResponseTime", "Response-(Departure-Arrival)", "OriginalSize", "processedBySpike");
+                csvAppenderJobs = new CsvAppender(Path.of(config.getCsvOutputDir() + "Jobs" + rngs.getSeed() +"rep"+i+ ".csv"), "IdJob", "Arrival", "Departure", "ResponseTime", "Response-(Departure-Arrival)", "OriginalSize", "processedBySpike");
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
             try {
-                csvAppenderServers = new CsvAppender(Path.of(config.getCsvOutputDir() + "Servers"+ rngs.getSeed() +".csv"), "timestamp", "active_jobs_per_webserver", "active_web_servers", "active_jobs_spikeserver");
+                csvAppenderServers = new CsvAppender(Path.of(config.getCsvOutputDir() + "Servers"+ rngs.getSeed() +"rep"+i+".csv"), "timestamp", "active_jobs_per_webserver", "active_web_servers", "active_jobs_spikeserver");
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
             try {
-                welfordCsv = new CsvAppender(Path.of("output/csv/Welford"+rngs.getSeed()+".csv"),"Type","N","Mean","StdDev");
+                welfordCsv = new CsvAppender(Path.of("output/csv/Welford"+rngs.getSeed()+"rep"+i+".csv"),"Type","N","Mean","StdDev");
 
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -137,6 +137,7 @@ public class SimulatorController {
 
             csvAppenderJobs.close();
             csvAppenderServers.close();
+            welfordCsv.close();
         }
     }
 }

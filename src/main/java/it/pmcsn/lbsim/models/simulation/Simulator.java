@@ -112,7 +112,6 @@ public class Simulator {
         try {
             welfordCsv.writeRow("OriginalSize",String.valueOf(welfordArrivalN),String.valueOf(welfordArrivalAvg),String.valueOf(welfordArrivalS));
             welfordCsv.writeRow("ResponseTime",String.valueOf(welfordDepartureN),String.valueOf(welfordDepartureAvg),String.valueOf(welfordDepartureS));
-            welfordCsv.close();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
