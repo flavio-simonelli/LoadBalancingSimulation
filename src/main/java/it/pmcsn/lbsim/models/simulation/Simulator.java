@@ -5,26 +5,19 @@ import it.pmcsn.lbsim.models.domain.Job;
 import it.pmcsn.lbsim.models.domain.LoadBalancer;
 import it.pmcsn.lbsim.models.simulation.workloadgenerator.TraceWorkloadGenerator;
 import it.pmcsn.lbsim.models.simulation.workloadgenerator.WorkloadGenerator;
+import it.pmcsn.lbsim.utils.IntervalEstimation;
+import it.pmcsn.lbsim.utils.TimeMediateWelford;
+import it.pmcsn.lbsim.utils.WelfordSimple;
 import it.pmcsn.lbsim.utils.csv.CsvAppender;
 
-import java.nio.file.Path;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Simulator {
     private static final Logger logger = Logger.getLogger(Simulator.class.getName());
 
-    //welford data fore departures
-    private int welfordDepartureN=0;
-    private double welfordDepartureAvg=0.0;
-    private double welfordDeparturV =0.0;
-    private double welfordDepartureS;
-
-    //welford data for arrivals
-    private int welfordArrivalN=0;
-    private double welfordArrivalAvg=0.0;
-    private double welfordArrivalV =0.0;
-    private double welfordArrivalS;
+    private final TimeMediateWelford departureStats = new TimeMediateWelford();
+    private final TimeMediateWelford arrivalStats = new TimeMediateWelford();
 
     private Double currentTime;                     // Current simulation time
     private final FutureEventList futureEventList; // Future Event List
@@ -33,22 +26,16 @@ public class Simulator {
     private final LoadBalancer loadBalancer; // System under simulation
 
 
-    private final CsvAppender csvAppenderServers;
-    private final CsvAppender csvAppenderJobs;
     private final CsvAppender welfordCsv;
 
 
     // Constructor
     public Simulator(WorkloadGenerator workloadGenerator,
                      LoadBalancer loadBalancer,
-                     CsvAppender csvAppenderServers,
-                     CsvAppender csvAppenderJobs,
                      CsvAppender csvWelford) {
 
         this.currentTime = 0.0;
         this.loadBalancer = loadBalancer;
-        this.csvAppenderServers = csvAppenderServers;
-        this.csvAppenderJobs = csvAppenderJobs;
         this.welfordCsv = csvWelford;
         this.workload = workloadGenerator;
         this.futureEventList = new FutureEventList();
@@ -81,8 +68,6 @@ public class Simulator {
 
         } while ((workload instanceof TraceWorkloadGenerator traceWorkloadGenerator) ? i < traceWorkloadGenerator.getSizeArrival() : this.currentTime < simulationDuration);
 
-        //TODO: gestire nel caso trace driven se non ci sono più arrivi o altri eventi ma il tempo di simulazione non è ancora finito
-
         // Drain remaining jobs after simulation ends
         this.futureEventList.setNextArrivalTime(Double.POSITIVE_INFINITY); //sicuro da modificare
         while (!this.futureEventList.getJobStats().isEmpty()){
@@ -96,22 +81,13 @@ public class Simulator {
         loadBalancer.getWebServers().backToInitialState();
 
 
-        this.csvAppenderServers.writeRow(
-                this.currentTime.toString(),
-                String.valueOf(this.loadBalancer.getJobCountsForWebServer()),
-                String.valueOf(this.loadBalancer.getWebServerCount()),
-                String.valueOf(this.loadBalancer.getSpikeServerJobCount())
-        );
 
-
-        //Welford final calculation
-        welfordDepartureS = Math.sqrt(welfordDeparturV/(welfordDepartureN));
-        welfordArrivalS = Math.sqrt(welfordArrivalV/(welfordArrivalN));
 
         //Welford csv
+        IntervalEstimation intervalEstimation = new IntervalEstimation(0.95);
         try {
-            welfordCsv.writeRow("OriginalSize",String.valueOf(welfordArrivalN),String.valueOf(welfordArrivalAvg),String.valueOf(welfordArrivalS));
-            welfordCsv.writeRow("ResponseTime",String.valueOf(welfordDepartureN),String.valueOf(welfordDepartureAvg),String.valueOf(welfordDepartureS));
+            welfordCsv.writeRow("OriginalSize",String.valueOf(arrivalStats.getI()),String.valueOf(arrivalStats.getAvg()),String.valueOf(arrivalStats.getStandardVariation()), String.valueOf(arrivalStats.getVariance()), String.valueOf(intervalEstimation.SemiIntervalEstimation(arrivalStats.getStandardVariation(), arrivalStats.getI())));
+            welfordCsv.writeRow("ResponseTime",String.valueOf(departureStats.getI()),String.valueOf(departureStats.getAvg()),String.valueOf(departureStats.getStandardVariation()), String.valueOf(departureStats.getVariance()), String.valueOf(intervalEstimation.SemiIntervalEstimation(departureStats.getStandardVariation(), departureStats.getI())));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -136,28 +112,11 @@ public class Simulator {
             jobStat.estimateDepartureTime(this.currentTime);
         }
 
-        // csv logging
-
-
-        this.csvAppenderServers.writeRow(
-                this.currentTime.toString(),
-                String.valueOf(this.loadBalancer.getJobCountsForWebServer()),
-                String.valueOf(this.loadBalancer.getWebServerCount()),
-                String.valueOf(this.loadBalancer.getSpikeServerJobCount())
-        );
-
-
-
         // Generate next arrival time
         this.futureEventList.setNextArrivalTime(this.workload.nextArrival(currentTime));
 
         //welford for arrivals
-        welfordArrivalN++;
-        double d = size - this.welfordArrivalAvg;
-        welfordArrivalV = welfordArrivalV + d * d * (welfordArrivalN-1)/welfordArrivalN;
-        welfordArrivalAvg = welfordArrivalAvg + d/welfordArrivalN;
-
-
+        arrivalStats.iteration(size, currentTime);
     }
 
     private void departureHandler(double elapsedTime, JobStats targetDepartureJobStats) {
@@ -165,41 +124,12 @@ public class Simulator {
         this.loadBalancer.getWebServers().processJobs(elapsedTime);
         this.loadBalancer.getSpikeServer().processJobs(elapsedTime);
 
-        // Update current time to departure time
-        this.currentTime = targetDepartureJobStats.getEstimatedDepartureTime();
-
         // Process job departure through load balancer
         double responseTime = this.currentTime - targetDepartureJobStats.getArrivalTime();
 
         this.loadBalancer.completeJob(targetDepartureJobStats.getJob(),this.currentTime, responseTime);
 
         // Add to the csv for forensics analysis
-
-
-        this.csvAppenderJobs.writeRow(
-                String.valueOf(targetDepartureJobStats.getJob().getJobId()),                                 // job id
-                String.valueOf(targetDepartureJobStats.getArrivalTime()),                                    // arrival time
-                String.valueOf(currentTime),                                                                 // departure time
-                String.valueOf(responseTime),                                                                // response time
-                String.valueOf(responseTime - (currentTime - targetDepartureJobStats.getArrivalTime())),                   // response - (departure - arrival)
-                String.valueOf(targetDepartureJobStats.getOriginalSize()) ,                                  // original size
-                String.valueOf(targetDepartureJobStats.getJob().getAssignedServer().getCpuMultiplier()>1) // processed by spike
-        );
-
-
-
-        this.csvAppenderServers.writeRow(
-                this.currentTime.toString(),
-                String.valueOf(this.loadBalancer.getJobCountsForWebServer()),
-                String.valueOf(this.loadBalancer.getWebServerCount()),
-                String.valueOf(this.loadBalancer.getSpikeServerJobCount())
-        );
-
-
-
-
-
-
         this.futureEventList.removeJobStats(targetDepartureJobStats);
 
         // Recalculate estimated departure times for remaining jobs
@@ -207,10 +137,7 @@ public class Simulator {
             js.estimateDepartureTime(this.currentTime);
         }
 
-        //Welford for departures
-        welfordDepartureN++;
-        double d = responseTime - this.welfordDepartureAvg;
-        welfordDeparturV = welfordDeparturV + d * d * (welfordDepartureN-1)/welfordDepartureN;
-        welfordDepartureAvg = welfordDepartureAvg + d/welfordDepartureN;
+        // welford for departures
+        departureStats.iteration(responseTime, this.currentTime);
     }
 }

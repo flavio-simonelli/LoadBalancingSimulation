@@ -1,12 +1,12 @@
 package it.pmcsn.lbsim.config;
 
 import it.pmcsn.lbsim.models.domain.schedulingpolicy.SchedulingType;
+import it.pmcsn.lbsim.models.simulation.workloadgenerator.WorkloadType;
 
 import java.time.Duration;
 
 public interface SimConfiguration {
     int getReplications();
-    boolean isFirstSimulation();
     long getSeed0();
     long getSeed1();
     long getSeed2();
@@ -49,6 +49,8 @@ public interface SimConfiguration {
 
     String getTraceArrivalsPath();
     String getTraceSizePath();
+
+    WorkloadType getChooseWorkload();
 
 
 }
