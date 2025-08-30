@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import it.pmcsn.lbsim.models.domain.schedulingpolicy.SchedulingType;
+import it.pmcsn.lbsim.models.simulation.workloadgenerator.WorkloadType;
 
 import java.io.InputStream;
 import java.time.Duration;
@@ -57,7 +58,6 @@ public class ConfigLoader {
         }
 
         @Override public int getReplications() { return cfg.simulation.replications; }
-        @Override public boolean isFirstSimulation() { return cfg.simulation.isFirstSimulation; }
         @Override public long getSeed0() { return cfg.simulation.seed0; }
         @Override public long getSeed1() { return cfg.simulation.seed1; }
         @Override public long getSeed2() { return cfg.simulation.seed2; }
@@ -100,6 +100,8 @@ public class ConfigLoader {
 
         @Override public String getTraceArrivalsPath() { return cfg.path.traceArrivalsPath; }
         @Override public String getTraceSizePath() { return cfg.path.traceSizePath; }
+
+        @Override public WorkloadType getChooseWorkload() { return WorkloadType.fromString(cfg.workload.chooseWorkload); }
     }
 
     private static void printDebug(SimConfiguration cfg) {

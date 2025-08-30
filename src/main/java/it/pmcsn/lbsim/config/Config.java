@@ -14,7 +14,6 @@ public class Config {
 
     public static class Simulation {
         public int replications;
-        public boolean isFirstSimulation;
         public long seed0;
         public long seed1;
         public long seed2;
@@ -25,6 +24,7 @@ public class Config {
     }
 
     public static class Workload {
+        public String chooseWorkload;
         public boolean isTracedriven;
         public Dist interarrival;
         public Dist service;
