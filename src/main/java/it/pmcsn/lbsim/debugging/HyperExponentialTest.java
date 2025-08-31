@@ -2,8 +2,8 @@ package it.pmcsn.lbsim.debugging;
 
 import it.pmcsn.lbsim.config.ConfigLoader;
 import it.pmcsn.lbsim.config.SimConfiguration;
+import it.pmcsn.lbsim.utils.WelfordSimple;
 import it.pmcsn.lbsim.utils.csv.CsvAppender;
-import it.pmcsn.lbsim.utils.plot.PlotCSV;
 import it.pmcsn.lbsim.utils.random.HyperExponential;
 import it.pmcsn.lbsim.utils.random.Rngs;
 import it.pmcsn.lbsim.utils.random.Rvgs;
@@ -18,8 +18,7 @@ import java.util.logging.Logger;
 
 public class HyperExponentialTest {
     private static final String configFilePath = "config.yaml"; // Default configuration file path
-    private static final String outputStimatedResult = "output/csv/stimated_hyperexponential.csv";
-    private static final String outputTheoreticalResult = "output/csv/theoretical_hyperexponential.csv";
+    private static final String outputResult = "output/csv/hyperexponential_test.csv";
     private static final Logger logger = Logger.getLogger(HyperExponentialTest.class.getName());
 
 
@@ -37,21 +36,21 @@ public class HyperExponentialTest {
         // create the hyperexponential test instance
         HyperExponential hyperExponential = new HyperExponential(theoreticalCv, theoreticalMean, config.getInterarrivalStreamP(), config.getInterarrivalStreamHexp1(), config.getInterarrivalStreamHexp2());
 
+        CsvAppender hyperexponentialTest;
         try {
-            CsvAppender theoreticalResult = new CsvAppender(Path.of(outputTheoreticalResult), "a_i", "stimatedDensity");
+            hyperexponentialTest = new CsvAppender(Path.of(outputResult), "type", "mean", "cv", "var");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        try {
-            CsvAppender stimatedResult = new CsvAppender(Path.of(outputStimatedResult), "a_i", "theoreticalDensity");
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        hyperexponentialTest.writeRow("theoretical", String.valueOf(theoreticalMean), String.valueOf(theoreticalCv), String.valueOf(thoereticalVar));
 
         // create a random generator
         Rngs rngs = new Rngs();
-        rngs.plantSeeds(config.getSeed0());
+        rngs.plantSeeds(config.getSeed0()); // get the first seed from the configuration file
         Rvgs rvgs = new Rvgs(rngs);
+
+        // create Welford for mean and variance
+        WelfordSimple welford = new WelfordSimple();
 
         logger.log(Level.INFO,"Generated seeds: {0}\n", Arrays.toString(rngs.getSeedArray()));
 
@@ -61,6 +60,7 @@ public class HyperExponentialTest {
         for (int i = 0; i < n; i++) {
             // Scelgo la fase in base alle probabilità
             double hyperSample = rvgs.hyperExponential(hyperExponential.getP(), hyperExponential.getM1(), hyperExponential.getM2(), hyperExponential.getStreamP(), hyperExponential.getStreamExp1(), hyperExponential.getStreamExp2());
+            welford.iteration(hyperSample);
             samples.add(hyperSample);
         }
 
@@ -108,24 +108,9 @@ public class HyperExponentialTest {
         double stimatedVar = HistogramUtils.stimatedVariance(a, gamma, k, count, n, stimatedMean);
         
         // write csv
-        try (CsvAppender stimatedResult = new CsvAppender(Path.of(outputStimatedResult), "a_i", "density")) {
-            for (int j = 0; j < k; j++) {
-                double a_i = a + j * gamma;
-                stimatedResult.writeRow(String.valueOf(a_i), String.valueOf(stimatedDenisty[j]));
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        try (CsvAppender theoreticalResult = new CsvAppender(Path.of(outputTheoreticalResult), "a_i", "density")) {
-            double c = a;
-            while (c<=b) {
-                theoreticalResult.writeRow(String.valueOf(c), String.valueOf(Rvms.pdfHyperexponential(theoreticalMean, theoreticalCv, c)));
-                c = c + 0.001;
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
+        hyperexponentialTest.writeRow("histogram", String.valueOf(stimatedMean), String.valueOf(stimatedStdDev/theoreticalMean), String.valueOf(stimatedVar));
+        hyperexponentialTest.writeRow("welford", String.valueOf(welford.getAvg()), String.valueOf(welford.getStandardVariation()/welford.getAvg()), String.valueOf(welford.getVariance()));
+        hyperexponentialTest.close();
 
 
         // Risultati

@@ -225,4 +225,8 @@ public class Rngs {
     public long[] getSeedArray() {
         return seed;
     }
+
+    public void setInitialized() {
+        this.initialized = 1;
+    }
 }

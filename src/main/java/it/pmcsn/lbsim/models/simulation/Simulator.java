@@ -16,8 +16,8 @@ import java.util.logging.Logger;
 public class Simulator {
     private static final Logger logger = Logger.getLogger(Simulator.class.getName());
 
-    private final TimeMediateWelford departureStats = new TimeMediateWelford();
-    private final TimeMediateWelford arrivalStats = new TimeMediateWelford();
+    private final WelfordSimple departureStats = new WelfordSimple();
+    private final WelfordSimple arrivalStats = new WelfordSimple();
 
     private Double currentTime;                     // Current simulation time
     private final FutureEventList futureEventList; // Future Event List
@@ -27,16 +27,22 @@ public class Simulator {
 
 
     private final CsvAppender welfordCsv;
+    private final CsvAppender jobLogCsv;
+    private final CsvAppender serverLogCsv;
 
 
     // Constructor
     public Simulator(WorkloadGenerator workloadGenerator,
                      LoadBalancer loadBalancer,
-                     CsvAppender csvWelford) {
+                     CsvAppender csvWelford,
+                     CsvAppender jobLogCsv,
+                     CsvAppender serverLogCsv) {
 
         this.currentTime = 0.0;
         this.loadBalancer = loadBalancer;
         this.welfordCsv = csvWelford;
+        this.jobLogCsv = jobLogCsv;
+        this.serverLogCsv = serverLogCsv;
         this.workload = workloadGenerator;
         this.futureEventList = new FutureEventList();
     }
@@ -46,32 +52,33 @@ public class Simulator {
             logger.log(Level.SEVERE, "Simulation Duration must be greater than zero");
             throw new IllegalArgumentException("Simulation duration must be greater than zero");
         }
-
         this.futureEventList.setNextArrivalTime(this.workload.nextArrival(currentTime));
         // Main simulation loop - process events until simulation duration
-        int i = 0;
-        do  {
+        while (this.futureEventList.getnextArrivalTime() <= simulationDuration) {
             FutureEventList.Event event = this.futureEventList.nextEvent();
             if(event == FutureEventList.Event.ARRIVAL) {
                 double nextArrivalTime = this.futureEventList.getnextArrivalTime();
+                if (nextArrivalTime == Double.POSITIVE_INFINITY) {
+                    break; // No more events to process
+                }
                 double elapsedTime = nextArrivalTime - this.currentTime;
                 this.currentTime = nextArrivalTime;
                 arrivalHandler(elapsedTime, this.currentTime);
-                i++;
+                this.futureEventList.setNextArrivalTime(this.workload.nextArrival(currentTime));
             } else {
                 JobStats nextDepartureJob = this.futureEventList.nextDepartureJob();
                 double nextDepartureTime = nextDepartureJob.getEstimatedDepartureTime();
+                if (nextDepartureTime == Double.POSITIVE_INFINITY) {
+                    break; // No more events to process
+                }
                 double elapsedTime = nextDepartureTime - this.currentTime;
                 this.currentTime = nextDepartureTime;
                 departureHandler(elapsedTime,nextDepartureJob);
             }
-
-        } while ((workload instanceof TraceWorkloadGenerator traceWorkloadGenerator) ? i < traceWorkloadGenerator.getSizeArrival() : this.currentTime < simulationDuration);
-
+        }
         // Drain remaining jobs after simulation ends
-        this.futureEventList.setNextArrivalTime(Double.POSITIVE_INFINITY); //sicuro da modificare
-        while (!this.futureEventList.getJobStats().isEmpty()){
-                JobStats nextDepartureJob = futureEventList.nextDepartureJob();
+        while ( this.futureEventList.nextDepartureJob() != null) {
+                JobStats nextDepartureJob = this.futureEventList.nextDepartureJob();
                 double nextDepartureTime = nextDepartureJob.getEstimatedDepartureTime();
                 double elapsedTime =  nextDepartureTime - this.currentTime;
                 this.currentTime = nextDepartureTime;
@@ -79,10 +86,6 @@ public class Simulator {
         }
         // Remove the servers added
         loadBalancer.getWebServers().backToInitialState();
-
-
-
-
         //Welford csv
         IntervalEstimation intervalEstimation = new IntervalEstimation(0.95);
         try {
@@ -112,11 +115,22 @@ public class Simulator {
             jobStat.estimateDepartureTime(this.currentTime);
         }
 
-        // Generate next arrival time
-        this.futureEventList.setNextArrivalTime(this.workload.nextArrival(currentTime));
-
         //welford for arrivals
-        arrivalStats.iteration(size, currentTime);
+        arrivalStats.iteration(size);
+
+        // Log job statistics
+        try {
+            jobLogCsv.writeRow(
+                    String.valueOf(newJobStats.getJob().getJobId()),
+                    String.format("%.6f", newJobStats.getArrivalTime()),
+                    "",
+                    "",
+                    String.format("%.6f", newJobStats.getOriginalSize()),
+                    String.valueOf(newJobStats.getJob().getAssignedServer().getId())
+            );
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void departureHandler(double elapsedTime, JobStats targetDepartureJobStats) {
@@ -137,7 +151,24 @@ public class Simulator {
             js.estimateDepartureTime(this.currentTime);
         }
 
+        // Log job statistics
+        try {
+            jobLogCsv.writeRow(
+                    String.valueOf(targetDepartureJobStats.getJob().getJobId()),
+                    String.format("%.6f", targetDepartureJobStats.getArrivalTime()),
+                    String.format("%.6f", this.currentTime),
+                    String.format("%.6f", responseTime),
+                    String.format("%.6f", targetDepartureJobStats.getOriginalSize()),
+                    String.valueOf(targetDepartureJobStats.getJob().getAssignedServer().getId())
+            );
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
         // welford for departures
-        departureStats.iteration(responseTime, this.currentTime);
+        if (currentTime >= 120.0) {
+            //warm-up period of 120 seconds
+            departureStats.iteration(responseTime);
+        }
     }
 }

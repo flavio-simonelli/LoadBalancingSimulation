@@ -38,20 +38,37 @@ public class SimulatorController {
             logger.log(Level.SEVERE,"Simulation configuration cannot be null");
             throw new IllegalArgumentException("Simulation configuration cannot be null");
         }
-
-        WorkloadGenerator wg = null;
+        // Define the random number generators
         Rngs rngs = new Rngs();
-
         for (int i=0; i< config.getReplications(); i++) {
             if (i == 0) {
-                rngs.plantSeeds(config.getSeed0());
+                if (config.getSeed1() != 0) {
+                    // put all seed in the rngs
+                    rngs.setInitialized();
+                    rngs.selectStream(0);
+                    rngs.plantSeeds(config.getSeed0());
+                    rngs.selectStream(1);
+                    rngs.plantSeeds(config.getSeed1());
+                    rngs.selectStream(2);
+                    rngs.plantSeeds(config.getSeed2());
+                    rngs.selectStream(3);
+                    rngs.plantSeeds(config.getSeed3());
+                    rngs.selectStream(4);
+                    rngs.plantSeeds(config.getSeed4());
+                    rngs.selectStream(5);
+                    rngs.plantSeeds(config.getSeed5());
+                } else {
+                    // plant only the first seed and let the others be generated
+                    rngs.plantSeeds(config.getSeed0());
+                }
             }
             Rvgs rvgs = new Rvgs(rngs);
             logger.log(Level.INFO, "Initial seeds: {0}\n", Arrays.toString(rngs.getSeedArray()));
+
+            // create the workload generator
+            WorkloadGenerator wg;
             HyperExponential interarrivalTimeObj;
             HyperExponential serviceTimeObj;
-
-
             switch (config.getChooseWorkload()){
                 case WorkloadType.HYPEREXPONENTIAL:
                     interarrivalTimeObj = new HyperExponential(config.getInterarrivalCv(), config.getInterarrivalMean(),
@@ -79,6 +96,9 @@ public class SimulatorController {
                         throw new RuntimeException(e);
                     }
                     break;
+                default:
+                    logger.log(Level.SEVERE, "Unsupported workload type: {0}\n", config.getChooseWorkload());
+                    throw new IllegalArgumentException("Unsupported workload type: " + config.getChooseWorkload());
             }
             // create the system under simulation
             RemovalPolicy removalPolicy = new RemovalPolicyLeastUsed();
@@ -87,10 +107,6 @@ public class SimulatorController {
             SchedulingPolicy schedulingPolicy = switch (config.getSchedulingType()) {
                 case LEAST_LOAD -> new LeastLoadPolicy();
                 case ROUND_ROBIN -> new RoundRobinPolicy();
-                default -> {
-                    logger.log(Level.SEVERE, "Unsupported scheduling policy: {0}\n", config.getSchedulingType());
-                    throw new IllegalArgumentException("Unsupported scheduling policy: " + config.getSchedulingType());
-                }
             };
             SpikeRouter spikeRouter;
             if (config.isSpikeEnabled()) {
@@ -116,29 +132,42 @@ public class SimulatorController {
                     spikeRouter,
                     horizontalScaler
             );
+            // welford csv
             CsvAppender welfordCsv;
+            CsvAppender jobStatsCsv;
+            CsvAppender serverStatsCsv;
             rngs.selectStream(0);
             try {
                 welfordCsv = new CsvAppender(Path.of("output/csv/Welford"+rngs.getSeed()+"rep"+i+".csv"),"Type","N","Mean","StdDev","Variance", "Semi Intervallo media");
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-
-
+            try {
+                jobStatsCsv = new CsvAppender(Path.of("output/csv/Jobstats"+rngs.getSeed()+"rep"+i+".csv"), "JobID", "Arrival", "Departure", "ResponseTime", "OriginalSize", "AssignedServerID");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            try {
+                serverStatsCsv = new CsvAppender(Path.of("output/csv/Serverstats"+rngs.getSeed()+"rep"+i+".csv"), "Time", "ServerID", "State", "CpuPercentage", "CpuMultiplier", "CurrentLoad", "JobsInQueue");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
             // Create a new simulator instance with the provided configuration
             Simulator simulator = new Simulator(
                     wg,
                     loadBalancer,
-                    welfordCsv
+                    welfordCsv,
+                    jobStatsCsv,
+                    serverStatsCsv
             );
-
             // Start the simulation
             simulator.run(config.getDurationSeconds().getSeconds());
-
             // print final seed
             logger.log(Level.INFO, "Final seeds: {0}\n", Arrays.toString(rngs.getSeedArray()));
-
+            // close welford csv
             welfordCsv.close();
+            jobStatsCsv.close();
+            serverStatsCsv.close();
         }
     }
 }
