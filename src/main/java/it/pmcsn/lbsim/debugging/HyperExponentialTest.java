@@ -19,6 +19,8 @@ import java.util.logging.Logger;
 public class HyperExponentialTest {
     private static final String configFilePath = "config.yaml"; // Default configuration file path
     private static final String outputResult = "output/csv/hyperexponential_test.csv";
+    private static final String outputHistogram = "output/csv/hyperexponential_histogram.csv";
+    private static final String outputTheoretical = "output/csv/hyperexponential_theoretical.csv";
     private static final Logger logger = Logger.getLogger(HyperExponentialTest.class.getName());
 
 
@@ -37,12 +39,24 @@ public class HyperExponentialTest {
         HyperExponential hyperExponential = new HyperExponential(theoreticalCv, theoreticalMean, config.getInterarrivalStreamP(), config.getInterarrivalStreamHexp1(), config.getInterarrivalStreamHexp2());
 
         CsvAppender hyperexponentialTest;
+        CsvAppender hyperexponentialHistogram;
+        CsvAppender hyperexponentialTheoretical;
         try {
             hyperexponentialTest = new CsvAppender(Path.of(outputResult), "type", "mean", "cv", "var");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
         hyperexponentialTest.writeRow("theoretical", String.valueOf(theoreticalMean), String.valueOf(theoreticalCv), String.valueOf(thoereticalVar));
+        try {
+            hyperexponentialHistogram = new CsvAppender(Path.of(outputHistogram), "x", "relative_frequency", "estimated_density");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        try {
+            hyperexponentialTheoretical = new CsvAppender(Path.of(outputTheoretical), "x", "pdf");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
         // create a random generator
         Rngs rngs = new Rngs();

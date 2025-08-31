@@ -110,19 +110,23 @@ public class SimulatorController {
             };
             SpikeRouter spikeRouter;
             if (config.isSpikeEnabled()) {
+                logger.log(Level.INFO, "Spike router enabled");
                 spikeRouter = new SimpleSpikeRouter(config.getSImax());
             } else {
+                logger.log(Level.INFO, "Spike router disabled");
                 spikeRouter = new NoneSpikeRouter();
             }
 
             HorizontalScaler horizontalScaler;
             if (config.isHorizontalEnabled()) {
+                logger.log(Level.INFO, "Horizontal scaler enabled");
                 horizontalScaler = new SlidingWindowHorizontalScaler(
                         config.getSlidingWindowSize(),
                         config.getR0min().getSeconds(),
                         config.getR0max().getSeconds(),
                         config.getHorizontalCoolDown().getSeconds());
             } else {
+                logger.log(Level.INFO, "Horizontal scaler disabled");
                 horizontalScaler = new NoneHorizontalScaler();
             }
             LoadBalancer loadBalancer = new LoadBalancer(
