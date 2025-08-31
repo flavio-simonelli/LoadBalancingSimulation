@@ -119,6 +119,7 @@ public class Simulator {
         arrivalStats.iteration(size);
 
         // Log job statistics
+        /*
         try {
             jobLogCsv.writeRow(
                     String.valueOf(newJobStats.getJob().getJobId()),
@@ -131,6 +132,7 @@ public class Simulator {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+        */
     }
 
     private void departureHandler(double elapsedTime, JobStats targetDepartureJobStats) {
