@@ -48,7 +48,7 @@ public class HyperExponentialTest {
         }
         hyperexponentialTest.writeRow("theoretical", String.valueOf(theoreticalMean), String.valueOf(theoreticalCv), String.valueOf(thoereticalVar));
         try {
-            hyperexponentialHistogram = new CsvAppender(Path.of(outputHistogram), "x", "relative_frequency", "estimated_density");
+            hyperexponentialHistogram = new CsvAppender(Path.of(outputHistogram), "x", "estimated_density");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -112,7 +112,9 @@ public class HyperExponentialTest {
         double[] stimatedDenisty = new double[k];
         for (int j=0; j<k; j++){
             stimatedDenisty[j] = HistogramUtils.stimatedDensity(freq[j], gamma);
+            hyperexponentialHistogram.writeRow(String.valueOf(j*gamma), String.valueOf(stimatedDenisty[j]));
         }
+        hyperexponentialHistogram.close();
 
         //media stimata
         double stimatedMean = HistogramUtils.stimatedMean(a, gamma, k, count, n);
@@ -125,6 +127,13 @@ public class HyperExponentialTest {
         hyperexponentialTest.writeRow("histogram", String.valueOf(stimatedMean), String.valueOf(stimatedStdDev/theoreticalMean), String.valueOf(stimatedVar));
         hyperexponentialTest.writeRow("welford", String.valueOf(welford.getAvg()), String.valueOf(welford.getStandardVariation()/welford.getAvg()), String.valueOf(welford.getVariance()));
         hyperexponentialTest.close();
+        // write pdf theoretical
+        double step = (b - a) / 1000;
+        for (double x = a; x <= b; x += step) {
+            double pdfValue = Rvms.pdfHyperexponential(theoreticalMean, theoreticalCv, x);
+            hyperexponentialTheoretical.writeRow(String.valueOf(x), String.valueOf(pdfValue));
+        }
+        hyperexponentialTheoretical.close();
 
 
         // Risultati
