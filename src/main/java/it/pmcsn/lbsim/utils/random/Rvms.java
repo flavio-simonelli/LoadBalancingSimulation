@@ -754,8 +754,15 @@ public class Rvms{
          * =========================================================================
          */
     {
-        if (x < 0.0)
-            return 0.0;
+		if (mean <= 0.0) {
+			throw new IllegalArgumentException("Mean must be > 0");
+		}
+		if (cv <= 1.0) {
+			throw new IllegalArgumentException("CV must be > 1 for hyperexponential");
+		}
+		if (x < 0.0) {
+			return 0.0; // pdf = 0 per x < 0
+		}
 
         // Calculate parameters from mean and coefficient of variation
         double cv2 = cv * cv;

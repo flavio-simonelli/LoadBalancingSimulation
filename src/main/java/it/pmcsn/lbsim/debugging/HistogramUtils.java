@@ -35,7 +35,8 @@ public class HistogramUtils {
     }
 
     public static int chooseDefinitiveK (int n){
-        int chooseK = chooseK(n);
+        //TODO: change me!
+        int chooseK = 1000;
         int kmin = kMin(n);
         int kmax = kMax(n);
         System.out.println(" k min : "+kmin+ " k max : "+kmax);
