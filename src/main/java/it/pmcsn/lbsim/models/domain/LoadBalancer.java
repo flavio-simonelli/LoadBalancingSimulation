@@ -14,7 +14,7 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class LoadBalancer {
-    private static final double EPSILON = 1e-10;
+    private static final double EPSILON = 1e-9;
     // Constants
     private static final Logger logger = Logger.getLogger(LoadBalancer.class.getName());
 

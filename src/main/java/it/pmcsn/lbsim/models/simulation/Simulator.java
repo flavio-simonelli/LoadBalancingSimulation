@@ -117,13 +117,28 @@ public class Simulator {
             jobStat.estimateDepartureTime(this.currentTime);
         }
 
+        try{
+            for (var server : loadBalancer.getWebServers().getWebServers()) {
+                serverLogCsv.writeRow(
+                        String.valueOf(this.currentTime),
+                        String.valueOf(server.getId()),
+                        String.valueOf(loadBalancer.getWebServers().isRemovingServer(server)),
+                        String.valueOf(server.getCurrentSI())
+                );
+            }
+            serverLogCsv.writeRow(
+                    String.valueOf(this.currentTime),
+                    String.valueOf(loadBalancer.getSpikeServer().getId()),
+                    "false",
+                    String.valueOf(loadBalancer.getSpikeServer().getCurrentSI())
+            );
+        }catch (Exception e){
+            throw new RuntimeException(e);
+        }
+
         //welford for arrivals
         arrivalStats.iteration(size);
-        if (currentTime >= 120.0) {
-            //warm-up period of 120 seconds
-            // welford for mean number of jobs
-            meanNumberJobs.iteration(loadBalancer.getCurrentJobCount(), this.currentTime);
-        }
+        meanNumberJobs.iteration(loadBalancer.getCurrentJobCount(), this.currentTime);
     }
 
     private void departureHandler(double elapsedTime, JobStats targetDepartureJobStats) {
@@ -154,16 +169,26 @@ public class Simulator {
                     String.format("%.6f", targetDepartureJobStats.getOriginalSize()),
                     String.valueOf(targetDepartureJobStats.getJob().getAssignedServer().getId())
             );
+            for (var server : loadBalancer.getWebServers().getWebServers()) {
+                serverLogCsv.writeRow(
+                        String.valueOf(this.currentTime),
+                        String.valueOf(server.getId()),
+                        String.valueOf(loadBalancer.getWebServers().isRemovingServer(server)),
+                        String.valueOf(server.getCurrentSI())
+                );
+            }
+            serverLogCsv.writeRow(
+                    String.valueOf(this.currentTime),
+                    String.valueOf(loadBalancer.getSpikeServer().getId()),
+                    "false",
+                    String.valueOf(loadBalancer.getSpikeServer().getCurrentSI())
+            );
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
         // welford for departures
-        if (currentTime >= 120.0) {
-            //warm-up period of 120 seconds
-            departureStats.iteration(responseTime);
-            // welford for mean number of jobs
-            meanNumberJobs.iteration(loadBalancer.getCurrentJobCount(), this.currentTime);
-        }
+        departureStats.iteration(responseTime);
+        meanNumberJobs.iteration(loadBalancer.getCurrentJobCount(), this.currentTime);
     }
 }

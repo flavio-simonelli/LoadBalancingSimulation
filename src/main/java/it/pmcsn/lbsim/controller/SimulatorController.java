@@ -151,7 +151,7 @@ public class SimulatorController {
                 throw new RuntimeException(e);
             }
             try {
-                serverStatsCsv = new CsvAppender(Path.of("output/csv/Serverstats"+rngs.getSeed()+"rep"+i+".csv"), "Time", "ServerID", "State", "CpuPercentage", "CpuMultiplier", "CurrentLoad", "JobsInQueue");
+                serverStatsCsv = new CsvAppender(Path.of("output/csv/Serverstats"+rngs.getSeed()+"rep"+i+".csv"), "Time", "ServerID", "State", "ActualSI");
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
