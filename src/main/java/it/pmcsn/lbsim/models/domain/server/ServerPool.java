@@ -147,5 +147,9 @@ public class ServerPool {
         }
     }
 
+    public boolean isRemovingServer(Server server){
+        return removingServers.contains(server);
+    }
+
 
 }

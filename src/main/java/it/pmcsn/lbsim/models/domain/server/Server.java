@@ -8,7 +8,7 @@ import java.util.logging.Level;
 
 public class Server {
     private static final Logger logger = Logger.getLogger(Server.class.getName());
-    private static final double EPSILON = 1e-10;
+    private static final double EPSILON = 1e-9;
 
     private final int id;
     private final List<Job> activeJobs;         // List of jobs currently being processed by this server

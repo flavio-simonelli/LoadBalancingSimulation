@@ -126,7 +126,7 @@ public class HyperExponentialTest {
         
         // write csv
         hyperexponentialTest.writeRow("histogram", String.valueOf(stimatedMean), String.valueOf(stimatedStdDev/theoreticalMean), String.valueOf(stimatedVar), String.valueOf(stimatedStdDev), String.valueOf(intervalEstimation.SemiIntervalEstimation(stimatedMean, k)), String.valueOf(intervalEstimation.SemiIntervalEstimation(stimatedVar, k)));
-        hyperexponentialTest.writeRow("welford", String.valueOf(welford.getAvg()), String.valueOf(welford.getStandardVariation()/welford.getAvg()), String.valueOf(welford.getVariance()), String.valueOf(welford.getStandardVariation()), String.valueOf(intervalEstimation.SemiIntervalEstimation(welford.getAvg(), welford.getI())), String.valueOf(intervalEstimation.SemiIntervalEstimation(welford.getVariance(), welford.getI())));
+        hyperexponentialTest.writeRow("welford", String.valueOf(welford.getAvg()), String.valueOf(welford.getStandardVariation()/welford.getAvg()), String.valueOf(welford.getVariance()), String.valueOf(welford.getStandardVariation())); // String.valueOf(intervalEstimation.SemiIntervalEstimation(welford.getAvg(), welford.getI())), String.valueOf(intervalEstimation.SemiIntervalEstimation(welford.getVariance(), welford.getI())));
         hyperexponentialTest.close();
         // write pdf theoretical
         double step = (b - a) / 1000;
