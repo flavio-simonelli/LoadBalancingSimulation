@@ -116,10 +116,19 @@ public class LoadBalancer {
         return spikeServer.getCurrentSI();
     }
 
+    //TODO: da riscrivere bene
     public String getJobCountsForWebServer(){
         List<Integer> jobs = webServers.getJobsCountForServer();
         return jobs.stream()
                 .map(v -> v == null ? "null" : v.toString())
                 .collect(Collectors.joining(",", "[", "]"));
+    }
+    // Restituisce il numero di job totale nell'istante corrente in secuzione
+    public int getCurrentJobCount() {
+        int jobCount = 0;
+        for (Server server : webServers.getWebServers()) {
+            jobCount += server.getCurrentSI();
+        }
+        return jobCount + spikeServer.getCurrentSI();
     }
 }

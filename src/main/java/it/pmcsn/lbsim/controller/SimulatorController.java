@@ -62,7 +62,6 @@ public class SimulatorController {
                     rngs.plantSeeds(config.getSeed0());
                 }
             }
-            Rvgs rvgs = new Rvgs(rngs);
             logger.log(Level.INFO, "Initial seeds: {0}\n", Arrays.toString(rngs.getSeedArray()));
 
             // create the workload generator
@@ -79,14 +78,14 @@ public class SimulatorController {
                             config.getServiceStreamP(), config.getServiceStreamHexp1(), config.getServiceStreamHexp2());
                     logger.log(Level.INFO, "Hyperexponential service with parameters {0} {1} {2} and stream {3} {4} {5}\n",
                             new Object[]{serviceTimeObj.getP(), serviceTimeObj.getM1(), serviceTimeObj.getM2(), serviceTimeObj.getStreamP(), serviceTimeObj.getStreamExp1(), serviceTimeObj.getStreamExp2()});
-                    wg = new DistributionWorkloadGenerator(rvgs, interarrivalTimeObj, serviceTimeObj);
+                    wg = new DistributionWorkloadGenerator(rngs, interarrivalTimeObj, serviceTimeObj);
                     break;
                 case WorkloadType.EXPONENTIAL:
                     serviceTimeObj = new HyperExponential(config.getServiceCv(), config.getServiceMean(),
                             config.getServiceStreamP(), config.getServiceStreamHexp1(), config.getServiceStreamHexp2());
-                    logger.log(Level.INFO, "Exponential interarrival with mean {0}\n", new Object[]{config.getInterarrivalMean()});
+                    logger.log(Level.INFO, "Exponential interarrival with mean {0} and stream {1}\n", new Object[]{config.getInterarrivalMean(), config.getInterarrivalStreamP()});
                     logger.log(Level.INFO, "Hyperexponential service with parameters {0} {1} {2} and stream {3} {4} {5}\n", new Object[]{serviceTimeObj.getP(), serviceTimeObj.getM1(), serviceTimeObj.getM2(), serviceTimeObj.getStreamP(), serviceTimeObj.getStreamExp1(), serviceTimeObj.getStreamExp2()});
-                    wg = new VerifyWorkloadGenerator(rvgs, config.getInterarrivalMean(), serviceTimeObj);
+                    wg = new VerifyWorkloadGenerator(rngs, config.getInterarrivalMean(), config.getInterarrivalStreamP(),serviceTimeObj);
                     break;
                 case WorkloadType.TRACE:
                     try {
