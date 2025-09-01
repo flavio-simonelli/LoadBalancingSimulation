@@ -11,7 +11,7 @@ simulation:
 workload:
   chooseWorkload: "exponential"  # valori possibili: "trace", "hyperexponential", "exponential"
   interarrival:
-    mean: 0.17        # media dei tempi di interarrivo (if chooseWorkload = "exponential" is used for the exponential distribution)
+    mean: 0.15        # media dei tempi di interarrivo (if chooseWorkload = "exponential" is used for the exponential distribution)
     cv: 4             # coefficiente di variazione
     streamp: 0
     streamhexp1: 1
@@ -49,7 +49,7 @@ output:
   plotDir: "output/plot/"
 
 logging:
-  level: "INFO"   # possibili valori: SEVERE, WARNING, INFO, FINE, FINER, FINEST
+  level: "FINEST"   # possibili valori: SEVERE, WARNING, INFO, FINE, FINER, FINEST
 
 path:
   traceArrivalsPath: "src/main/resources/arrivals.txt"

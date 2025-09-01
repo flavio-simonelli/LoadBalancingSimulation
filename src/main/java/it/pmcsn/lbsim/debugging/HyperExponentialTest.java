@@ -2,6 +2,7 @@ package it.pmcsn.lbsim.debugging;
 
 import it.pmcsn.lbsim.config.ConfigLoader;
 import it.pmcsn.lbsim.config.SimConfiguration;
+import it.pmcsn.lbsim.utils.IntervalEstimation;
 import it.pmcsn.lbsim.utils.WelfordSimple;
 import it.pmcsn.lbsim.utils.csv.CsvAppender;
 import it.pmcsn.lbsim.utils.random.HyperExponential;
@@ -10,7 +11,6 @@ import it.pmcsn.lbsim.utils.random.Rvgs;
 import it.pmcsn.lbsim.utils.random.Rvms;
 
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.logging.Level;
@@ -27,6 +27,7 @@ public class HyperExponentialTest {
 
 
     public static void main(String[] args) {
+        IntervalEstimation intervalEstimation = new IntervalEstimation(0.95);
         // read the configuration from a YAML file
         int n = 10000000; // numero di campioni
         SimConfiguration config = ConfigLoader.load(configFilePath);
@@ -42,11 +43,11 @@ public class HyperExponentialTest {
         CsvAppender hyperexponentialHistogram;
         CsvAppender hyperexponentialTheoretical;
         try {
-            hyperexponentialTest = new CsvAppender(Path.of(outputResult), "type", "mean", "cv", "var");
+            hyperexponentialTest = new CsvAppender(Path.of(outputResult), "type", "mean", "cv", "var", "std_dev", "semi_interval_mean", "semi_interval_var");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        hyperexponentialTest.writeRow("theoretical", String.valueOf(theoreticalMean), String.valueOf(theoreticalCv), String.valueOf(thoereticalVar));
+        hyperexponentialTest.writeRow("theoretical", String.valueOf(theoreticalMean), String.valueOf(theoreticalCv), String.valueOf(thoereticalVar), String.valueOf(Math.sqrt(thoereticalVar)), String.valueOf(0.0), String.valueOf(0.0));
         try {
             hyperexponentialHistogram = new CsvAppender(Path.of(outputHistogram), "x", "estimated_density");
         } catch (IOException e) {
@@ -124,8 +125,8 @@ public class HyperExponentialTest {
         double stimatedVar = HistogramUtils.stimatedVariance(a, gamma, k, count, n, stimatedMean);
         
         // write csv
-        hyperexponentialTest.writeRow("histogram", String.valueOf(stimatedMean), String.valueOf(stimatedStdDev/theoreticalMean), String.valueOf(stimatedVar));
-        hyperexponentialTest.writeRow("welford", String.valueOf(welford.getAvg()), String.valueOf(welford.getStandardVariation()/welford.getAvg()), String.valueOf(welford.getVariance()));
+        hyperexponentialTest.writeRow("histogram", String.valueOf(stimatedMean), String.valueOf(stimatedStdDev/theoreticalMean), String.valueOf(stimatedVar), String.valueOf(stimatedStdDev), String.valueOf(intervalEstimation.SemiIntervalEstimation(stimatedMean, k)), String.valueOf(intervalEstimation.SemiIntervalEstimation(stimatedVar, k)));
+        hyperexponentialTest.writeRow("welford", String.valueOf(welford.getAvg()), String.valueOf(welford.getStandardVariation()/welford.getAvg()), String.valueOf(welford.getVariance()), String.valueOf(welford.getStandardVariation()), String.valueOf(intervalEstimation.SemiIntervalEstimation(welford.getAvg(), welford.getI())), String.valueOf(intervalEstimation.SemiIntervalEstimation(welford.getVariance(), welford.getI())));
         hyperexponentialTest.close();
         // write pdf theoretical
         double step = (b - a) / 1000;
