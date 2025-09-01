@@ -18,6 +18,7 @@ public class Simulator {
 
     private final WelfordSimple departureStats = new WelfordSimple();
     private final WelfordSimple arrivalStats = new WelfordSimple();
+    private final TimeMediateWelford meanNumberJobs = new TimeMediateWelford(120.0);
 
     private Double currentTime;                     // Current simulation time
     private final FutureEventList futureEventList; // Future Event List
@@ -91,6 +92,7 @@ public class Simulator {
         try {
             welfordCsv.writeRow("OriginalSize",String.valueOf(arrivalStats.getI()),String.valueOf(arrivalStats.getAvg()),String.valueOf(arrivalStats.getStandardVariation()), String.valueOf(arrivalStats.getVariance()), String.valueOf(intervalEstimation.SemiIntervalEstimation(arrivalStats.getStandardVariation(), arrivalStats.getI())));
             welfordCsv.writeRow("ResponseTime",String.valueOf(departureStats.getI()),String.valueOf(departureStats.getAvg()),String.valueOf(departureStats.getStandardVariation()), String.valueOf(departureStats.getVariance()), String.valueOf(intervalEstimation.SemiIntervalEstimation(departureStats.getStandardVariation(), departureStats.getI())));
+            welfordCsv.writeRow("MeanNumberJobs",String.valueOf(meanNumberJobs.getI()),String.valueOf(meanNumberJobs.getAvg()),String.valueOf(meanNumberJobs.getStandardVariation()), String.valueOf(meanNumberJobs.getVariance()), String.valueOf(intervalEstimation.SemiIntervalEstimation(meanNumberJobs.getStandardVariation(), meanNumberJobs.getI())));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -117,22 +119,11 @@ public class Simulator {
 
         //welford for arrivals
         arrivalStats.iteration(size);
-
-        // Log job statistics
-        /*
-        try {
-            jobLogCsv.writeRow(
-                    String.valueOf(newJobStats.getJob().getJobId()),
-                    String.format("%.6f", newJobStats.getArrivalTime()),
-                    "",
-                    "",
-                    String.format("%.6f", newJobStats.getOriginalSize()),
-                    String.valueOf(newJobStats.getJob().getAssignedServer().getId())
-            );
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        if (currentTime >= 120.0) {
+            //warm-up period of 120 seconds
+            // welford for mean number of jobs
+            meanNumberJobs.iteration(loadBalancer.getCurrentJobCount(), this.currentTime);
         }
-        */
     }
 
     private void departureHandler(double elapsedTime, JobStats targetDepartureJobStats) {
@@ -171,6 +162,8 @@ public class Simulator {
         if (currentTime >= 120.0) {
             //warm-up period of 120 seconds
             departureStats.iteration(responseTime);
+            // welford for mean number of jobs
+            meanNumberJobs.iteration(loadBalancer.getCurrentJobCount(), this.currentTime);
         }
     }
 }

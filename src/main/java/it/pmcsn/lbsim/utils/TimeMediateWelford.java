@@ -5,7 +5,14 @@ public class TimeMediateWelford {
     private int i=0;
     private double avg =0.0;
     private double variance =0.0;
-    private double time = 0;
+    private double time;
+
+    public TimeMediateWelford(double initialTime) {
+        if (initialTime < 0.0) {
+            throw new IllegalArgumentException("Initial time must be non-negative");
+        }
+        this.time = initialTime;
+    }
 
 
     public void iteration(double x, double newTime) {
