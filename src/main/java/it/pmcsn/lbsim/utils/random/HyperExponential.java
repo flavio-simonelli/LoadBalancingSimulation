@@ -35,20 +35,17 @@ public class HyperExponential {
 
     private double calculateP(double cv) {
         double c2 = cv * cv; // C^2
-        double insideSqrt = 1 - (2.0 / (c2 + 1.0));
-
-        if (insideSqrt < 0) {
-            throw new IllegalArgumentException("CV troppo piccolo: non esiste soluzione reale.");
+        if (c2 <= 1.0) {
+            throw new IllegalArgumentException("CV must be > 1 for hyperexponential: " + cv);
         }
-        double sqrtTerm = Math.sqrt(insideSqrt);
-        double p1 = (1 + sqrtTerm) / 2.0;
-        double p2 = (1 - sqrtTerm) / 2.0;
-        return Math.min(p1, p2);
+        // Standard hyperexponential formula: p = (1/2)[1 - √((C²-1)/(C²+1))]
+        double p = 0.5 * (1 - Math.sqrt((c2 - 1.0) / (c2 + 1.0)));
+        return p;
     }
 
     private double calculateMHyper(double m, double p){
-        double mu = 1/m;
-        return 1/(2*p*mu);
+        // For hyperexponential: λ_i = 2*p_i/m, so m_i = 1/λ_i = m/(2*p_i)
+        return m / (2 * p);
     }
 
     public double getM1() {

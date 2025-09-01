@@ -6,7 +6,7 @@ simulation:
   seed3: 0        # seed per il generatore di numeri casuali
   seed4: 0       # seed per il generatore di numeri
   seed5: 0       # seed per il generatore di numeri
-  duration: "P10DT0H"   # P2DT3H4M → 2 giorni, 3 ore, 4 minuti
+  duration: "P1DT0H"   # P2DT3H4M → 2 giorni, 3 ore, 4 minuti
 
 workload:
   chooseWorkload: "hyperexponential"  # valori possibili: "trace", "hyperexponential", "exponential"
