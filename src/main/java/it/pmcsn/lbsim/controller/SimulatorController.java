@@ -101,6 +101,7 @@ public class SimulatorController {
             }
             // create the system under simulation
             RemovalPolicy removalPolicy = new RemovalPolicyLeastUsed();
+            // Use processing rate 1.0 so job sizes directly represent service times
             ServerPool serverPool = new ServerPool(config.getInitialServerCount(), 1.0, removalPolicy);
             Server spikeServer = new Server(config.getSpikeCpuMultiplier(), config.getSpikeCpuPercentage(), -1);
             SchedulingPolicy schedulingPolicy = switch (config.getSchedulingType()) {
