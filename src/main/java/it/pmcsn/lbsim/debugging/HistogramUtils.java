@@ -3,6 +3,8 @@ package it.pmcsn.lbsim.debugging;
 import java.util.Arrays;
 import java.util.List;
 
+import static java.lang.Math.max;
+
 public class HistogramUtils {
 
     // Regola di Sturges
@@ -21,7 +23,7 @@ public class HistogramUtils {
         int k1 = sturgesRule(n);
         int k2 = wandRule(n);
         System.out.println("k1 sturgesRule : "+k1+ " k2 wandRule: "+k2);
-        return (k1 + k2) / 2;
+        return max(k1, k2);
     }
 
     // Estremo inferiore: floor(log2(n))
@@ -35,8 +37,7 @@ public class HistogramUtils {
     }
 
     public static int chooseDefinitiveK (int n){
-        //TODO: change me!
-        int chooseK = 1000;
+        int chooseK = chooseK(n);
         int kmin = kMin(n);
         int kmax = kMax(n);
         System.out.println(" k min : "+kmin+ " k max : "+kmax);
