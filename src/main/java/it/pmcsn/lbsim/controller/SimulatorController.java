@@ -69,7 +69,7 @@ public class SimulatorController {
             HyperExponential interarrivalTimeObj;
             HyperExponential serviceTimeObj;
             switch (config.getChooseWorkload()){
-                case WorkloadType.HYPEREXPONENTIAL:
+                case HYPEREXPONENTIAL:
                     interarrivalTimeObj = new HyperExponential(config.getInterarrivalCv(), config.getInterarrivalMean(),
                             config.getInterarrivalStreamP(), config.getInterarrivalStreamHexp1(), config.getInterarrivalStreamHexp2());
                     logger.log(Level.INFO, "Hyperexponential interarrival with parameters {0} {1} {2} and {3} {4} {5}\n",
@@ -80,14 +80,14 @@ public class SimulatorController {
                             new Object[]{serviceTimeObj.getP(), serviceTimeObj.getM1(), serviceTimeObj.getM2(), serviceTimeObj.getStreamP(), serviceTimeObj.getStreamExp1(), serviceTimeObj.getStreamExp2()});
                     wg = new DistributionWorkloadGenerator(rngs, interarrivalTimeObj, serviceTimeObj);
                     break;
-                case WorkloadType.EXPONENTIAL:
+                case EXPONENTIAL:
                     serviceTimeObj = new HyperExponential(config.getServiceCv(), config.getServiceMean(),
                             config.getServiceStreamP(), config.getServiceStreamHexp1(), config.getServiceStreamHexp2());
                     logger.log(Level.INFO, "Exponential interarrival with mean {0} and stream {1}\n", new Object[]{config.getInterarrivalMean(), config.getInterarrivalStreamP()});
                     logger.log(Level.INFO, "Hyperexponential service with parameters {0} {1} {2} and stream {3} {4} {5}\n", new Object[]{serviceTimeObj.getP(), serviceTimeObj.getM1(), serviceTimeObj.getM2(), serviceTimeObj.getStreamP(), serviceTimeObj.getStreamExp1(), serviceTimeObj.getStreamExp2()});
                     wg = new VerifyWorkloadGenerator(rngs, config.getInterarrivalMean(), config.getInterarrivalStreamP(),serviceTimeObj);
                     break;
-                case WorkloadType.TRACE:
+                case TRACE:
                     try {
                         logger.log(Level.INFO, "Trace driven workload with arrivals from {0} and sizes from {1}\n", new Object[]{config.getTraceArrivalsPath(), config.getTraceSizePath()});
                         wg = new TraceWorkloadGenerator(Path.of(config.getTraceArrivalsPath()), Path.of(config.getTraceSizePath()));
