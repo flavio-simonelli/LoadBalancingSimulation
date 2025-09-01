@@ -6,12 +6,12 @@ simulation:
   seed3: 0        # seed per il generatore di numeri casuali
   seed4: 0       # seed per il generatore di numeri
   seed5: 0       # seed per il generatore di numeri
-  duration: "P0DT1H"   # Changed to 1 hour for testing
+  duration: "P10DT0H"   # P2DT3H4M → 2 giorni, 3 ore, 4 minuti
 
 workload:
-  chooseWorkload: "exponential"  # Changed to exponential for testing
+  chooseWorkload: "hyperexponential"  # valori possibili: "trace", "hyperexponential", "exponential"
   interarrival:
-    mean: 0.2        # Changed to 0.2 as specified in problem statement
+    mean: 0.111111        # media dei tempi di interarrivo (if chooseWorkload = "exponential" is used for the exponential distribution)
     cv: 4             # coefficiente di variazione
     streamp: 0
     streamhexp1: 1
@@ -28,7 +28,7 @@ scheduling:
 
 scaling:
   spikeServer:
-    enabled: false      # Disabled spike as specified
+    enabled: true
     SImax: 120        # max job nel web server prima di reindirizzare allo spike
     SImin: 6        # min job nel web server prima di reindirizzare al web server
     cpuMultiplier: 2  # moltiplicatore CPU spike
@@ -42,7 +42,7 @@ scaling:
     R0min: "PT1S"        # media tempo di risposta per scale out
     coolDown: "PT10S"     # ritardo tra una scalata e l'altra
 
-    initialServerCount: 1   # 1 server as specified
+    initialServerCount: 1   # server iniziali (senza spike)
 
 output:
   csvDir: "output/csv/"
