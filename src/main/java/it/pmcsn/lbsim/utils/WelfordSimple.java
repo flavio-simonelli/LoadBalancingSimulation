@@ -9,9 +9,10 @@ public class WelfordSimple {
 
     public void iteration(double x) {
         i++;
-        double d = x - avg;
-        this.variance = this.variance + d * d * (i - 1.0) / i;
-        this.avg = this.avg + d / i;
+        double delta = x - avg;
+        this.avg = this.avg + delta / i;
+        double delta2 = x - this.avg;
+        this.variance = this.variance + delta * delta2;
     }
 
     public int getI() {
@@ -23,11 +24,11 @@ public class WelfordSimple {
     }
 
     public double getVariance() {
-        return this.variance / (i);
+        return i > 1 ? this.variance / (i - 1) : 0.0;  // Sample variance
     }
 
     public double getStandardVariation() {
-        return Math.sqrt(this.variance /(i));
+        return i > 1 ? Math.sqrt(this.variance / (i - 1)) : 0.0;  // Sample standard deviation
     }
 
 }

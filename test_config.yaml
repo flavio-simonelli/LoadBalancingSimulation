@@ -6,19 +6,19 @@ simulation:
   seed3: 0        # seed per il generatore di numeri casuali
   seed4: 0       # seed per il generatore di numeri
   seed5: 0       # seed per il generatore di numeri
-  duration: "P0DT1H"   # Changed to 1 hour for testing
+  duration: "P0DT1H"   # 1 hour for testing
 
 workload:
-  chooseWorkload: "exponential"  # Changed to exponential for testing
+  chooseWorkload: "exponential"  # Exponential interarrival
   interarrival:
-    mean: 0.2        # Changed to 0.2 as specified in problem statement
-    cv: 4             # coefficiente di variazione
+    mean: 0.2        # Mean interarrival time = 0.2 (λ = 5)
+    cv: 1             # CV = 1 for exponential
     streamp: 0
     streamhexp1: 1
     streamhexp2: 2
   service:
-    mean: 0.16        # media della distribuzione del tempo di servizio
-    cv: 4             # coefficiente di variazione
+    mean: 0.16        # Mean service time = 0.16 (μ = 6.25)  
+    cv: 1.1           # CV slightly > 1 to use hyperexponential but close to exponential
     streamp: 3
     streamhexp1: 4
     streamhexp2: 5
