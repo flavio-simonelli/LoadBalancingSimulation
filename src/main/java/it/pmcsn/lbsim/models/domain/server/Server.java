@@ -42,9 +42,8 @@ public class Server {
             throw new IllegalArgumentException("Job cannot be null");
         }
         if (!activeJobs.contains(job)) {
-            // Job might have already been automatically removed during processing
-            logger.log(Level.FINE, "Job {0} was already removed from server (likely completed during processing)", job.getJobId());
-            return; // Silently handle already-removed jobs
+            logger.log(Level.WARNING, "Attempted to remove a job that is not present in the server's active job list. jobId={0}", job.getJobId());
+            throw new IllegalArgumentException("Job not found in the server's active job list");
         }
         if (Math.abs(job.getRemainingSize()) > EPSILON) {
             logger.log(Level.WARNING, "Attempted to remove a job that is not yet completed. jobId={0}, remainingSize={1}", new Object[]{job.getJobId(), job.getRemainingSize()});
@@ -65,14 +64,10 @@ public class Server {
         double effectiveProcessingRate = (cpuPercentage * cpuMultiplier) / activeJobs.size();
         double amountToProcess = effectiveProcessingRate * timeInterval;
 
-        // Create a copy to iterate over, since we'll be modifying the original list
-        java.util.List<Job> jobsToProcess = new java.util.ArrayList<>(activeJobs);
-        
-        for (Job job : jobsToProcess) {
+        for (Job job : activeJobs) {
             job.process(amountToProcess);
             if (job.getRemainingSize() <= EPSILON) {
-                activeJobs.remove(job);
-                logger.log(Level.FINE, "Job {0} completed and removed during processing\n", job.getJobId());
+                logger.log(Level.FINE, "Job {0} completed during processing\n", job.getJobId());
             }
         }
     }
