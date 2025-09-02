@@ -45,7 +45,7 @@ public class Server {
             logger.log(Level.WARNING, "Attempted to remove a job that is not present in the server's active job list. jobId={0}", job.getJobId());
             throw new IllegalArgumentException("Job not found in the server's active job list");
         }
-        if (job.getRemainingSize()> EPSILON ||job.getRemainingSize()< -EPSILON ) {
+        if (Math.abs(job.getRemainingSize()) > EPSILON) {
             logger.log(Level.WARNING, "Attempted to remove a job that is not yet completed. jobId={0}, remainingSize={1}", new Object[]{job.getJobId(), job.getRemainingSize()});
             throw new IllegalStateException("Cannot remove a job that is not yet completed");
         }
@@ -66,8 +66,8 @@ public class Server {
 
         for (Job job : new java.util.ArrayList<>(activeJobs)) {
             job.process(amountToProcess);
-            if (job.getRemainingSize() <= 0) {
-                logger.log(Level.FINE, "Job {0} completed and removed from server\n", job.getJobId()); //TODO: metti in fine il log
+            if (job.getRemainingSize() <= EPSILON) {
+                logger.log(Level.FINE, "Job {0} completed during processing\n", job.getJobId());
             }
         }
     }
