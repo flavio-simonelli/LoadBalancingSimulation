@@ -118,6 +118,20 @@ public class ServerPool {
         return res;
     }
 
+    public List<Double> getRemianingSizeForAllJobs(){
+        List<Double> res = new ArrayList<>();
+        // Unisci tutti i server attivi e in draining
+        List<Server> allServers = new ArrayList<>();
+        allServers.addAll(webServers);
+        allServers.addAll(removingServers);
+        for (Server server : allServers) {
+            for (Job job : server.getActiveJobs()) {
+                res.add(job.getRemainingSize());
+            }
+        }
+        return res;
+    }
+
     public void backToInitialState() {
         // 1) Pulisci i server in draining
         for (Server s : new ArrayList<>(removingServers)) {

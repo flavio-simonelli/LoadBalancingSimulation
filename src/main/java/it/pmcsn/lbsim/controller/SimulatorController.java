@@ -20,7 +20,6 @@ import it.pmcsn.lbsim.models.simulation.workloadgenerator.*;
 import it.pmcsn.lbsim.utils.csv.CsvAppender;
 import it.pmcsn.lbsim.utils.random.HyperExponential;
 import it.pmcsn.lbsim.utils.random.Rngs;
-import it.pmcsn.lbsim.utils.random.Rvgs;
 
 
 import java.io.IOException;
@@ -139,6 +138,7 @@ public class SimulatorController {
             CsvAppender welfordCsv;
             CsvAppender jobStatsCsv;
             CsvAppender serverStatsCsv;
+            CsvAppender departureStatsCsv;
             rngs.selectStream(0);
             try {
                 welfordCsv = new CsvAppender(Path.of("output/csv/Welford"+rngs.getSeed()+"rep"+i+".csv"),"Type","N","Mean","StdDev","Variance", "Semi Intervallo media");
@@ -155,13 +155,19 @@ public class SimulatorController {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
+            try {
+                departureStatsCsv = new CsvAppender(Path.of("output/csv/Departures"+rngs.getSeed()+"rep"+i+".csv"), "Time", "NumJobs", "ProxArrival", "ProxDepartureofAllJobs", "RemainingSizeOfAllJobs", "NumServers");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
             // Create a new simulator instance with the provided configuration
             Simulator simulator = new Simulator(
                     wg,
                     loadBalancer,
                     welfordCsv,
                     jobStatsCsv,
-                    serverStatsCsv
+                    serverStatsCsv,
+                    departureStatsCsv
             );
             // Start the simulation
             simulator.run(config.getDurationSeconds().getSeconds());
@@ -171,6 +177,7 @@ public class SimulatorController {
             welfordCsv.close();
             jobStatsCsv.close();
             serverStatsCsv.close();
+            departureStatsCsv.close();
         }
     }
 }

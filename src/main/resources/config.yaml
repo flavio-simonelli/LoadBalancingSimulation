@@ -6,10 +6,10 @@ simulation:
   seed3: 0        # seed per il generatore di numeri casuali
   seed4: 0       # seed per il generatore di numeri
   seed5: 0       # seed per il generatore di numeri
-  duration: "PT20M"   # P2DT3H4M → 2 giorni, 3 ore, 4 minuti
+  duration: "PT1S"   # P2DT3H4M → 2 giorni, 3 ore, 4 minuti
 
 workload:
-  chooseWorkload: "exponential"  # valori possibili: "trace", "hyperexponential", "exponential"
+  chooseWorkload: "hyperexponential"  # valori possibili: "trace", "hyperexponential", "exponential"
   interarrival:
     mean: 0.15        # media dei tempi di interarrivo (if chooseWorkload = "exponential" is used for the exponential distribution)
     cv: 4             # coefficiente di variazione
@@ -28,7 +28,7 @@ scheduling:
 
 scaling:
   spikeServer:
-    enabled: true
+    enabled: false
     SImax: 120        # max job nel web server prima di reindirizzare allo spike
     SImin: 6        # min job nel web server prima di reindirizzare al web server
     cpuMultiplier: 2  # moltiplicatore CPU spike
@@ -36,7 +36,7 @@ scaling:
     coolDown: "PT0S" # tempo cooldown reindirizzamento (s)
 
   horizontal:
-    enabled: true
+    enabled: false
     slidingWindowSize: 10     # finestra mobile per media tempo risposta
     R0max: "PT3S"        # media tempo di risposta per scale in
     R0min: "PT1.2S"        # media tempo di risposta per scale out

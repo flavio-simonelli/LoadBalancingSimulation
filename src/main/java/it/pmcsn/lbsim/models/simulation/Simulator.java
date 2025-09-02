@@ -18,7 +18,7 @@ public class Simulator {
 
     private final WelfordSimple departureStats = new WelfordSimple();
     private final WelfordSimple arrivalStats = new WelfordSimple();
-    private final TimeMediateWelford meanNumberJobs = new TimeMediateWelford(120.0);
+    private final TimeMediateWelford meanNumberJobs = new TimeMediateWelford();
 
     private Double currentTime;                     // Current simulation time
     private final FutureEventList futureEventList; // Future Event List
@@ -30,6 +30,7 @@ public class Simulator {
     private final CsvAppender welfordCsv;
     private final CsvAppender jobLogCsv;
     private final CsvAppender serverLogCsv;
+    private final CsvAppender departureStatsCsv;
 
 
     // Constructor
@@ -37,7 +38,8 @@ public class Simulator {
                      LoadBalancer loadBalancer,
                      CsvAppender csvWelford,
                      CsvAppender jobLogCsv,
-                     CsvAppender serverLogCsv) {
+                     CsvAppender serverLogCsv,
+                     CsvAppender departureStatsCsv) {
 
         this.currentTime = 0.0;
         this.loadBalancer = loadBalancer;
@@ -45,6 +47,7 @@ public class Simulator {
         this.jobLogCsv = jobLogCsv;
         this.serverLogCsv = serverLogCsv;
         this.workload = workloadGenerator;
+        this.departureStatsCsv = departureStatsCsv;
         this.futureEventList = new FutureEventList();
     }
 
@@ -64,8 +67,8 @@ public class Simulator {
                 }
                 double elapsedTime = nextArrivalTime - this.currentTime;
                 this.currentTime = nextArrivalTime;
-                arrivalHandler(elapsedTime, this.currentTime);
                 this.futureEventList.setNextArrivalTime(this.workload.nextArrival(currentTime));
+                arrivalHandler(elapsedTime, this.currentTime);
             } else {
                 JobStats nextDepartureJob = this.futureEventList.nextDepartureJob();
                 double nextDepartureTime = nextDepartureJob.getEstimatedDepartureTime();
@@ -132,6 +135,14 @@ public class Simulator {
                     "false",
                     String.valueOf(loadBalancer.getSpikeServer().getCurrentSI())
             );
+            departureStatsCsv.writeRow(
+                    String.valueOf(this.currentTime),
+                    String.valueOf(this.loadBalancer.getCurrentJobCount()),
+                    String.valueOf(this.futureEventList.getnextArrivalTime()),
+                    String.valueOf(this.futureEventList.getAllDepartureTimes()),
+                    String.valueOf(this.loadBalancer.getWebServers().getRemianingSizeForAllJobs()),
+                    String.valueOf(this.loadBalancer.getWebServers().getWebServerCount())
+            );
         }catch (Exception e){
             throw new RuntimeException(e);
         }
@@ -182,6 +193,14 @@ public class Simulator {
                     String.valueOf(loadBalancer.getSpikeServer().getId()),
                     "false",
                     String.valueOf(loadBalancer.getSpikeServer().getCurrentSI())
+            );
+            departureStatsCsv.writeRow(
+                    String.valueOf(this.currentTime),
+                    String.valueOf(this.loadBalancer.getCurrentJobCount()),
+                    String.valueOf(this.futureEventList.getnextArrivalTime()),
+                    String.valueOf(this.futureEventList.getAllDepartureTimes()),
+                    String.valueOf(this.loadBalancer.getWebServers().getRemianingSizeForAllJobs()),
+                    String.valueOf(this.loadBalancer.getWebServers().getWebServerCount())
             );
         } catch (Exception e) {
             throw new RuntimeException(e);
