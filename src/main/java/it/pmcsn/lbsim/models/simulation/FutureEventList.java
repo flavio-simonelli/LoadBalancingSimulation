@@ -67,4 +67,12 @@ public class FutureEventList {
     }
     public void removeJobStats(JobStats jobStat) {jobStats.remove(jobStat);}
 
+    public List<Double> getAllDepartureTimes() {
+        List<Double> departureTimes = new java.util.ArrayList<>();
+        for (JobStats stats : jobStats) {
+            departureTimes.add(stats.getEstimatedDepartureTime());
+        }
+        return departureTimes;
+    }
+
 }
