@@ -6,18 +6,29 @@ public class TimeMediateWelford {
     private double avg =0.0;
     private double variance =0.0;
     private double time;
+    private double lastX;
 
-    public TimeMediateWelford(double initialTime) {
+    public TimeMediateWelford(double initialTime, double initialX) {
         if (initialTime < 0.0) {
             throw new IllegalArgumentException("Initial time must be non-negative");
         }
         this.time = initialTime;
+        this.lastX = initialX;
+    }
+
+    public TimeMediateWelford(double initialTime) {
+        this(initialTime,0.0);
+    }
+
+    public TimeMediateWelford() {
+        this(0.0,0.0);
     }
 
 
     public void iteration(double x, double newTime) {
         i++;
-        double d = x - avg;
+        double d = this.lastX - avg;
+        this.lastX = x;
 
         double delta = newTime - this.time;
 
