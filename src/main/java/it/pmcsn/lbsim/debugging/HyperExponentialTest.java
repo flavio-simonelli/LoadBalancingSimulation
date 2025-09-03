@@ -125,7 +125,7 @@ public class HyperExponentialTest {
         double stimatedVar = HistogramUtils.stimatedVariance(a, gamma, k, count, n, stimatedMean);
         
         // write csv
-        hyperexponentialTest.writeRow("histogram", String.valueOf(stimatedMean), String.valueOf(stimatedStdDev/theoreticalMean), String.valueOf(stimatedVar), String.valueOf(stimatedStdDev), String.valueOf(intervalEstimation.SemiIntervalEstimation(stimatedMean, k)), String.valueOf(intervalEstimation.SemiIntervalEstimation(stimatedVar, k)));
+        hyperexponentialTest.writeRow("histogram", String.valueOf(stimatedMean), String.valueOf(stimatedStdDev/theoreticalMean), String.valueOf(stimatedVar), String.valueOf(stimatedStdDev), String.valueOf(intervalEstimation.semiIntervalEstimation(stimatedMean, k)), String.valueOf(intervalEstimation.semiIntervalEstimation(stimatedVar, k)));
         hyperexponentialTest.writeRow("welford", String.valueOf(welford.getAvg()), String.valueOf(welford.getStandardVariation()/welford.getAvg()), String.valueOf(welford.getVariance()), String.valueOf(welford.getStandardVariation())); // String.valueOf(intervalEstimation.SemiIntervalEstimation(welford.getAvg(), welford.getI())), String.valueOf(intervalEstimation.SemiIntervalEstimation(welford.getVariance(), welford.getI())));
         hyperexponentialTest.close();
         // write pdf theoretical
