@@ -6,12 +6,12 @@ simulation:
   seed3: 0        # seed per il generatore di numeri casuali
   seed4: 0       # seed per il generatore di numeri
   seed5: 0       # seed per il generatore di numeri
-  duration: "P20DT0H4M"   # P2DT3H4M → 2 giorni, 3 ore, 4 minuti
+  duration: "P1DT0H"   # P2DT3H4M → 2 giorni, 3 ore, 4 minuti
 
 workload:
   chooseWorkload: "hyperexponential"  # valori possibili: "trace", "hyperexponential", "exponential"
   interarrival:
-    mean: 0.2        # media dei tempi di interarrivo (if chooseWorkload = "exponential" is used for the exponential distribution)
+    mean: 0.5        # media dei tempi di interarrivo (if chooseWorkload = "exponential" is used for the exponential distribution)
     cv: 4             # coefficiente di variazione
     streamp: 0
     streamhexp1: 1
@@ -29,10 +29,10 @@ scheduling:
 scaling:
   spikeServer:
     enabled: false
-    SImax: 120        # max job nel web server prima di reindirizzare allo spike
+    SImax: 80        # max job nel web server prima di reindirizzare allo spike
     SImin: 6        # min job nel web server prima di reindirizzare al web server
     cpuMultiplier: 2  # moltiplicatore CPU spike
-    cpuPercentage: 0.8 # percentuale CPU assegnata all'app spike
+    cpuPercentage: 0.4 # percentuale CPU assegnata all'app spike
     coolDown: "PT0S" # tempo cooldown reindirizzamento (s)
 
   horizontal:

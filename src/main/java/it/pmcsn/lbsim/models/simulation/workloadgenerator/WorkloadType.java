@@ -3,7 +3,8 @@ package it.pmcsn.lbsim.models.simulation.workloadgenerator;
 public enum WorkloadType {
     HYPEREXPONENTIAL,
     EXPONENTIAL,
-    TRACE;
+    TRACE,
+    FULLEXP;
 
     public static WorkloadType fromString(String value) {
         if (value == null) {
@@ -13,6 +14,7 @@ public enum WorkloadType {
             case "hyperexponential" -> HYPEREXPONENTIAL;
             case "exponential" -> EXPONENTIAL;
             case "trace" -> TRACE;
+            case "fullexp" -> FULLEXP;
             default -> throw new IllegalArgumentException("Unknown scheduling policy: " + value);
         };
     }
