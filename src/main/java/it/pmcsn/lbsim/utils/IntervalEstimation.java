@@ -19,9 +19,14 @@ public class IntervalEstimation {
         this.rvms = new Rvms();
     }
 
-    public double SemiIntervalEstimation(double standardDeviation, int n) {
+    public double semiIntervalEstimation(double standardDeviation, int n) {
         double u = 1.0 - 0.5 * (1.0 - LOC);
-        double t = rvms.idfStudent(n-1, u);
+        double t;
+        if ( n > 2500000 ) {
+            t = rvms .idfNormal(0.0, 1.0,u);
+        } else {
+            t = rvms.idfStudent(n-1, u);
+        }
         return t * standardDeviation / Math.sqrt(n-1);
     }
 
@@ -95,7 +100,7 @@ public class IntervalEstimation {
         double standardDeviation = Math.sqrt(variance);
 
         // Calcola il semi-intervallo
-        double semiInterval = SemiIntervalEstimation(standardDeviation, n);
+        double semiInterval = semiIntervalEstimation(standardDeviation, n);
 
         // Calcola i limiti dell'intervallo
         double lowerBound = grandMean - semiInterval;

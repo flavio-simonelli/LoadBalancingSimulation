@@ -3,7 +3,6 @@ package it.pmcsn.lbsim.models.simulation;
 
 import it.pmcsn.lbsim.models.domain.Job;
 import it.pmcsn.lbsim.models.domain.LoadBalancer;
-import it.pmcsn.lbsim.models.simulation.workloadgenerator.TraceWorkloadGenerator;
 import it.pmcsn.lbsim.models.simulation.workloadgenerator.WorkloadGenerator;
 import it.pmcsn.lbsim.utils.IntervalEstimation;
 import it.pmcsn.lbsim.utils.TimeMediateWelford;
@@ -93,9 +92,9 @@ public class Simulator {
         //Welford csv
         IntervalEstimation intervalEstimation = new IntervalEstimation(0.95);
         try {
-            welfordCsv.writeRow("OriginalSize",String.valueOf(arrivalStats.getI()),String.valueOf(arrivalStats.getAvg()),String.valueOf(arrivalStats.getStandardVariation()), String.valueOf(arrivalStats.getVariance()), String.valueOf(intervalEstimation.SemiIntervalEstimation(arrivalStats.getStandardVariation(), arrivalStats.getI())));
-            welfordCsv.writeRow("ResponseTime",String.valueOf(departureStats.getI()),String.valueOf(departureStats.getAvg()),String.valueOf(departureStats.getStandardVariation()), String.valueOf(departureStats.getVariance()), String.valueOf(intervalEstimation.SemiIntervalEstimation(departureStats.getStandardVariation(), departureStats.getI())));
-            welfordCsv.writeRow("MeanNumberJobs",String.valueOf(meanNumberJobs.getI()),String.valueOf(meanNumberJobs.getAvg()),String.valueOf(meanNumberJobs.getStandardVariation()), String.valueOf(meanNumberJobs.getVariance()), String.valueOf(intervalEstimation.SemiIntervalEstimation(meanNumberJobs.getStandardVariation(), meanNumberJobs.getI())));
+            welfordCsv.writeRow("OriginalSize",String.valueOf(arrivalStats.getI()),String.valueOf(arrivalStats.getAvg()),String.valueOf(arrivalStats.getStandardVariation()), String.valueOf(arrivalStats.getVariance()), String.valueOf(intervalEstimation.semiIntervalEstimation(arrivalStats.getStandardVariation(), arrivalStats.getI())));
+            welfordCsv.writeRow("ResponseTime",String.valueOf(departureStats.getI()),String.valueOf(departureStats.getAvg()),String.valueOf(departureStats.getStandardVariation()), String.valueOf(departureStats.getVariance()), String.valueOf(intervalEstimation.semiIntervalEstimation(departureStats.getStandardVariation(), departureStats.getI())));
+            welfordCsv.writeRow("MeanNumberJobs",String.valueOf(meanNumberJobs.getI()),String.valueOf(meanNumberJobs.getAvg()),String.valueOf(meanNumberJobs.getStandardVariation()), String.valueOf(meanNumberJobs.getVariance()), String.valueOf(intervalEstimation.semiIntervalEstimation(meanNumberJobs.getStandardVariation(), meanNumberJobs.getI())));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
