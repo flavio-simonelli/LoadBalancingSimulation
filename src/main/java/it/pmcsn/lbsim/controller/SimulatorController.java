@@ -94,6 +94,9 @@ public class SimulatorController {
                         throw new RuntimeException(e);
                     }
                     break;
+                case WorkloadType.FULLEXP:
+                    wg = new FullExpWorkloadGenerator(rngs, config.getInterarrivalMean(), 0, config.getServiceMean(), 1);
+                    break;
                 default:
                     logger.log(Level.SEVERE, "Unsupported workload type: {0}\n", config.getChooseWorkload());
                     throw new IllegalArgumentException("Unsupported workload type: " + config.getChooseWorkload());
