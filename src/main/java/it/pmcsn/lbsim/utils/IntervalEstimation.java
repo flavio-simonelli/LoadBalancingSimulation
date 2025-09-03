@@ -2,6 +2,7 @@ package it.pmcsn.lbsim.utils;
 
 import it.pmcsn.lbsim.utils.random.Rvms;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -185,12 +186,9 @@ public class IntervalEstimation {
      */
     public static void main(String[] args) {
         try {
-            // Path per il CSV aggregato
-            String aggregatedCsvPath = "output/aggregated_response_times.csv";
+            System.out.println("=== GENERAZIONE CSV AGGREGATI PER GRUPPI jN ===");
 
-            System.out.println("=== GENERAZIONE CSV AGGREGATO ===");
-
-            // Prima controlla quali file Welford sono disponibili
+            // Elenco file Welford disponibili
             java.util.List<String> welfordFiles = it.pmcsn.lbsim.utils.csv.CsvAppender.listWelfordFiles("output/csv/");
             System.out.println("File Welford trovati (" + welfordFiles.size() + "):");
             for (String file : welfordFiles) {
@@ -199,51 +197,97 @@ public class IntervalEstimation {
 
             if (welfordFiles.isEmpty()) {
                 System.err.println("⚠️  Nessun file Welford trovato in output/csv/");
-                System.err.println("   Assicurati di aver eseguito le simulazioni prima!");
                 return;
             }
 
-            // Genera il CSV aggregato
-            it.pmcsn.lbsim.utils.csv.CsvAppender.createResponseTimeAggregatedCsv(
-                    java.nio.file.Paths.get(aggregatedCsvPath)
-            );
-            System.out.println("✅ CSV aggregato creato: " + aggregatedCsvPath);
+            // Raggruppa i file per jN
+            java.util.Map<String, java.util.List<String>> groupedFiles = new java.util.HashMap<>();
+            java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("j(\\d+)");
 
-            System.out.println("\n=== CALCOLO INTERVALLO DI CONFIDENZA ===");
+            for (String file : welfordFiles) {
+                java.util.regex.Matcher matcher = pattern.matcher(file);
+                if (matcher.find()) {
+                    String groupKey = matcher.group(); // es. "j0", "j1", "j2"
+                    groupedFiles.computeIfAbsent(groupKey, k -> new java.util.ArrayList<>()).add(file);
+                } else {
+                    groupedFiles.computeIfAbsent("ungrouped", k -> new java.util.ArrayList<>()).add(file);
+                }
+            }
 
-            // Crea l'estimatore con livello di confidenza del 95%
+            // Estimatore con confidenza 95%
             IntervalEstimation estimator = new IntervalEstimation(0.95);
 
-            // Calcola l'intervallo di confidenza dal CSV generato
-            ConfidenceIntervalResult result = estimator.calculateConfidenceIntervalFromCSV(
-                    aggregatedCsvPath,
-                    1, // indice colonna jobs_count
-                    2, // indice colonna mean_response_time
-                    true // ha header
-            );
+            // Percorso della cartella dei CSV
+            java.nio.file.Path csvDir = java.nio.file.Paths.get("output/csv/");
 
-            System.out.println("✅ Calcolo completato!\n");
-            System.out.println(result);
+            // Processa ogni gruppo
+            for (var entry : groupedFiles.entrySet()) {
+                String groupKey = entry.getKey();
+                java.util.List<String> files = entry.getValue();
 
-            // Informazioni aggiuntive
-            System.out.println("\n=== INTERPRETAZIONE RISULTATI ===");
-            System.out.printf("📊 Con il %.0f%% di confidenza, il vero tempo medio di risposta\n",
-                    result.confidenceLevel * 100);
-            System.out.printf("   del sistema è compreso tra %.6f e %.6f secondi.\n",
-                    result.lowerBound, result.upperBound);
-            System.out.printf("🎯 La nostra migliore stima è: %.6f ± %.6f secondi\n",
-                    result.grandMean, result.semiInterval);
+                System.out.println("\n=== Gruppo: " + groupKey + " (" + files.size() + " file) ===");
 
-            // Analisi della precisione
-            double relativeError = (result.semiInterval / result.grandMean) * 100;
-            System.out.printf("📏 Errore relativo: ±%.2f%%\n", relativeError);
+                // Cartella backup temporanea
+                java.nio.file.Path backupDir = java.nio.file.Files.createTempDirectory("backup_" + groupKey);
 
-            if (relativeError < 5) {
-                System.out.println("✅ Ottima precisione! (errore < 5%)");
-            } else if (relativeError < 10) {
-                System.out.println("👍 Buona precisione (errore < 10%)");
-            } else {
-                System.out.println("⚠️  Precisione moderata - considera più repliche per migliorare");
+                // Sposta TUTTI i file in backup
+                java.util.List<java.nio.file.Path> allFiles = java.nio.file.Files.list(csvDir).toList();
+                for (java.nio.file.Path f : allFiles) {
+                    java.nio.file.Files.move(f, backupDir.resolve(f.getFileName()),
+                            java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                }
+
+                // Riporta solo i file del gruppo
+                for (String file : files) {
+                    java.nio.file.Path source = backupDir.resolve(file);
+                    java.nio.file.Path target = csvDir.resolve(file);
+                    java.nio.file.Files.move(source, target,
+                            java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                }
+
+                // Path CSV aggregato per il gruppo
+                String aggregatedCsvPath = "output/aggregated_response_times_" + groupKey + ".csv";
+
+                // Ora CsvAppender vede SOLO i file del gruppo
+                it.pmcsn.lbsim.utils.csv.CsvAppender.createResponseTimeAggregatedCsv(
+                        java.nio.file.Paths.get(aggregatedCsvPath)
+                );
+
+                System.out.println("✅ CSV aggregato creato: " + aggregatedCsvPath);
+
+                // Calcola intervallo di confidenza
+                ConfidenceIntervalResult result = estimator.calculateConfidenceIntervalFromCSV(
+                        aggregatedCsvPath,
+                        1, // colonna jobs_count
+                        2, // colonna mean_response_time
+                        true // ha header
+                );
+
+                System.out.println("✅ Calcolo completato!\n");
+                System.out.println(result);
+
+                // Analisi della precisione
+                double relativeError = (result.semiInterval / result.grandMean) * 100;
+                System.out.printf("📏 Errore relativo: ±%.2f%%\n", relativeError);
+
+                if (relativeError < 5) {
+                    System.out.println("✅ Ottima precisione! (errore < 5%)");
+                } else if (relativeError < 10) {
+                    System.out.println("👍 Buona precisione (errore < 10%)");
+                } else {
+                    System.out.println("⚠️  Precisione moderata - considera più repliche per migliorare");
+                }
+
+                // Ripristina i file originali
+                java.util.List<java.nio.file.Path> tempFiles = java.nio.file.Files.list(csvDir).toList();
+                for (java.nio.file.Path f : tempFiles) {
+                    java.nio.file.Files.move(f, backupDir.resolve(f.getFileName()),
+                            java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                }
+                for (java.nio.file.Path f : java.nio.file.Files.list(backupDir).toList()) {
+                    java.nio.file.Files.move(f, csvDir.resolve(f.getFileName()),
+                            java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                }
             }
 
         } catch (java.io.IOException e) {
@@ -256,4 +300,6 @@ public class IntervalEstimation {
             e.printStackTrace();
         }
     }
+
+
 }

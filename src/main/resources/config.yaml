@@ -1,17 +1,17 @@
 simulation:
-  replications: 1        # numero di repliche della simulazione
+  replications: 20        # numero di repliche della simulazione
   seed0: 123456789        # seed per il generatore di numeri casuali
   seed1: 0        # seed per il generatore di numeri casuali
   seed2: 0        # seed per il generatore di numeri casuali
   seed3: 0        # seed per il generatore di numeri casuali
   seed4: 0       # seed per il generatore di numeri
   seed5: 0       # seed per il generatore di numeri
-  duration: "P1DT0H"   # P2DT3H4M → 2 giorni, 3 ore, 4 minuti
+  duration: "PT30M"   # P2DT3H4M → 2 giorni, 3 ore, 4 minuti
 
 workload:
   chooseWorkload: "hyperexponential"  # valori possibili: "trace", "hyperexponential", "exponential"
   interarrival:
-    mean: 0.5        # media dei tempi di interarrivo (if chooseWorkload = "exponential" is used for the exponential distribution)
+    mean: 0.15        # media dei tempi di interarrivo (if chooseWorkload = "exponential" is used for the exponential distribution)
     cv: 4             # coefficiente di variazione
     streamp: 0
     streamhexp1: 1

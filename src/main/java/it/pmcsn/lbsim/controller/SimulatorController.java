@@ -39,7 +39,7 @@ public class SimulatorController {
         }
         // Define the random number generators
         Rngs rngs = new Rngs();
-        for (int j = 0; j < 1; j++) {
+        for (int j = 0; j < 3; j++) {
             for (int i=0; i< config.getReplications(); i++) {
                 if (i == 0 && j == 0) {
                     if (config.getSeed1() != 0) {
@@ -175,7 +175,7 @@ public class SimulatorController {
                         departureStatsCsv
                 );
                 // Start the simulation
-                simulator.run(config.getDurationSeconds().getSeconds()*2^(j+1));
+                simulator.run(config.getDurationSeconds().getSeconds()*2^(j));
                 // print final seed
                 logger.log(Level.INFO, "Final seeds: {0}\n", Arrays.toString(rngs.getSeedArray()));
                 // close welford csv
