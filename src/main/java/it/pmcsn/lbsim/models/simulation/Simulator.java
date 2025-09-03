@@ -68,6 +68,7 @@ public class Simulator {
                 double elapsedTime = nextArrivalTime - this.currentTime;
                 this.currentTime = nextArrivalTime;
                 this.futureEventList.setNextArrivalTime(this.workload.nextArrival(currentTime));
+
                 arrivalHandler(elapsedTime, this.currentTime);
             } else {
                 JobStats nextDepartureJob = this.futureEventList.nextDepartureJob();
@@ -77,9 +78,12 @@ public class Simulator {
                 }
                 double elapsedTime = nextDepartureTime - this.currentTime;
                 this.currentTime = nextDepartureTime;
+
+
                 departureHandler(elapsedTime,nextDepartureJob);
             }
         }
+
         // Drain remaining jobs after simulation ends
         while ( this.futureEventList.nextDepartureJob() != null) {
                 JobStats nextDepartureJob = this.futureEventList.nextDepartureJob();
@@ -93,9 +97,9 @@ public class Simulator {
         //Welford csv
         IntervalEstimation intervalEstimation = new IntervalEstimation(0.95);
         try {
-            welfordCsv.writeRow("OriginalSize",String.valueOf(arrivalStats.getI()),String.valueOf(arrivalStats.getAvg()),String.valueOf(arrivalStats.getStandardVariation()), String.valueOf(arrivalStats.getVariance()), String.valueOf(intervalEstimation.SemiIntervalEstimation(arrivalStats.getStandardVariation(), arrivalStats.getI())));
-            welfordCsv.writeRow("ResponseTime",String.valueOf(departureStats.getI()),String.valueOf(departureStats.getAvg()),String.valueOf(departureStats.getStandardVariation()), String.valueOf(departureStats.getVariance()), String.valueOf(intervalEstimation.SemiIntervalEstimation(departureStats.getStandardVariation(), departureStats.getI())));
-            welfordCsv.writeRow("MeanNumberJobs",String.valueOf(meanNumberJobs.getI()),String.valueOf(meanNumberJobs.getAvg()),String.valueOf(meanNumberJobs.getStandardVariation()), String.valueOf(meanNumberJobs.getVariance()), String.valueOf(intervalEstimation.SemiIntervalEstimation(meanNumberJobs.getStandardVariation(), meanNumberJobs.getI())));
+            welfordCsv.writeRow("OriginalSize",String.valueOf(arrivalStats.getI()),String.valueOf(arrivalStats.getAvg()),String.valueOf(arrivalStats.getStandardVariation()), String.valueOf(arrivalStats.getVariance()), String.valueOf(intervalEstimation.semiIntervalEstimation(arrivalStats.getStandardVariation(), arrivalStats.getI())));
+            welfordCsv.writeRow("ResponseTime",String.valueOf(departureStats.getI()),String.valueOf(departureStats.getAvg()),String.valueOf(departureStats.getStandardVariation()), String.valueOf(departureStats.getVariance()), String.valueOf(intervalEstimation.semiIntervalEstimation(departureStats.getStandardVariation(), departureStats.getI())));
+            welfordCsv.writeRow("MeanNumberJobs",String.valueOf(meanNumberJobs.getI()),String.valueOf(meanNumberJobs.getAvg()),String.valueOf(meanNumberJobs.getStandardVariation()), String.valueOf(meanNumberJobs.getVariance()), String.valueOf(intervalEstimation.semiIntervalEstimation(meanNumberJobs.getStandardVariation(), meanNumberJobs.getI())));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -210,4 +214,6 @@ public class Simulator {
         departureStats.iteration(responseTime);
         meanNumberJobs.iteration(loadBalancer.getCurrentJobCount(), this.currentTime);
     }
+
+
 }
