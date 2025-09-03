@@ -30,7 +30,7 @@ public class IntervalEstimation {
             t = rvms.idfStudent(n - 1, u);
         }
 
-        return t * standardDeviation / Math.sqrt(n);
+        return t * standardDeviation / Math.sqrt(n-1);
     }
 
 
