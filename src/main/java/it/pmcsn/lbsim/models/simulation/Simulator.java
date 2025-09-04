@@ -79,6 +79,8 @@ public class Simulator {
 
         // Reset servers to initial state
         loadBalancer.getWebServers().backToInitialState();
+        // update final runpolicy
+        runPolicy.updateFinalStats();
     }
 
 
@@ -110,8 +112,6 @@ public class Simulator {
                 double elapsedTime = nextDepartureTime - this.currentTime;
                 this.currentTime = nextDepartureTime;
 
-
-
                 departureHandler(elapsedTime,nextDepartureJob);
             }
         }
@@ -126,6 +126,8 @@ public class Simulator {
         }
         // Remove the servers added
         loadBalancer.getWebServers().backToInitialState();
+        // update final runpolicy
+        runPolicy.updateFinalStats();
     }
 
 

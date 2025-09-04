@@ -72,6 +72,12 @@ public class BatchMeans implements RunPolicy {
             printCsvs();
             countDeparture = 0;
             currentBatch++;
+            this.responceTimeWebServerWelford.reset();
+            this.responceTimeSpikeServerWelford.reset();
+            this.utilizationWebServerWelford.reset();
+            this.utilizationSpikeServerWelford.reset();
+            this.meanNumberJobsWebServerWelford.reset();
+            this.meanNumberJobsSpikeServerWelford.reset();
         }
     }
 

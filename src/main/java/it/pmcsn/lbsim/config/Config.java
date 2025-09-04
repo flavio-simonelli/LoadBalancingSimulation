@@ -33,7 +33,7 @@ public class Config {
     }
 
     public static class Autocorrelation {
-        public int kmax;
+        public int maxlag;
     }
 
     public static class Workload {

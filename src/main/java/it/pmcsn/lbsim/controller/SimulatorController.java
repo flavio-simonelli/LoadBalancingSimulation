@@ -1,6 +1,5 @@
 package it.pmcsn.lbsim.controller;
 
-import it.pmcsn.lbsim.config.Config;
 import it.pmcsn.lbsim.config.SimConfiguration;
 import it.pmcsn.lbsim.models.domain.LoadBalancer;
 import it.pmcsn.lbsim.models.domain.removalPolicy.RemovalPolicy;
@@ -17,6 +16,7 @@ import it.pmcsn.lbsim.models.domain.schedulingpolicy.SchedulingPolicy;
 import it.pmcsn.lbsim.models.domain.schedulingpolicy.SchedulingType;
 import it.pmcsn.lbsim.models.domain.server.Server;
 import it.pmcsn.lbsim.models.domain.server.ServerPool;
+import it.pmcsn.lbsim.models.simulation.runType.Autocorrelation;
 import it.pmcsn.lbsim.models.simulation.runType.RunPolicy;
 import it.pmcsn.lbsim.models.simulation.runType.RunType;
 import it.pmcsn.lbsim.models.simulation.Simulator;
@@ -56,7 +56,7 @@ public class SimulatorController {
         // istance workload
         WorkloadGenerator wg = istanceWorkloadGenerator(rngs, config.getChooseWorkload(), config.getInterarrivalMean(), config.getInterarrivalCv(), config.getServiceMean(), config.getServiceCv(), config.getInterarrivalStreamP(), config.getInterarrivalStreamHexp1(), config.getInterarrivalStreamHexp2(), config.getServiceStreamP(), config.getServiceStreamHexp1(), config.getServiceStreamHexp2(), config.getTraceArrivalsPath(), config.getTraceSizePath());
         // print the initial seed of the replica
-        logger.log(Level.INFO, "Initial seeds of the run: {1}\n", Arrays.toString(rngs.getSeedArray()));
+        logger.log(Level.INFO, "Initial seeds of the run: {0} \n", Arrays.toString(rngs.getSeedArray()));
         // create a runtype
         RunPolicy runPolicy = new BatchMeans(config.getBatchSize(), 0.95F);
         // create a new system
@@ -77,7 +77,7 @@ public class SimulatorController {
         // run n replicas
         for (int replica = 0; replica<config.getNumberOfReplicas(); replica++) {
             // print the initial seed of the replica
-            logger.log(Level.INFO, "Initial seeds of Replica {0}: {1}\n", new Object[]{replica,Arrays.toString(rngs.getSeedArray())});
+            logger.log(Level.INFO, "Initial seeds of Replica {0}: {1}\n", new Object[]{replica, Arrays.toString(rngs.getSeedArray())});
             // create a run policy
             RunPolicy runPolicy = new BatchMeans(config.getBatchSize(), 0.95F);
             // create a new system
@@ -101,12 +101,14 @@ public class SimulatorController {
         // print the initial seed of the replica
         logger.log(Level.INFO, "Initial seeds: {1}\n", Arrays.toString(rngs.getSeedArray()));
         // create a runtype
-        RunPolicy runPolicy = new BatchMeans(config.getBatchSize(), 0.95F);
+        RunPolicy runPolicy = new Autocorrelation(config.getMaxLag());
         // create a new system
         Simulator simulator = createNewSimulator(config.getInitialServerCount(), config.getSpikeCpuMultiplier(), config.getSpikeCpuPercentage(), config.getSchedulingType(), config.isSpikeEnabled(), config.getSImax(), config.isHorizontalEnabled(), config.getSlidingWindowSize(), config.getR0min(), config.getR0max(), config.getHorizontalCoolDown(), runPolicy, wg);
         // run simulation
-        simulator.run(config.getKmax()); //TODO: da scrivere bene
-        logger.log(Level.INFO, "Final seeds: {1}\n", Arrays.toString(rngs.getSeedArray()));
+        simulator.run(config.getMaxLag()*100); //TODO: empirical value ho scelto io
+        logger.log(Level.INFO, "Final seeds: {0}\n", Arrays.toString(rngs.getSeedArray()));
+        // close csv
+        runPolicy.closeCsvs();
 
     }
 

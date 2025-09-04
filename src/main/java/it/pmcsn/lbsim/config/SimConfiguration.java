@@ -14,7 +14,7 @@ public interface SimConfiguration {
     int getNumberOfReplicas();
     int getDurationInJobs();
     Duration getDurationInSeconds();
-    int getKmax();
+    int getMaxLag();
 
 
     boolean getIsTracedriven();

@@ -36,8 +36,14 @@ public class TimeMediateWelford {
         this.avg = this.avg + d* delta/newTime;
 
         this.time = newTime;
+    }
 
-
+    public void reset() {
+        this.i = 0;
+        this.avg = 0.0;
+        this.variance = 0.0;
+        this.time = 0.0;
+        this.lastX = 0.0;
     }
     
     public int getI() {

@@ -68,7 +68,7 @@ public class ConfigLoader {
         @Override public int getNumberOfBatchs() {return cfg.infinitesimulation.k;}
         @Override public int getNumberOfReplicas() { return cfg.finitesimulation.replica; }
         @Override public int getBatchSize() { return cfg.infinitesimulation.b; }
-        @Override public int getKmax(){return cfg.autocorrelation.kmax;}
+        @Override public int getMaxLag(){return cfg.autocorrelation.maxlag;}
         @Override public double getInterarrivalMean() { return cfg.workload.interarrival.mean; }
         @Override public double getInterarrivalCv() { return cfg.workload.interarrival.cv; }
         @Override public int getInterarrivalStreamP() { return cfg.workload.interarrival.streamp; }
@@ -182,7 +182,7 @@ public class ConfigLoader {
                     break;
 
                 case AUTOCORRELATION:
-                    sb.append("Kmax: ").append(cfg.getKmax()).append("\n");
+                    sb.append("Kmax: ").append(cfg.getMaxLag()).append("\n");
                     break;
             }
 

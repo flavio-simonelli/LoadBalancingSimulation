@@ -1,10 +1,10 @@
 simulation:
-  typesimulation: "infinitesimulation" # valori possibili: "infinitesimulation", "finitesimulationjobs", "finitesimulationtime", "autocorrelation"
+  typesimulation: "autocorrelation" # valori possibili: "infinitesimulation", "finitesimulationjobs", "finitesimulationtime", "autocorrelation"
   seed: 123456789
 
 infinitesimulation:
   k: 64 # numero di batch
-  b: 128 # dimensione del batch
+  b: 1000000 # dimensione del batch
 
 finitesimulation:
   replica: 64  #numero di repliche
@@ -13,12 +13,12 @@ finitesimulation:
 
 
 autocorrelation:
-  kmax: 100
+  maxlag: 1000
 
 workload:
   chooseWorkload: "hyperexponential"  # valori possibili: "trace", "hyperexponential", "exponential"
   interarrival:
-    mean: 0.2        # media dei tempi di interarrivo (if chooseWorkload = "exponential" is used for the exponential distribution)
+    mean: 0.15        # media dei tempi di interarrivo (if chooseWorkload = "exponential" is used for the exponential distribution)
     cv: 4             # coefficiente di variazione
     streamp: 0
     streamhexp1: 1
@@ -35,7 +35,7 @@ scheduling:
 
 scaling:
   spikeServer:
-    enabled: false
+    enabled: true
     SImax: 80        # max job nel web server prima di reindirizzare allo spike
     SImin: 6        # min job nel web server prima di reindirizzare al web server
     cpuMultiplier: 2  # moltiplicatore CPU spike
