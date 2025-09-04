@@ -2,7 +2,7 @@ package it.pmcsn.lbsim.config;
 
 import it.pmcsn.lbsim.models.domain.schedulingpolicy.SchedulingType;
 import it.pmcsn.lbsim.models.simulation.workloadgenerator.WorkloadType;
-import it.pmcsn.lbsim.utils.runType.RunType;
+import it.pmcsn.lbsim.models.simulation.runType.RunType;
 
 import java.time.Duration;
 

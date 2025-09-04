@@ -92,6 +92,19 @@ public class ServerPool {
     }
 
 
+    public int getJobCount(int id){
+        for (Server server : webServers) {
+            if (server.getId() == id) {
+                return server.getCurrentSI();
+            }
+        }
+        for (Server server : removingServers) {
+            if (server.getId() == id) {
+                return server.getCurrentSI();
+            }
+        }
+        return 0;
+    }
 
     public List<Integer> getJobsCountForServer() {
         List<Integer> res;

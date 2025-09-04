@@ -5,7 +5,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import it.pmcsn.lbsim.models.domain.schedulingpolicy.SchedulingType;
 import it.pmcsn.lbsim.models.simulation.workloadgenerator.WorkloadType;
-import it.pmcsn.lbsim.utils.runType.RunType;
+import it.pmcsn.lbsim.models.simulation.runType.RunType;
 
 import java.io.InputStream;
 import java.time.Duration;
@@ -42,7 +42,7 @@ public class ConfigLoader {
             // stampa di debug (sarà mostrata solo se livello lo permette)
 
             //printDebug(cfg);
-            printNewDebug(cfg);
+            //printNewDebug(cfg);
 
             return cfg;
 
@@ -60,14 +60,14 @@ public class ConfigLoader {
             this.cfg = cfg;
         }
 
-        @Override public RunType getRunType() { return RunType.valueOf(cfg.simulation.typeSimulation); }
+        @Override public RunType getRunType() { return RunType.fromString(cfg.simulation.typesimulation); }
         @Override public long getSeed() { return cfg.simulation.seed; }
         @Override public boolean getIsTracedriven() {return cfg.workload.isTracedriven;}
-        @Override public Duration getDurationInSeconds() { return cfg.finiteSimulation.duration; }
-        @Override public int getDurationInJobs() { return cfg.finiteSimulation.numJobs; }
-        @Override public int getNumberOfBatchs() {return cfg.infiniteSimulation.k;}
-        @Override public int getNumberOfReplicas() { return cfg.finiteSimulation.replica; }
-        @Override public int getBatchSize() { return cfg.infiniteSimulation.b; }
+        @Override public Duration getDurationInSeconds() { return cfg.finitesimulation.duration; }
+        @Override public int getDurationInJobs() { return cfg.finitesimulation.numjobs; }
+        @Override public int getNumberOfBatchs() {return cfg.infinitesimulation.k;}
+        @Override public int getNumberOfReplicas() { return cfg.finitesimulation.replica; }
+        @Override public int getBatchSize() { return cfg.infinitesimulation.b; }
         @Override public int getKmax(){return cfg.autocorrelation.kmax;}
         @Override public double getInterarrivalMean() { return cfg.workload.interarrival.mean; }
         @Override public double getInterarrivalCv() { return cfg.workload.interarrival.cv; }

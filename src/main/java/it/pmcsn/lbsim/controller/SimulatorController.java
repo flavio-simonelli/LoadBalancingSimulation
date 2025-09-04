@@ -1,5 +1,6 @@
 package it.pmcsn.lbsim.controller;
 
+import it.pmcsn.lbsim.config.Config;
 import it.pmcsn.lbsim.config.SimConfiguration;
 import it.pmcsn.lbsim.models.domain.LoadBalancer;
 import it.pmcsn.lbsim.models.domain.removalPolicy.RemovalPolicy;
@@ -16,9 +17,10 @@ import it.pmcsn.lbsim.models.domain.schedulingpolicy.SchedulingPolicy;
 import it.pmcsn.lbsim.models.domain.schedulingpolicy.SchedulingType;
 import it.pmcsn.lbsim.models.domain.server.Server;
 import it.pmcsn.lbsim.models.domain.server.ServerPool;
-import it.pmcsn.lbsim.utils.runType.RunPolicy;
-import it.pmcsn.lbsim.utils.runType.RunType;
+import it.pmcsn.lbsim.models.simulation.runType.RunPolicy;
+import it.pmcsn.lbsim.models.simulation.runType.RunType;
 import it.pmcsn.lbsim.models.simulation.Simulator;
+import it.pmcsn.lbsim.models.simulation.runType.infiniteHorizon.BatchMeans;
 import it.pmcsn.lbsim.models.simulation.workloadgenerator.*;
 import it.pmcsn.lbsim.utils.random.HyperExponential;
 import it.pmcsn.lbsim.utils.random.Rngs;
@@ -56,12 +58,14 @@ public class SimulatorController {
         // print the initial seed of the replica
         logger.log(Level.INFO, "Initial seeds of the run: {1}\n", Arrays.toString(rngs.getSeedArray()));
         // create a runtype
-        //RunPolicy runPolicy = new BatchMeans()
+        RunPolicy runPolicy = new BatchMeans(config.getBatchSize(), 0.95F);
         // create a new system
         Simulator simulator = createNewSimulator(config.getInitialServerCount(), config.getSpikeCpuMultiplier(), config.getSpikeCpuPercentage(), config.getSchedulingType(), config.isSpikeEnabled(), config.getSImax(), config.isHorizontalEnabled(), config.getSlidingWindowSize(), config.getR0min(), config.getR0max(), config.getHorizontalCoolDown(), runPolicy, wg);
         // run simulation
         simulator.run(config.getBatchSize() * config.getNumberOfBatchs());
         logger.log(Level.INFO, "Final seeds of the run {0}\n", Arrays.toString(rngs.getSeedArray()));
+        // close csv
+        runPolicy.closeCsvs();
 
     }
 
@@ -74,6 +78,8 @@ public class SimulatorController {
         for (int replica = 0; replica<config.getNumberOfReplicas(); replica++) {
             // print the initial seed of the replica
             logger.log(Level.INFO, "Initial seeds of Replica {0}: {1}\n", new Object[]{replica,Arrays.toString(rngs.getSeedArray())});
+            // create a run policy
+            RunPolicy runPolicy = new BatchMeans(config.getBatchSize(), 0.95F);
             // create a new system
             Simulator simulator = createNewSimulator(config.getInitialServerCount(), config.getSpikeCpuMultiplier(), config.getSpikeCpuPercentage(), config.getSchedulingType(), config.isSpikeEnabled(), config.getSImax(), config.isHorizontalEnabled(), config.getSlidingWindowSize(), config.getR0min(), config.getR0max(), config.getHorizontalCoolDown(), runPolicy, wg);
             // run simulation
@@ -95,7 +101,7 @@ public class SimulatorController {
         // print the initial seed of the replica
         logger.log(Level.INFO, "Initial seeds: {1}\n", Arrays.toString(rngs.getSeedArray()));
         // create a runtype
-        //RunPolicy runPolicy = new BatchMeans()
+        RunPolicy runPolicy = new BatchMeans(config.getBatchSize(), 0.95F);
         // create a new system
         Simulator simulator = createNewSimulator(config.getInitialServerCount(), config.getSpikeCpuMultiplier(), config.getSpikeCpuPercentage(), config.getSchedulingType(), config.isSpikeEnabled(), config.getSImax(), config.isHorizontalEnabled(), config.getSlidingWindowSize(), config.getR0min(), config.getR0max(), config.getHorizontalCoolDown(), runPolicy, wg);
         // run simulation
@@ -150,7 +156,7 @@ public class SimulatorController {
         return wg;
     }
 
-    public Simulator createNewSimulator(int initialNumberOfWS, float cpuMultiplierSpike, float cpuPercentageSpike, SchedulingType schedulingType, boolean spikeEnable, int SImax, boolean horizontalEnable, int slidingWindowSize, Duration R0min, Duration R0max, Duration horizontalCoolDown, RunPolicy runPolicy, WorkloadGenerator wg) {
+    public Simulator createNewSimulator(int initialNumberOfWS, double cpuMultiplierSpike, double cpuPercentageSpike, SchedulingType schedulingType, boolean spikeEnable, int SImax, boolean horizontalEnable, int slidingWindowSize, Duration R0min, Duration R0max, Duration horizontalCoolDown, RunPolicy runPolicy, WorkloadGenerator wg) {
         RemovalPolicy removalPolicy = new RemovalPolicyLeastUsed();
         ServerPool serverPool = new ServerPool(initialNumberOfWS, 1.0, removalPolicy);
         Server spikeServer = new Server(cpuMultiplierSpike, cpuPercentageSpike, -1);

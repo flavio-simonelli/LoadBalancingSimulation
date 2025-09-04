@@ -4,9 +4,7 @@ package it.pmcsn.lbsim.models.simulation;
 import it.pmcsn.lbsim.models.domain.Job;
 import it.pmcsn.lbsim.models.domain.LoadBalancer;
 import it.pmcsn.lbsim.models.simulation.workloadgenerator.WorkloadGenerator;
-import it.pmcsn.lbsim.utils.IntervalEstimation;
-import it.pmcsn.lbsim.utils.csv.CsvAppender;
-import it.pmcsn.lbsim.utils.runType.RunPolicy;
+import it.pmcsn.lbsim.models.simulation.runType.RunPolicy;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -17,7 +15,7 @@ public class Simulator {
     private final FutureEventList futureEventList; // Future Event List
     private final WorkloadGenerator workload; // Workload generator
     private final LoadBalancer loadBalancer; // System under simulation
-    private RunPolicy runPolicy;
+    private final RunPolicy runPolicy;
 
     public Simulator(WorkloadGenerator workloadGenerator, LoadBalancer loadBalancer, RunPolicy runPolicy) {
         this.currentTime = 0.0;
@@ -28,8 +26,61 @@ public class Simulator {
     }
 
     public void run(int numJobs) {
+        if (numJobs <= 0) {
+            logger.log(Level.SEVERE, "Number of jobs must be greater than zero");
+            throw new IllegalArgumentException("Number of jobs must be greater than zero");
+        }
 
+        int createdJobs = 0;
+
+        // Schedule first arrival
+        this.futureEventList.setNextArrivalTime(this.workload.nextArrival(currentTime));
+
+        // Main loop - until we create numJobs
+        while (createdJobs < numJobs) {
+            FutureEventList.Event event = this.futureEventList.nextEvent();
+
+            if (event == FutureEventList.Event.ARRIVAL) {
+                double nextArrivalTime = this.futureEventList.getnextArrivalTime();
+                if (nextArrivalTime == Double.POSITIVE_INFINITY) {
+                    break; // no more arrivals possible
+                }
+                double elapsedTime = nextArrivalTime - this.currentTime;
+                this.currentTime = nextArrivalTime;
+                this.futureEventList.setNextArrivalTime(this.workload.nextArrival(currentTime));
+
+                arrivalHandler(elapsedTime, this.currentTime);
+                createdJobs++; // conta job creato
+
+            } else { // DEPARTURE
+                JobStats nextDepartureJob = this.futureEventList.nextDepartureJob();
+                if (nextDepartureJob == null) {
+                    break; // no departures left
+                }
+                double nextDepartureTime = nextDepartureJob.getEstimatedDepartureTime();
+                if (nextDepartureTime == Double.POSITIVE_INFINITY) {
+                    break;
+                }
+                double elapsedTime = nextDepartureTime - this.currentTime;
+                this.currentTime = nextDepartureTime;
+
+                departureHandler(elapsedTime, nextDepartureJob);
+            }
+        }
+
+        // Drain: completa i job rimanenti
+        while (this.futureEventList.nextDepartureJob() != null) {
+            JobStats nextDepartureJob = this.futureEventList.nextDepartureJob();
+            double nextDepartureTime = nextDepartureJob.getEstimatedDepartureTime();
+            double elapsedTime = nextDepartureTime - this.currentTime;
+            this.currentTime = nextDepartureTime;
+            departureHandler(elapsedTime, nextDepartureJob);
+        }
+
+        // Reset servers to initial state
+        loadBalancer.getWebServers().backToInitialState();
     }
+
 
     public void run(double simulationDuration) {
         if (simulationDuration <= 0.0) {
@@ -75,14 +126,6 @@ public class Simulator {
         }
         // Remove the servers added
         loadBalancer.getWebServers().backToInitialState();
-        //Welford csv
-      /*  try {
-            welfordCsv.writeRow("OriginalSize", String.valueOf(arrivalStats.getI()), String.valueOf(arrivalStats.getAvg()), String.valueOf(arrivalStats.getStandardVariation()), String.valueOf(arrivalStats.getVariance()), String.valueOf(intervalEstimation.semiIntervalEstimation(arrivalStats.getStandardVariation(), arrivalStats.getI())));
-            welfordCsv.writeRow("ResponseTime", String.valueOf(departureStats.getI()), String.valueOf(departureStats.getAvg()), String.valueOf(departureStats.getStandardVariation()), String.valueOf(departureStats.getVariance()), String.valueOf(intervalEstimation.semiIntervalEstimation(departureStats.getStandardVariation(), departureStats.getI())));
-            welfordCsv.writeRow("MeanNumberJobs", String.valueOf(meanNumberJobs.getI()), String.valueOf(meanNumberJobs.getAvg()), String.valueOf(meanNumberJobs.getStandardVariation()), String.valueOf(meanNumberJobs.getVariance()), String.valueOf(intervalEstimation.semiIntervalEstimation(meanNumberJobs.getStandardVariation(), meanNumberJobs.getI())));
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }*/
     }
 
 
@@ -103,10 +146,7 @@ public class Simulator {
         for (JobStats jobStat : this.futureEventList.getJobStats()) {
             jobStat.estimateDepartureTime(this.currentTime);
         }
-
         runPolicy.updateArrivalStats(size, loadBalancer.getCurrentJobCount(), this.currentTime, this.loadBalancer, this.futureEventList);
-
-
     }
 
     private void departureHandler(double elapsedTime, JobStats targetDepartureJobStats) {
@@ -126,9 +166,7 @@ public class Simulator {
         for (JobStats js : this.futureEventList.getJobStats()) {
             js.estimateDepartureTime(this.currentTime);
         }
-
         // Log job statistics
-
         this.runPolicy.updateDepartureStats(loadBalancer.getCurrentJobCount(), this.currentTime, responseTime, targetDepartureJobStats,loadBalancer,futureEventList);
     }
 

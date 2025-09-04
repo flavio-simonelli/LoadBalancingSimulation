@@ -61,7 +61,7 @@ public class HyperExponentialTest {
 
         // create a random generator
         Rngs rngs = new Rngs();
-        rngs.plantSeeds(config.getSeed0()); // get the first seed from the configuration file
+        rngs.plantSeeds(config.getSeed());
         Rvgs rvgs = new Rvgs(rngs);
 
         // create Welford for mean and variance

@@ -2,7 +2,7 @@ simulation:
   typesimulation: "infinitesimulation" # valori possibili: "infinitesimulation", "finitesimulationjobs", "finitesimulationtime", "autocorrelation"
   seed: 123456789
 
-inifinitesimulation:
+infinitesimulation:
   k: 64 # numero di batch
   b: 128 # dimensione del batch
 

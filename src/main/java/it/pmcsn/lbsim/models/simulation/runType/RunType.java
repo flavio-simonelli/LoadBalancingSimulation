@@ -1,4 +1,4 @@
-package it.pmcsn.lbsim.utils.runType;
+package it.pmcsn.lbsim.models.simulation.runType;
 
 public enum RunType {
     INFINITESIMULATION,
@@ -11,7 +11,7 @@ public enum RunType {
             throw new IllegalArgumentException("Run type cannot be null");
         }
         return switch (value.toLowerCase()) {
-            case "infinitesimualtion" -> INFINITESIMULATION;
+            case "infinitesimulation" -> INFINITESIMULATION;
             case "finitesimulationjobs" -> FINITESIMULATIONJOBS;
             case "finitesimualtiontime" -> FINITESIMULATIONTIME;
             case "autocorrelation" -> AUTOCORRELATION;
