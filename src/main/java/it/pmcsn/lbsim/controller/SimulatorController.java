@@ -16,11 +16,8 @@ import it.pmcsn.lbsim.models.domain.schedulingpolicy.SchedulingPolicy;
 import it.pmcsn.lbsim.models.domain.schedulingpolicy.SchedulingType;
 import it.pmcsn.lbsim.models.domain.server.Server;
 import it.pmcsn.lbsim.models.domain.server.ServerPool;
-import it.pmcsn.lbsim.models.simulation.runType.Autocorrelation;
-import it.pmcsn.lbsim.models.simulation.runType.RunPolicy;
-import it.pmcsn.lbsim.models.simulation.runType.RunType;
+import it.pmcsn.lbsim.models.simulation.runType.*;
 import it.pmcsn.lbsim.models.simulation.Simulator;
-import it.pmcsn.lbsim.models.simulation.runType.infiniteHorizon.BatchMeans;
 import it.pmcsn.lbsim.models.simulation.workloadgenerator.*;
 import it.pmcsn.lbsim.utils.random.HyperExponential;
 import it.pmcsn.lbsim.utils.random.Rngs;
@@ -74,12 +71,12 @@ public class SimulatorController {
         Rngs rngs = istanceRandomGenerator(config.getSeed());
         // istance workload
         WorkloadGenerator wg = istanceWorkloadGenerator(rngs, config.getChooseWorkload(), config.getInterarrivalMean(), config.getInterarrivalCv(), config.getServiceMean(), config.getServiceCv(), config.getInterarrivalStreamP(), config.getInterarrivalStreamHexp1(), config.getInterarrivalStreamHexp2(), config.getServiceStreamP(), config.getServiceStreamHexp1(), config.getServiceStreamHexp2(), config.getTraceArrivalsPath(), config.getTraceSizePath());
+        // create a run policy
+        Replication runPolicy = new Replication(0.95F);
         // run n replicas
         for (int replica = 0; replica<config.getNumberOfReplicas(); replica++) {
             // print the initial seed of the replica
             logger.log(Level.INFO, "Initial seeds of Replica {0}: {1}\n", new Object[]{replica, Arrays.toString(rngs.getSeedArray())});
-            // create a run policy
-            RunPolicy runPolicy = new BatchMeans(config.getBatchSize(), 0.95F);
             // create a new system
             Simulator simulator = createNewSimulator(config.getInitialServerCount(), config.getSpikeCpuMultiplier(), config.getSpikeCpuPercentage(), config.getSchedulingType(), config.isSpikeEnabled(), config.getSImax(), config.isHorizontalEnabled(), config.getSlidingWindowSize(), config.getR0min(), config.getR0max(), config.getHorizontalCoolDown(), runPolicy, wg);
             // run simulation
@@ -90,7 +87,13 @@ public class SimulatorController {
             }
             // print the final seed of the replica
             logger.log(Level.INFO, "Final seeds of Replica {0}: {1}\n", new Object[]{replica,Arrays.toString(rngs.getSeedArray())});
+            // update the replica counter
+            runPolicy.nextReplica();
         }
+        // close csv
+        runPolicy.closeCsvs();
+        // print the results of the replicas
+        runPolicy.finalCalculation();
     }
 
     public void autocorrelation(SimConfiguration config) {

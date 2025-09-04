@@ -1,4 +1,4 @@
-package it.pmcsn.lbsim.models.simulation.runType.infiniteHorizon;
+package it.pmcsn.lbsim.models.simulation.runType;
 
 import it.pmcsn.lbsim.models.domain.LoadBalancer;
 import it.pmcsn.lbsim.models.simulation.FutureEventList;
@@ -7,7 +7,6 @@ import it.pmcsn.lbsim.utils.IntervalEstimation;
 import it.pmcsn.lbsim.utils.TimeMediateWelford;
 import it.pmcsn.lbsim.utils.WelfordSimple;
 import it.pmcsn.lbsim.utils.csv.CsvAppender;
-import it.pmcsn.lbsim.models.simulation.runType.RunPolicy;
 
 import java.io.IOException;
 import java.nio.file.Path;

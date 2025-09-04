@@ -1,5 +1,5 @@
 simulation:
-  typesimulation: "autocorrelation" # valori possibili: "infinitesimulation", "finitesimulationjobs", "finitesimulationtime", "autocorrelation"
+  typesimulation: "finitesimulationtime" # valori possibili: "infinitesimulation", "finitesimulationjobs", "finitesimulationtime", "autocorrelation"
   seed: 123456789
 
 infinitesimulation:
@@ -7,9 +7,9 @@ infinitesimulation:
   b: 1000000 # dimensione del batch
 
 finitesimulation:
-  replica: 64  #numero di repliche
+  replica: 10  #numero di repliche
   numjobs: 11000 # numero di job da eseguire per ogni replica
-  duration: "P30DT0H"   # P2DT3H4M → 2 giorni, 3 ore, 4 minuti (tempo per ogni replica)
+  duration: "P3DT0H"   # P2DT3H4M → 2 giorni, 3 ore, 4 minuti (tempo per ogni replica)
 
 
 autocorrelation:

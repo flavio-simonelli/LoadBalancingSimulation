@@ -3,7 +3,6 @@ package it.pmcsn.lbsim.models.simulation.runType;
 import it.pmcsn.lbsim.models.domain.LoadBalancer;
 import it.pmcsn.lbsim.models.simulation.FutureEventList;
 import it.pmcsn.lbsim.models.simulation.JobStats;
-import it.pmcsn.lbsim.utils.AutoCorrelationFunction;
 import it.pmcsn.lbsim.utils.OnlineACFOneStep;
 import it.pmcsn.lbsim.utils.csv.CsvAppender;
 

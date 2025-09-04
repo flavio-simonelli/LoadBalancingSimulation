@@ -13,7 +13,7 @@ public enum RunType {
         return switch (value.toLowerCase()) {
             case "infinitesimulation" -> INFINITESIMULATION;
             case "finitesimulationjobs" -> FINITESIMULATIONJOBS;
-            case "finitesimualtiontime" -> FINITESIMULATIONTIME;
+            case "finitesimulationtime" -> FINITESIMULATIONTIME;
             case "autocorrelation" -> AUTOCORRELATION;
                 default -> throw new IllegalArgumentException("Unknown type of run: " + value);
         };
