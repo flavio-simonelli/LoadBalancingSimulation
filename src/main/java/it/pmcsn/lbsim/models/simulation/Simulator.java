@@ -26,7 +26,7 @@ public class Simulator {
 
     private final LoadBalancer loadBalancer; // System under simulation
 
-
+    private int nextHourToReport;
     private final CsvAppender welfordCsv;
     private final CsvAppender jobLogCsv;
     private final CsvAppender serverLogCsv;
@@ -68,7 +68,7 @@ public class Simulator {
                 double elapsedTime = nextArrivalTime - this.currentTime;
                 this.currentTime = nextArrivalTime;
                 this.futureEventList.setNextArrivalTime(this.workload.nextArrival(currentTime));
-
+                checkHourPassed();
                 arrivalHandler(elapsedTime, this.currentTime);
             } else {
                 JobStats nextDepartureJob = this.futureEventList.nextDepartureJob();
@@ -78,6 +78,7 @@ public class Simulator {
                 }
                 double elapsedTime = nextDepartureTime - this.currentTime;
                 this.currentTime = nextDepartureTime;
+                checkHourPassed();
 
 
                 departureHandler(elapsedTime,nextDepartureJob);
@@ -214,6 +215,30 @@ public class Simulator {
         departureStats.iteration(responseTime);
         meanNumberJobs.iteration(loadBalancer.getCurrentJobCount(), this.currentTime);
     }
+
+    private void checkHourPassed() {
+        while (this.currentTime >= nextHourToReport * 3600) {
+            int totalHours = nextHourToReport;
+            int days = totalHours / 24;
+            int hours = totalHours % 24;
+
+            String message;
+            if (days > 0) {
+                if (hours > 0) {
+                    message = "Sono passati " + days + " giorno" + (days > 1 ? "i" : "")
+                            + " e " + hours + "h";
+                } else {
+                    message = "Sono passati " + days + " giorno" + (days > 1 ? "i" : "");
+                }
+            } else {
+                message = "È passata " + totalHours + "h";
+            }
+
+            logger.info(message);
+            nextHourToReport++;
+        }
+    }
+
 
 
 }
