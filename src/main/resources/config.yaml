@@ -1,12 +1,19 @@
 simulation:
-  replications: 1        # numero di repliche della simulazione
-  seed0: 123456789        # seed per il generatore di numeri casuali
-  seed1: 0        # seed per il generatore di numeri casuali
-  seed2: 0        # seed per il generatore di numeri casuali
-  seed3: 0        # seed per il generatore di numeri casuali
-  seed4: 0       # seed per il generatore di numeri
-  seed5: 0       # seed per il generatore di numeri
-  duration: "P30DT0H"   # P2DT3H4M → 2 giorni, 3 ore, 4 minuti
+  typesimulation: "infinitesimulation" # valori possibili: "infinitesimulation", "finitesimulationjobs", "finitesimulationtime", "autocorrelation"
+  seed: 123456789
+
+inifinitesimulation:
+  k: 64 # numero di batch
+  b: 128 # dimensione del batch
+
+finitesimulation:
+  replica: 64  #numero di repliche
+  numjobs: 11000 # numero di job da eseguire per ogni replica
+  duration: "P30DT0H"   # P2DT3H4M → 2 giorni, 3 ore, 4 minuti (tempo per ogni replica)
+
+
+autocorrelation:
+  kmax: 100
 
 workload:
   chooseWorkload: "hyperexponential"  # valori possibili: "trace", "hyperexponential", "exponential"
@@ -25,8 +32,6 @@ workload:
 
 scheduling:
   policy: "least_load"   # valori possibili: least_load, round_robin
-
-
 
 scaling:
   spikeServer:

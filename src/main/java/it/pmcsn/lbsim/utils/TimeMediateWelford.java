@@ -56,4 +56,5 @@ public class TimeMediateWelford {
         return Math.sqrt(this.variance /(i));
     }
 
+
 }

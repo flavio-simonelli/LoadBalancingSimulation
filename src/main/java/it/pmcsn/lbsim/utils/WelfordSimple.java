@@ -30,4 +30,11 @@ public class WelfordSimple {
         return Math.sqrt(this.variance /(i));
     }
 
+
+    public void reset() {
+        this.i = 0;
+        this.avg = 0.0;
+        this.variance = 0.0;
+    }
+
 }

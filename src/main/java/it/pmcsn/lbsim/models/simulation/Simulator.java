@@ -3,52 +3,32 @@ package it.pmcsn.lbsim.models.simulation;
 
 import it.pmcsn.lbsim.models.domain.Job;
 import it.pmcsn.lbsim.models.domain.LoadBalancer;
-import it.pmcsn.lbsim.models.simulation.workloadgenerator.TraceWorkloadGenerator;
 import it.pmcsn.lbsim.models.simulation.workloadgenerator.WorkloadGenerator;
 import it.pmcsn.lbsim.utils.IntervalEstimation;
-import it.pmcsn.lbsim.utils.TimeMediateWelford;
-import it.pmcsn.lbsim.utils.WelfordSimple;
 import it.pmcsn.lbsim.utils.csv.CsvAppender;
+import it.pmcsn.lbsim.utils.runType.RunPolicy;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Simulator {
     private static final Logger logger = Logger.getLogger(Simulator.class.getName());
-
-    private final WelfordSimple departureStats = new WelfordSimple();
-    private final WelfordSimple arrivalStats = new WelfordSimple();
-    private final TimeMediateWelford meanNumberJobs = new TimeMediateWelford();
-
     private Double currentTime;                     // Current simulation time
     private final FutureEventList futureEventList; // Future Event List
     private final WorkloadGenerator workload; // Workload generator
-
     private final LoadBalancer loadBalancer; // System under simulation
+    private RunPolicy runPolicy;
 
-    private int nextHourToReport;
-    private final CsvAppender welfordCsv;
-    private final CsvAppender jobLogCsv;
-    private final CsvAppender serverLogCsv;
-    private final CsvAppender departureStatsCsv;
-
-
-    // Constructor
-    public Simulator(WorkloadGenerator workloadGenerator,
-                     LoadBalancer loadBalancer,
-                     CsvAppender csvWelford,
-                     CsvAppender jobLogCsv,
-                     CsvAppender serverLogCsv,
-                     CsvAppender departureStatsCsv) {
-
+    public Simulator(WorkloadGenerator workloadGenerator, LoadBalancer loadBalancer, RunPolicy runPolicy) {
         this.currentTime = 0.0;
         this.loadBalancer = loadBalancer;
-        this.welfordCsv = csvWelford;
-        this.jobLogCsv = jobLogCsv;
-        this.serverLogCsv = serverLogCsv;
+        this.runPolicy = runPolicy;
         this.workload = workloadGenerator;
-        this.departureStatsCsv = departureStatsCsv;
         this.futureEventList = new FutureEventList();
+    }
+
+    public void run(int numJobs) {
+
     }
 
     public void run(double simulationDuration) {
@@ -68,7 +48,7 @@ public class Simulator {
                 double elapsedTime = nextArrivalTime - this.currentTime;
                 this.currentTime = nextArrivalTime;
                 this.futureEventList.setNextArrivalTime(this.workload.nextArrival(currentTime));
-                checkHourPassed();
+
                 arrivalHandler(elapsedTime, this.currentTime);
             } else {
                 JobStats nextDepartureJob = this.futureEventList.nextDepartureJob();
@@ -78,7 +58,7 @@ public class Simulator {
                 }
                 double elapsedTime = nextDepartureTime - this.currentTime;
                 this.currentTime = nextDepartureTime;
-                checkHourPassed();
+
 
 
                 departureHandler(elapsedTime,nextDepartureJob);
@@ -96,14 +76,13 @@ public class Simulator {
         // Remove the servers added
         loadBalancer.getWebServers().backToInitialState();
         //Welford csv
-        IntervalEstimation intervalEstimation = new IntervalEstimation(0.95);
-        try {
-            welfordCsv.writeRow("OriginalSize",String.valueOf(arrivalStats.getI()),String.valueOf(arrivalStats.getAvg()),String.valueOf(arrivalStats.getStandardVariation()), String.valueOf(arrivalStats.getVariance()), String.valueOf(intervalEstimation.semiIntervalEstimation(arrivalStats.getStandardVariation(), arrivalStats.getI())));
-            welfordCsv.writeRow("ResponseTime",String.valueOf(departureStats.getI()),String.valueOf(departureStats.getAvg()),String.valueOf(departureStats.getStandardVariation()), String.valueOf(departureStats.getVariance()), String.valueOf(intervalEstimation.semiIntervalEstimation(departureStats.getStandardVariation(), departureStats.getI())));
-            welfordCsv.writeRow("MeanNumberJobs",String.valueOf(meanNumberJobs.getI()),String.valueOf(meanNumberJobs.getAvg()),String.valueOf(meanNumberJobs.getStandardVariation()), String.valueOf(meanNumberJobs.getVariance()), String.valueOf(intervalEstimation.semiIntervalEstimation(meanNumberJobs.getStandardVariation(), meanNumberJobs.getI())));
+      /*  try {
+            welfordCsv.writeRow("OriginalSize", String.valueOf(arrivalStats.getI()), String.valueOf(arrivalStats.getAvg()), String.valueOf(arrivalStats.getStandardVariation()), String.valueOf(arrivalStats.getVariance()), String.valueOf(intervalEstimation.semiIntervalEstimation(arrivalStats.getStandardVariation(), arrivalStats.getI())));
+            welfordCsv.writeRow("ResponseTime", String.valueOf(departureStats.getI()), String.valueOf(departureStats.getAvg()), String.valueOf(departureStats.getStandardVariation()), String.valueOf(departureStats.getVariance()), String.valueOf(intervalEstimation.semiIntervalEstimation(departureStats.getStandardVariation(), departureStats.getI())));
+            welfordCsv.writeRow("MeanNumberJobs", String.valueOf(meanNumberJobs.getI()), String.valueOf(meanNumberJobs.getAvg()), String.valueOf(meanNumberJobs.getStandardVariation()), String.valueOf(meanNumberJobs.getVariance()), String.valueOf(intervalEstimation.semiIntervalEstimation(meanNumberJobs.getStandardVariation(), meanNumberJobs.getI())));
         } catch (Exception e) {
             throw new RuntimeException(e);
-        }
+        }*/
     }
 
 
@@ -125,36 +104,9 @@ public class Simulator {
             jobStat.estimateDepartureTime(this.currentTime);
         }
 
-        try{
-            for (var server : loadBalancer.getWebServers().getWebServers()) {
-                serverLogCsv.writeRow(
-                        String.valueOf(this.currentTime),
-                        String.valueOf(server.getId()),
-                        String.valueOf(loadBalancer.getWebServers().isRemovingServer(server)),
-                        String.valueOf(server.getCurrentSI())
-                );
-            }
-            serverLogCsv.writeRow(
-                    String.valueOf(this.currentTime),
-                    String.valueOf(loadBalancer.getSpikeServer().getId()),
-                    "false",
-                    String.valueOf(loadBalancer.getSpikeServer().getCurrentSI())
-            );
-            departureStatsCsv.writeRow(
-                    String.valueOf(this.currentTime),
-                    String.valueOf(this.loadBalancer.getCurrentJobCount()),
-                    String.valueOf(this.futureEventList.getnextArrivalTime()),
-                    String.valueOf(this.futureEventList.getAllDepartureTimes()),
-                    String.valueOf(this.loadBalancer.getWebServers().getRemianingSizeForAllJobs()),
-                    String.valueOf(this.loadBalancer.getWebServers().getWebServerCount())
-            );
-        }catch (Exception e){
-            throw new RuntimeException(e);
-        }
+        runPolicy.updateArrivalStats(size, loadBalancer.getCurrentJobCount(), this.currentTime, this.loadBalancer, this.futureEventList);
 
-        //welford for arrivals
-        arrivalStats.iteration(size);
-        meanNumberJobs.iteration(loadBalancer.getCurrentJobCount(), this.currentTime);
+
     }
 
     private void departureHandler(double elapsedTime, JobStats targetDepartureJobStats) {
@@ -176,69 +128,9 @@ public class Simulator {
         }
 
         // Log job statistics
-        try {
-            jobLogCsv.writeRow(
-                    String.valueOf(targetDepartureJobStats.getJob().getJobId()),
-                    String.format("%.6f", targetDepartureJobStats.getArrivalTime()),
-                    String.format("%.6f", this.currentTime),
-                    String.format("%.6f", responseTime),
-                    String.format("%.6f", targetDepartureJobStats.getOriginalSize()),
-                    String.valueOf(targetDepartureJobStats.getJob().getAssignedServer().getId())
-            );
-            for (var server : loadBalancer.getWebServers().getWebServers()) {
-                serverLogCsv.writeRow(
-                        String.valueOf(this.currentTime),
-                        String.valueOf(server.getId()),
-                        String.valueOf(loadBalancer.getWebServers().isRemovingServer(server)),
-                        String.valueOf(server.getCurrentSI())
-                );
-            }
-            serverLogCsv.writeRow(
-                    String.valueOf(this.currentTime),
-                    String.valueOf(loadBalancer.getSpikeServer().getId()),
-                    "false",
-                    String.valueOf(loadBalancer.getSpikeServer().getCurrentSI())
-            );
-            departureStatsCsv.writeRow(
-                    String.valueOf(this.currentTime),
-                    String.valueOf(this.loadBalancer.getCurrentJobCount()),
-                    String.valueOf(this.futureEventList.getnextArrivalTime()),
-                    String.valueOf(this.futureEventList.getAllDepartureTimes()),
-                    String.valueOf(this.loadBalancer.getWebServers().getRemianingSizeForAllJobs()),
-                    String.valueOf(this.loadBalancer.getWebServers().getWebServerCount())
-            );
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
 
-        // welford for departures
-        departureStats.iteration(responseTime);
-        meanNumberJobs.iteration(loadBalancer.getCurrentJobCount(), this.currentTime);
+        this.runPolicy.updateDepartureStats(loadBalancer.getCurrentJobCount(), this.currentTime, responseTime, targetDepartureJobStats,loadBalancer,futureEventList);
     }
-
-    private void checkHourPassed() {
-        while (this.currentTime >= nextHourToReport * 3600) {
-            int totalHours = nextHourToReport;
-            int days = totalHours / 24;
-            int hours = totalHours % 24;
-
-            String message;
-            if (days > 0) {
-                if (hours > 0) {
-                    message = "Sono passati " + days + " giorno" + (days > 1 ? "i" : "")
-                            + " e " + hours + "h";
-                } else {
-                    message = "Sono passati " + days + " giorno" + (days > 1 ? "i" : "");
-                }
-            } else {
-                message = "È passata " + totalHours + "h";
-            }
-
-            logger.info(message);
-            nextHourToReport++;
-        }
-    }
-
 
 
 }

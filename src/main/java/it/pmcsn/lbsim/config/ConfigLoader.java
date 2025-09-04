@@ -5,6 +5,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import it.pmcsn.lbsim.models.domain.schedulingpolicy.SchedulingType;
 import it.pmcsn.lbsim.models.simulation.workloadgenerator.WorkloadType;
+import it.pmcsn.lbsim.utils.runType.RunType;
 
 import java.io.InputStream;
 import java.time.Duration;
@@ -39,7 +40,9 @@ public class ConfigLoader {
             SimConfiguration cfg = new ConfigAdapter(raw);
 
             // stampa di debug (sarà mostrata solo se livello lo permette)
-            printDebug(cfg);
+
+            //printDebug(cfg);
+            printNewDebug(cfg);
 
             return cfg;
 
@@ -57,15 +60,15 @@ public class ConfigLoader {
             this.cfg = cfg;
         }
 
-        @Override public int getReplications() { return cfg.simulation.replications; }
-        @Override public long getSeed0() { return cfg.simulation.seed0; }
-        @Override public long getSeed1() { return cfg.simulation.seed1; }
-        @Override public long getSeed2() { return cfg.simulation.seed2; }
-        @Override public long getSeed3() { return cfg.simulation.seed3; }
-        @Override public long getSeed4() { return cfg.simulation.seed4; }
-        @Override public long getSeed5() { return cfg.simulation.seed5; }
+        @Override public RunType getRunType() { return RunType.valueOf(cfg.simulation.typeSimulation); }
+        @Override public long getSeed() { return cfg.simulation.seed; }
         @Override public boolean getIsTracedriven() {return cfg.workload.isTracedriven;}
-        @Override public Duration getDurationSeconds() { return cfg.simulation.duration; }
+        @Override public Duration getDurationInSeconds() { return cfg.finiteSimulation.duration; }
+        @Override public int getDurationInJobs() { return cfg.finiteSimulation.numJobs; }
+        @Override public int getNumberOfBatchs() {return cfg.infiniteSimulation.k;}
+        @Override public int getNumberOfReplicas() { return cfg.finiteSimulation.replica; }
+        @Override public int getBatchSize() { return cfg.infiniteSimulation.b; }
+        @Override public int getKmax(){return cfg.autocorrelation.kmax;}
         @Override public double getInterarrivalMean() { return cfg.workload.interarrival.mean; }
         @Override public double getInterarrivalCv() { return cfg.workload.interarrival.cv; }
         @Override public int getInterarrivalStreamP() { return cfg.workload.interarrival.streamp; }
@@ -108,13 +111,9 @@ public class ConfigLoader {
         if (logger.isLoggable(Level.CONFIG)) {
             StringBuilder sb = new StringBuilder();
             sb.append("\n=== Simulation Config ===\n")
-                    .append("Seed0: ").append(cfg.getSeed0()).append("\n")
-                    .append("Seed1: ").append(cfg.getSeed1()).append("\n")
-                    .append("Seed2: ").append(cfg.getSeed2()).append("\n")
-                    .append("Seed3: ").append(cfg.getSeed3()).append("\n")
-                    .append("Seed4: ").append(cfg.getSeed4()).append("\n")
-                    .append("Seed5: ").append(cfg.getSeed5()).append("\n")
-                    .append("Duration (s): ").append(cfg.getDurationSeconds()).append("\n")
+                    .append("Seed: ").append(cfg.getSeed()).append("\n")
+                    .append("Duration (s): ").append(cfg.getDurationInSeconds()).append("\n")
+                    .append("Duration (jobs): ").append(cfg.getDurationInJobs()).append("\n")
 
                     .append("\n--- Workload ---\n")
                     .append("Interarrival mean: ").append(cfg.getInterarrivalMean()).append("\n")
@@ -153,6 +152,107 @@ public class ConfigLoader {
                     .append("===========================\n");
 
             logger.log(Level.CONFIG,sb.toString());
+        }
+    }
+
+    private static void printNewDebug(SimConfiguration cfg) {
+        if (logger.isLoggable(Level.CONFIG)) {
+            StringBuilder sb = new StringBuilder();
+
+            // Informazioni generiche (sempre mostrate)
+            sb.append("\n=== Simulation Config ===\n")
+                    .append("Run Type: ").append(cfg.getRunType()).append("\n")
+                    .append("Seed: ").append(cfg.getSeed()).append("\n");
+
+            // Informazioni specifiche per tipo di simulazione
+            switch (cfg.getRunType()) {
+                case INFINITESIMULATION:
+                    sb.append("Number of Batches (k): ").append(cfg.getNumberOfBatchs()).append("\n")
+                            .append("Batch Size (b): ").append(cfg.getBatchSize()).append("\n");
+                    break;
+
+                case FINITESIMULATIONJOBS:
+                    sb.append("Duration (jobs): ").append(cfg.getDurationInJobs()).append("\n")
+                            .append("Number of Replicas: ").append(cfg.getNumberOfReplicas()).append("\n");
+                    break;
+
+                case FINITESIMULATIONTIME:
+                    sb.append("Duration (s): ").append(cfg.getDurationInSeconds()).append("\n")
+                            .append("Number of Replicas: ").append(cfg.getNumberOfReplicas()).append("\n");
+                    break;
+
+                case AUTOCORRELATION:
+                    sb.append("Kmax: ").append(cfg.getKmax()).append("\n");
+                    break;
+            }
+
+            // Informazioni workload (sempre mostrate)
+            sb.append("\n--- Workload ---\n")
+                    .append("Workload Type: ").append(cfg.getChooseWorkload()).append("\n")
+                    .append("Is Trace Driven: ").append(cfg.getIsTracedriven()).append("\n");
+
+            // Informazioni interarrival (sempre mostrate)
+            sb.append("Interarrival mean: ").append(cfg.getInterarrivalMean()).append("\n")
+                    .append("Interarrival cv: ").append(cfg.getInterarrivalCv()).append("\n");
+
+            // Stream parameters solo se non è trace-driven
+            if (!cfg.getIsTracedriven()) {
+                sb.append("Interarrival stream p: ").append(cfg.getInterarrivalStreamP()).append("\n")
+                        .append("Interarrival stream hexp1: ").append(cfg.getInterarrivalStreamHexp1()).append("\n")
+                        .append("Interarrival stream hexp2: ").append(cfg.getInterarrivalStreamHexp2()).append("\n");
+            }
+
+            // Informazioni service (sempre mostrate)
+            sb.append("Service mean: ").append(cfg.getServiceMean()).append("\n")
+                    .append("Service cv: ").append(cfg.getServiceCv()).append("\n");
+
+            // Stream parameters solo se non è trace-driven
+            if (!cfg.getIsTracedriven()) {
+                sb.append("Service stream p: ").append(cfg.getServiceStreamP()).append("\n")
+                        .append("Service stream hexp1: ").append(cfg.getServiceStreamHexp1()).append("\n")
+                        .append("Service stream hexp2: ").append(cfg.getServiceStreamHexp2()).append("\n");
+            }
+
+            // Informazioni scheduling (sempre mostrate)
+            sb.append("\n--- Scheduling ---\n")
+                    .append("Policy: ").append(cfg.getSchedulingType()).append("\n");
+
+            // Informazioni scaling spike server (solo se abilitato)
+            if (cfg.isSpikeEnabled()) {
+                sb.append("\n--- Scaling: Spike Server ---\n")
+                        .append("Enabled: ").append(cfg.isSpikeEnabled()).append("\n")
+                        .append("SImax: ").append(cfg.getSImax()).append("\n")
+                        .append("SImin: ").append(cfg.getSImin()).append("\n")
+                        .append("CPU Multiplier: ").append(cfg.getSpikeCpuMultiplier()).append("\n")
+                        .append("CPU Percentage: ").append(cfg.getSpikeCpuPercentage()).append("\n")
+                        .append("CoolDown: ").append(cfg.getSpikeCoolDown()).append("\n");
+            }
+
+            // Informazioni scaling orizzontale (solo se abilitato)
+            if (cfg.isHorizontalEnabled()) {
+                sb.append("\n--- Scaling: Horizontal ---\n")
+                        .append("Enabled: ").append(cfg.isHorizontalEnabled()).append("\n")
+                        .append("SlidingWindowSize: ").append(cfg.getSlidingWindowSize()).append("\n")
+                        .append("R0max: ").append(cfg.getR0max()).append("\n")
+                        .append("R0min: ").append(cfg.getR0min()).append("\n")
+                        .append("CoolDown: ").append(cfg.getHorizontalCoolDown()).append("\n")
+                        .append("InitialServerCount: ").append(cfg.getInitialServerCount()).append("\n");
+            }
+
+            // Informazioni trace paths (solo se trace-driven)
+            if (cfg.getIsTracedriven()) {
+                sb.append("\n--- Trace Paths ---\n")
+                        .append("Trace Arrivals Path: ").append(cfg.getTraceArrivalsPath()).append("\n")
+                        .append("Trace Size Path: ").append(cfg.getTraceSizePath()).append("\n");
+            }
+
+            // Informazioni output (sempre mostrate)
+            sb.append("\n--- Output ---\n")
+                    .append("CSV Dir: ").append(cfg.getCsvOutputDir()).append("\n")
+                    .append("Plot Dir: ").append(cfg.getPlotOutputDir()).append("\n")
+                    .append("===========================\n");
+
+            logger.log(Level.CONFIG, sb.toString());
         }
     }
 }

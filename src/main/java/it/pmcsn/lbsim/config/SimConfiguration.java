@@ -2,18 +2,20 @@ package it.pmcsn.lbsim.config;
 
 import it.pmcsn.lbsim.models.domain.schedulingpolicy.SchedulingType;
 import it.pmcsn.lbsim.models.simulation.workloadgenerator.WorkloadType;
+import it.pmcsn.lbsim.utils.runType.RunType;
 
 import java.time.Duration;
 
 public interface SimConfiguration {
-    int getReplications();
-    long getSeed0();
-    long getSeed1();
-    long getSeed2();
-    long getSeed3();
-    long getSeed4();
-    long getSeed5();
-    Duration getDurationSeconds();
+    RunType getRunType();
+    long getSeed();
+    int getNumberOfBatchs();
+    int getBatchSize();
+    int getNumberOfReplicas();
+    int getDurationInJobs();
+    Duration getDurationInSeconds();
+    int getKmax();
+
 
     boolean getIsTracedriven();
     double getInterarrivalMean();

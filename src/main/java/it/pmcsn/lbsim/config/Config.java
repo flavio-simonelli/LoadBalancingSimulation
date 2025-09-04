@@ -1,10 +1,15 @@
 package it.pmcsn.lbsim.config;
 
+import it.pmcsn.lbsim.utils.runType.infiniteHorizon.BatchMeans;
+
 import java.time.Duration;
 
 public class Config {
 
     public Simulation simulation;
+    public InfiniteSimulation infiniteSimulation;
+    public FiniteSimulation finiteSimulation;
+    public Autocorrelation autocorrelation;
     public Workload workload;
     public Scheduling scheduling;
     public Scaling scaling;
@@ -13,14 +18,24 @@ public class Config {
     public Path path;
 
     public static class Simulation {
-        public int replications;
-        public long seed0;
-        public long seed1;
-        public long seed2;
-        public long seed3;
-        public long seed4;
-        public long seed5;
+        public String typeSimulation;
+        public long seed;
+
+    }
+
+    public static class InfiniteSimulation {
+        public int k;
+        public int b;
+    }
+
+    public static class FiniteSimulation {
+        public int replica;
+        public int numJobs;
         public Duration duration;
+    }
+
+    public static class Autocorrelation {
+        public int kmax;
     }
 
     public static class Workload {
