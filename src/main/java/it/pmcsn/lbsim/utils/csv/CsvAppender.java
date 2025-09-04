@@ -62,7 +62,7 @@ public class CsvAppender implements AutoCloseable {
      * @param csvDirectory directory contenente i file CSV (default: "output/csv/")
      * @throws IOException se ci sono errori nella lettura/scrittura dei file
      */
-    public static void createResponseTimeAggregatedCsv(Path outputPath, String csvDirectory) throws IOException {
+    public static void createWelfordAggregatedCsv(Path outputPath, String csvDirectory, String type) throws IOException {
         Path csvDir = Paths.get(csvDirectory);
 
         if (!Files.exists(csvDir)) {
@@ -70,12 +70,12 @@ public class CsvAppender implements AutoCloseable {
         }
 
         try (CsvAppender aggregatedCsv = new CsvAppender(outputPath,
-                "replica_name", "jobs_count", "mean_response_time")) {
+                "replica_name", "jobs_count", "mean_value")) {
 
             // Scansiona tutti i file che iniziano con "Welford" nella directory
             try (DirectoryStream<Path> stream = Files.newDirectoryStream(csvDir, "Welford*.csv")) {
                 for (Path welfordFile : stream) {
-                    processWelfordFile(welfordFile, aggregatedCsv);
+                    processWelfordFile(welfordFile, aggregatedCsv, type);
                 }
             }
         }
@@ -84,14 +84,14 @@ public class CsvAppender implements AutoCloseable {
     /**
      * Versione semplificata che usa la directory di default "output/csv/"
      */
-    public static void createResponseTimeAggregatedCsv(Path outputPath) throws IOException {
-        createResponseTimeAggregatedCsv(outputPath, "output/csv/");
+    public static void createWelfordAggregatedCsv(Path outputPath, String type) throws IOException {
+        createWelfordAggregatedCsv(outputPath, "output/csv/", type);
     }
 
     /**
      * Processa un singolo file Welford e estrae i dati ResponseTime
      */
-    private static void processWelfordFile(Path welfordFile, CsvAppender aggregatedCsv) throws IOException {
+    private static void processWelfordFile(Path welfordFile, CsvAppender aggregatedCsv, String type) throws IOException {
         String replicaName = welfordFile.getFileName().toString().replace(".csv", "");
 
         try (Reader reader = Files.newBufferedReader(welfordFile, StandardCharsets.UTF_8);
@@ -113,16 +113,6 @@ public class CsvAppender implements AutoCloseable {
                 return;
             }
 
-            if (jobsIndex == -1) {
-                // Prova nomi alternativi per la colonna jobs
-                jobsIndex = findColumnIndex(headers, "jobs_count", "N", "Count", "Jobs_Count");
-            }
-
-            if (meanIndex == -1) {
-                // Prova nomi alternativi per la colonna mean
-                meanIndex = findColumnIndex(headers, "mean", "average", "Mean_Value", "Response_Time");
-            }
-
             if (jobsIndex == -1 || meanIndex == -1) {
                 System.err.println("Colonne necessarie non trovate in: " + welfordFile +
                         " (jobs: " + jobsIndex + ", mean: " + meanIndex + ")");
@@ -132,7 +122,7 @@ public class CsvAppender implements AutoCloseable {
             // Leggi tutte le righe e filtra per Type == "ResponseTime"
             String[] row;
             while ((row = csvReader.readNext()) != null) {
-                if (row.length > typeIndex && "ResponseTime".equals(row[typeIndex].trim())) {
+                if (row.length > typeIndex && type.equals(row[typeIndex].trim())) {
                     try {
                         String jobsCount = row.length > jobsIndex ? row[jobsIndex].trim() : "0";
                         String meanValue = row.length > meanIndex ? row[meanIndex].trim() : "0.0";

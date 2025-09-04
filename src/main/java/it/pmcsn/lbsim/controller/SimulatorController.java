@@ -175,7 +175,9 @@ public class SimulatorController {
                         departureStatsCsv
                 );
                 // Start the simulation
-                simulator.run(config.getDurationSeconds().getSeconds()*2^(j));
+                double originalTime = config.getDurationSeconds().getSeconds();
+                double updatedTime = originalTime * (Math.pow(2, j));
+                simulator.run(updatedTime);
                 // print final seed
                 logger.log(Level.INFO, "Final seeds: {0}\n", Arrays.toString(rngs.getSeedArray()));
                 // close welford csv

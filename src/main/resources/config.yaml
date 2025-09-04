@@ -1,12 +1,12 @@
 simulation:
-  replications: 20        # numero di repliche della simulazione
+  replications: 5        # numero di repliche della simulazione
   seed0: 123456789        # seed per il generatore di numeri casuali
   seed1: 0        # seed per il generatore di numeri casuali
   seed2: 0        # seed per il generatore di numeri casuali
   seed3: 0        # seed per il generatore di numeri casuali
   seed4: 0       # seed per il generatore di numeri
   seed5: 0       # seed per il generatore di numeri
-  duration: "PT30M"   # P2DT3H4M → 2 giorni, 3 ore, 4 minuti
+  duration: "PT3M"   # P2DT3H4M → 2 giorni, 3 ore, 4 minuti
 
 workload:
   chooseWorkload: "hyperexponential"  # valori possibili: "trace", "hyperexponential", "exponential"

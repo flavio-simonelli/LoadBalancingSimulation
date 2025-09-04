@@ -1,8 +1,8 @@
 package it.pmcsn.lbsim.utils;
 
+import it.pmcsn.lbsim.utils.csv.CsvAppender;
 import it.pmcsn.lbsim.utils.random.Rvms;
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -38,7 +38,7 @@ public class IntervalEstimation {
     /**
      * Calcola l'intervallo di confidenza da un file CSV contenente i risultati delle repliche
      * @param csvFilePath percorso del file CSV
-     * @param jobsColumnIndex indice della colonna contenente il numero di job per replica (0-based)
+     * @param jobsCountColumnIndex indice della colonna contenente il numero di job per replica (0-based)
      * @param meanColumnIndex indice della colonna contenente la media calcolata per replica (0-based)
      * @param hasHeader true se il CSV ha una riga di header da saltare
      * @return oggetto ConfidenceIntervalResult contenente i risultati
@@ -46,7 +46,7 @@ public class IntervalEstimation {
      */
     public ConfidenceIntervalResult calculateConfidenceIntervalFromCSV(
             String csvFilePath,
-            int jobsColumnIndex,
+            int jobsCountColumnIndex,
             int meanColumnIndex,
             boolean hasHeader) throws IOException {
 
@@ -67,7 +67,7 @@ public class IntervalEstimation {
                 String[] fields = line.split(",");
 
                 try {
-                    int jobs = Integer.parseInt(fields[jobsColumnIndex].trim());
+                    int jobs = Integer.parseInt(fields[jobsCountColumnIndex].trim());
                     double mean = Double.parseDouble(fields[meanColumnIndex].trim());
 
                     jobCounts.add(jobs);
@@ -186,6 +186,7 @@ public class IntervalEstimation {
      */
     public static void main(String[] args) {
         try {
+            String type = "ResponseTime";
             System.out.println("=== GENERAZIONE CSV AGGREGATI PER GRUPPI jN ===");
 
             // Elenco file Welford disponibili
@@ -246,11 +247,12 @@ public class IntervalEstimation {
                 }
 
                 // Path CSV aggregato per il gruppo
-                String aggregatedCsvPath = "output/aggregated_response_times_" + groupKey + ".csv";
+                String aggregatedCsvPath = "output/aggregated_welford_" + groupKey + ".csv";
 
                 // Ora CsvAppender vede SOLO i file del gruppo
-                it.pmcsn.lbsim.utils.csv.CsvAppender.createResponseTimeAggregatedCsv(
-                        java.nio.file.Paths.get(aggregatedCsvPath)
+                CsvAppender.createWelfordAggregatedCsv(
+                        java.nio.file.Paths.get(aggregatedCsvPath),
+                        type
                 );
 
                 System.out.println("✅ CSV aggregato creato: " + aggregatedCsvPath);
@@ -258,9 +260,9 @@ public class IntervalEstimation {
                 // Calcola intervallo di confidenza
                 ConfidenceIntervalResult result = estimator.calculateConfidenceIntervalFromCSV(
                         aggregatedCsvPath,
-                        1, // colonna jobs_count
-                        2, // colonna mean_response_time
-                        true // ha header
+                        1,
+                        2,
+                        true
                 );
 
                 System.out.println("✅ Calcolo completato!\n");
