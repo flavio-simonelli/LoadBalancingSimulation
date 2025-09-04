@@ -13,11 +13,13 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 public class BatchMeans implements RunPolicy {
+
     private final int batchSize;
     private final int k;
+
     private int currentBatch = 0;
-    private final CsvAppender responceTimeCsv;
-    private final WelfordSimple responceTimeWelford;
+
+    private final CsvAppender jobLogCsv ;
     private final  CsvAppender serverLogCsv;
     private final CsvAppender departureStatsCsv;
     private final CsvAppender welfordCsv;
@@ -67,7 +69,7 @@ public class BatchMeans implements RunPolicy {
         saveCsvForDeparture(jobStats,futureEventList,currentTime, responseTime, loadBalancer);
         this.departureStats.iteration(responseTime);
         this.meanNumberJobs.iteration(numJobs,currentTime);
-        if ( departureStats.getI() >= batchSize) {
+        if ( departureStats >= batchSize) {
             saveData();
             this.departureStats = new WelfordSimple();
             currentBatch++;
