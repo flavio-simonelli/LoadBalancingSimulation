@@ -86,10 +86,8 @@ public class ConfigLoader {
 
         @Override public boolean isSpikeEnabled() { return cfg.scaling.spikeServer.enabled; }
         @Override public int getSImax() { return cfg.scaling.spikeServer.SImax; }
-        @Override public int getSImin() { return cfg.scaling.spikeServer.SImin; }
         @Override public int getSpikeCpuMultiplier() { return cfg.scaling.spikeServer.cpuMultiplier; }
         @Override public double getSpikeCpuPercentage() { return cfg.scaling.spikeServer.cpuPercentage; }
-        @Override public Duration getSpikeCoolDown() { return cfg.scaling.spikeServer.coolDown; }
 
         @Override public boolean isHorizontalEnabled() { return cfg.scaling.horizontal.enabled; }
         @Override public int getSlidingWindowSize() { return cfg.scaling.horizontal.slidingWindowSize; }
@@ -133,10 +131,8 @@ public class ConfigLoader {
                     .append("\n--- Scaling: Spike Server ---\n")
                     .append("Enabled:        ").append(cfg.isSpikeEnabled()).append("\n")
                     .append("SImax:          ").append(cfg.getSImax()).append("\n")
-                    .append("SImin:          ").append(cfg.getSImin()).append("\n")
                     .append("CPU Multiplier: ").append(cfg.getSpikeCpuMultiplier()).append("\n")
                     .append("CPU Percentage: ").append(cfg.getSpikeCpuPercentage()).append("\n")
-                    .append("CoolDown:       ").append(cfg.getSpikeCoolDown()).append("\n")
 
                     .append("\n--- Scaling: Horizontal ---\n")
                     .append("Enabled:            ").append(cfg.isHorizontalEnabled()).append("\n")
@@ -222,10 +218,8 @@ public class ConfigLoader {
                 sb.append("\n--- Scaling: Spike Server ---\n")
                         .append("Enabled: ").append(cfg.isSpikeEnabled()).append("\n")
                         .append("SImax: ").append(cfg.getSImax()).append("\n")
-                        .append("SImin: ").append(cfg.getSImin()).append("\n")
                         .append("CPU Multiplier: ").append(cfg.getSpikeCpuMultiplier()).append("\n")
-                        .append("CPU Percentage: ").append(cfg.getSpikeCpuPercentage()).append("\n")
-                        .append("CoolDown: ").append(cfg.getSpikeCoolDown()).append("\n");
+                        .append("CPU Percentage: ").append(cfg.getSpikeCpuPercentage()).append("\n");
             }
 
             // Informazioni scaling orizzontale (solo se abilitato)
