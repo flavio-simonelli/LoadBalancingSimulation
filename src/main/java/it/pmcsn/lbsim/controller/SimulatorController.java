@@ -102,7 +102,7 @@ public class SimulatorController {
         // istance workload
         WorkloadGenerator wg = istanceWorkloadGenerator(rngs, config.getChooseWorkload(), config.getInterarrivalMean(), config.getInterarrivalCv(), config.getServiceMean(), config.getServiceCv(), config.getInterarrivalStreamP(), config.getInterarrivalStreamHexp1(), config.getInterarrivalStreamHexp2(), config.getServiceStreamP(), config.getServiceStreamHexp1(), config.getServiceStreamHexp2(), config.getTraceArrivalsPath(), config.getTraceSizePath());
         // print the initial seed of the replica
-        logger.log(Level.INFO, "Initial seeds: {1}\n", Arrays.toString(rngs.getSeedArray()));
+        logger.log(Level.INFO, "Initial seeds: {0}\n", Arrays.toString(rngs.getSeedArray()));
         // create a runtype
         RunPolicy runPolicy = new Autocorrelation(config.getMaxLag());
         // create a new system

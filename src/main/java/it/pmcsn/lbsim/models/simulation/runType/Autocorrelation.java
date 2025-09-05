@@ -3,23 +3,17 @@ package it.pmcsn.lbsim.models.simulation.runType;
 import it.pmcsn.lbsim.models.domain.LoadBalancer;
 import it.pmcsn.lbsim.models.simulation.FutureEventList;
 import it.pmcsn.lbsim.models.simulation.JobStats;
-import it.pmcsn.lbsim.utils.OnlineACFOneStep;
+import it.pmcsn.lbsim.utils.AutoCorrelationFunction;
 import it.pmcsn.lbsim.utils.csv.CsvAppender;
 
 import java.io.IOException;
 import java.nio.file.Path;
 
 public class Autocorrelation implements RunPolicy {
-    private final CsvAppender autocorrCsv;
-    private final OnlineACFOneStep acf;
+    private final AutoCorrelationFunction acf;
 
     public Autocorrelation(int maxLag) {
-        try {
-            this.autocorrCsv = new CsvAppender(Path.of("output/csv/autocorrelation.csv"), "lag", "acf");
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        this.acf = new OnlineACFOneStep(maxLag);
+        this.acf = new AutoCorrelationFunction(maxLag, "autocorrelation.csv");
     }
 
     @Override
@@ -32,21 +26,17 @@ public class Autocorrelation implements RunPolicy {
         if (currentTime < 1200.0) {
             return; // skip the first 120 seconds to avoid transient effects
         }
-        this.acf.add(responseTime);
+        this.acf.add(responseTime); // response R0
     }
 
     @Override
     public void updateFinalStats() {
         // write the csv file
-        double[] r = acf.getACF();
-        for (int j = 0; j < r.length; j++) {
-            autocorrCsv.writeRow(String.valueOf(j), String.valueOf(r[j]));
-        }
+        this.acf.saveToCsv();
+        System.out.println("CUTOFF VALUE "+this.acf.findCutoffLag(0.05,10));
     }
 
     @Override
     public void closeCsvs() {
-        // close the csv file
-        this.autocorrCsv.close();
     }
 }
