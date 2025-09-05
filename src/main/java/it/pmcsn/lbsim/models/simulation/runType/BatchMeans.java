@@ -10,6 +10,8 @@ import it.pmcsn.lbsim.utils.csv.CsvAppender;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.logging.Logger;
+import java.util.logging.Level;
 
 public class BatchMeans implements RunPolicy {
     private final int batchSize;
@@ -25,6 +27,7 @@ public class BatchMeans implements RunPolicy {
     private final TimeMediateWelford meanNumberJobsWebServerWelford = new TimeMediateWelford();
     private final TimeMediateWelford meanNumberJobsSpikeServerWelford = new TimeMediateWelford();
     private final IntervalEstimation intervalEstimation;
+    private final static Logger logger = Logger.getLogger(BatchMeans.class.getName());
 
 
     public BatchMeans(int batchSize, float LOC) {
@@ -68,6 +71,7 @@ public class BatchMeans implements RunPolicy {
             this.responceTimeWebServerWelford.iteration(responseTime);
         }
         if (countDeparture == batchSize) {
+            logger.log(Level.INFO, "Finite Batch " + currentBatch);
             printCsvs();
             countDeparture = 0;
             currentBatch++;
@@ -82,9 +86,6 @@ public class BatchMeans implements RunPolicy {
 
     @Override
     public void updateFinalStats() {
-        this.responceTimeCsv.close();
-        this.meanNumberJobsCsv.close();
-        this.utilizationCsv.close();
     }
 
     private void printCsvs() {

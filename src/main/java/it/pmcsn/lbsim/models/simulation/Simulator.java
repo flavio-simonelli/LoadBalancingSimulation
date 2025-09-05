@@ -30,12 +30,9 @@ public class Simulator {
             logger.log(Level.SEVERE, "Number of jobs must be greater than zero");
             throw new IllegalArgumentException("Number of jobs must be greater than zero");
         }
-
         int createdJobs = 0;
-
         // Schedule first arrival
         this.futureEventList.setNextArrivalTime(this.workload.nextArrival(currentTime));
-
         // Main loop - until we create numJobs
         while (createdJobs < numJobs) {
             FutureEventList.Event event = this.futureEventList.nextEvent();
@@ -63,11 +60,9 @@ public class Simulator {
                 }
                 double elapsedTime = nextDepartureTime - this.currentTime;
                 this.currentTime = nextDepartureTime;
-
                 departureHandler(elapsedTime, nextDepartureJob);
             }
         }
-
         // Drain: completa i job rimanenti
         while (this.futureEventList.nextDepartureJob() != null) {
             JobStats nextDepartureJob = this.futureEventList.nextDepartureJob();
@@ -76,7 +71,6 @@ public class Simulator {
             this.currentTime = nextDepartureTime;
             departureHandler(elapsedTime, nextDepartureJob);
         }
-
         // Reset servers to initial state
         loadBalancer.getWebServers().backToInitialState();
         // update final runpolicy
@@ -101,7 +95,6 @@ public class Simulator {
                 double elapsedTime = nextArrivalTime - this.currentTime;
                 this.currentTime = nextArrivalTime;
                 this.futureEventList.setNextArrivalTime(this.workload.nextArrival(currentTime));
-
                 arrivalHandler(elapsedTime, this.currentTime);
             } else {
                 JobStats nextDepartureJob = this.futureEventList.nextDepartureJob();
@@ -111,11 +104,9 @@ public class Simulator {
                 }
                 double elapsedTime = nextDepartureTime - this.currentTime;
                 this.currentTime = nextDepartureTime;
-
                 departureHandler(elapsedTime,nextDepartureJob);
             }
         }
-
         // Drain remaining jobs after simulation ends
         while ( this.futureEventList.nextDepartureJob() != null) {
                 JobStats nextDepartureJob = this.futureEventList.nextDepartureJob();
@@ -135,7 +126,6 @@ public class Simulator {
         // Process elapsed time for all active jobs
         this.loadBalancer.getWebServers().processJobs(elapsedTime);
         this.loadBalancer.getSpikeServer().processJobs(elapsedTime);
-
         // Create new job
         double size = this.workload.nextJobSize();
         Job newJob = new Job(size);
@@ -143,7 +133,6 @@ public class Simulator {
         this.loadBalancer.assignJob(newJob, currentTime);
         JobStats newJobStats = new JobStats(newJob, this.currentTime, size);
         this.futureEventList.addJobStats(newJobStats);
-
         // Recalculate estimated departure times for all jobs
         for (JobStats jobStat : this.futureEventList.getJobStats()) {
             jobStat.estimateDepartureTime(this.currentTime);
@@ -155,15 +144,11 @@ public class Simulator {
         //Process elapsed time for all active jobs
         this.loadBalancer.getWebServers().processJobs(elapsedTime);
         this.loadBalancer.getSpikeServer().processJobs(elapsedTime);
-
         // Process job departure through load balancer
         double responseTime = this.currentTime - targetDepartureJobStats.getArrivalTime();
-
         this.loadBalancer.completeJob(targetDepartureJobStats.getJob(),this.currentTime, responseTime);
-
         // Add to the csv for forensics analysis
         this.futureEventList.removeJobStats(targetDepartureJobStats);
-
         // Recalculate estimated departure times for remaining jobs
         for (JobStats js : this.futureEventList.getJobStats()) {
             js.estimateDepartureTime(this.currentTime);

@@ -1,5 +1,5 @@
 simulation:
-  typesimulation: "finitesimulationtime" # valori possibili: "infinitesimulation", "finitesimulationjobs", "finitesimulationtime", "autocorrelation"
+  typesimulation: "infinitesimulation" # valori possibili: "infinitesimulation", "finitesimulationjobs", "finitesimulationtime", "autocorrelation"
   seed: 123456789
 
 infinitesimulation:
