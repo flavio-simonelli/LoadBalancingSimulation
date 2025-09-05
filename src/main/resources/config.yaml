@@ -1,5 +1,5 @@
 simulation:
-  typesimulation: "autocorrelation" # valori possibili: "infinitesimulation", "finitesimulationjobs", "finitesimulationtime", "autocorrelation"
+  typesimulation: "finitesimulationtime" # valori possibili: "infinitesimulation", "finitesimulationjobs", "finitesimulationtime", "autocorrelation"
   seed: 123456789
 
 infinitesimulation:
@@ -9,11 +9,11 @@ infinitesimulation:
 finitesimulation:
   replica: 10  #numero di repliche
   numjobs: 11000 # numero di job da eseguire per ogni replica
-  duration: "P3DT0H"   # P2DT3H4M → 2 giorni, 3 ore, 4 minuti (tempo per ogni replica)
+  duration: "PT3H"   # P2DT3H4M → 2 giorni, 3 ore, 4 minuti (tempo per ogni replica)
 
 
 autocorrelation:
-  maxlag: 100000
+  maxlag: 50000
 
 workload:
   chooseWorkload: "hyperexponential"  # valori possibili: "trace", "hyperexponential", "exponential"

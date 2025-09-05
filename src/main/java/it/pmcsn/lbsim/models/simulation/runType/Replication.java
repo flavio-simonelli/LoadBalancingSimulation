@@ -15,6 +15,7 @@ public class Replication implements  RunPolicy {
     private int replica = 0;
     private final WelfordSimple responseTimeWebServerWelford;
     private final CsvAppender replicationResponseTime;
+    private CsvAppender singleResponseTime;
     private List<Double> replicaMeans = new ArrayList<>();
     private final IntervalEstimation intervalEstimation;
 
@@ -23,6 +24,11 @@ public class Replication implements  RunPolicy {
         this.responseTimeWebServerWelford = new WelfordSimple();
         try {
             this.replicationResponseTime = new CsvAppender(Path.of("output/csv/responseTimeReplication.csv"), "Replica", "MeanResponseTime", "StdDev", "Variance");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        try {
+            this.singleResponseTime = new CsvAppender(Path.of("output/csv/responseTimeSingle0.csv"), "Time","R0");
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -37,6 +43,9 @@ public class Replication implements  RunPolicy {
     @Override
     public void updateDepartureStats(int jobs, double currentTime, double responseTime, JobStats jobStats, LoadBalancer loadBalancer, FutureEventList futureEventList) {
         responseTimeWebServerWelford.iteration(responseTime);
+        if (responseTimeWebServerWelford.getI() % 1000 == 0) {
+            this.singleResponseTime.writeRow(String.valueOf(currentTime), String.valueOf(responseTimeWebServerWelford.getAvg()));
+        }
     }
 
     @Override
@@ -49,6 +58,16 @@ public class Replication implements  RunPolicy {
         // add the mean of this replica to the list
         this.replicaMeans.add(this.responseTimeWebServerWelford.getAvg());
         this.responseTimeWebServerWelford.reset();
+        this.singleResponseTime.close();
+        try {
+            // create a new csv file for the next replica
+            String path = "output/csv/responseTimeSingle" + this.replica + ".csv";
+            System.out.println("Creating new csv file: " + path);
+            // create a new csv file for the next replica
+            this.singleResponseTime = new CsvAppender(Path.of(path), "Time","R0");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
