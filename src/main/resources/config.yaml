@@ -35,7 +35,7 @@ scheduling:
 
 scaling:
   spikeServer:
-    enabled: true
+    enabled: false
     SImax: 80        # max job nel web server prima di reindirizzare allo spike
     SImin: 6        # min job nel web server prima di reindirizzare al web server
     cpuMultiplier: 2  # moltiplicatore CPU spike
