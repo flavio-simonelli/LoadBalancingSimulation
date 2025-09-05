@@ -1,96 +1,89 @@
 package it.pmcsn.lbsim.utils;
 
-
-import it.pmcsn.lbsim.utils.csv.CsvAppender;
-
-import java.io.IOException;
-import java.nio.file.Path;
+import java.util.Arrays;
 
 /**
- * Implementazione OO dell'algoritmo ACS del libro:
- * - mantiene un buffer circolare di SIZE = K+1 osservazioni
- * - accumula cosum[j] = somma di x[i] * x[i+j]
- * - normalizza a fine raccolta per ottenere ACF (autocorrelazione) ai lag 1..K
+ * Calcolo "one-pass" dell'autocorrelazione fino al lag K usando un buffer circolare di ampiezza K+1.
+ * Logica identica a Acs.java (Park & Geyer), ma con API streaming:
+ * - chiama iteration(x) per ogni nuovo dato
+ * - chiama finish() quando non arrivano più dati (effettua lo "svuotamento" del buffer)
+ * - poi leggi mean(), stdev(), autocovarianceAtLag(j), autocorrelation()
  *
- * NOTE:
- *  - Per coerenza con il codice del libro, la logica è identica.
- *  - Si assume di fornire almeno K+1 osservazioni (come l'esempio originale).
- *  - Dopo finish() l'istanza è “chiusa” (non chiamare più add()).
+ * NOTE IMPORTANTI:
+ * - Servono almeno K+1 punti prima di chiamare finish(), come nel programma originale.
+ * - Le stime di autocovarianza usano denominatore (n - j) e la varianza è "biased", identica all'originale.
  */
 public class AutoCorrelationFunction {
 
-    private final int K;          // massimo lag
-    private final int SIZE;       // K + 1 (dimensione del buffer)
-    private final double[] hold;  // buffer circolare con gli ultimi K+1 valori
-    private final double[] cosum; // cosum[j] accumula x[i] * x[i+j]
-
-    // stato di accumulo
-    private int i = 0;            // quanti punti ho ricevuto (indice "dati letti")
-    private int p = 0;            // testa del buffer circolare
-    private double sum = 0.0;     // somma dei valori per la media
+    private final int K;           // lag massimo
+    private final int SIZE;        // K + 1
+    private final double[] hold;   // buffer circolare degli ultimi K+1 valori
+    private final double[] cosum;  // accumuli di sum x_i * x_{i+j}
+    private int p = 0;             // indice testa del buffer (elemento più "vecchio")
+    private int filled = 0;        // quanti elementi del buffer sono stati riempiti (<= SIZE)
+    private long n = 0;            // conteggio totale punti
+    private double sum = 0.0;      // somma dei valori (per la media)
     private boolean finished = false;
 
-    // risultati finali
-    private long n = 0;           // numero totale di dati (prima del draining)
-    private double mean = Double.NaN;
-    private double[] acf = null;  // ACF[0..K] con acf[0]=1.0
-
+    /**
+     * @param K lag massimo (>=1)
+     */
     public AutoCorrelationFunction(int K) {
-        if (K < 1) throw new IllegalArgumentException("K deve essere >= 1");
+        if (K < 1) {
+            throw new IllegalArgumentException("K deve essere >= 1");
+        }
         this.K = K;
         this.SIZE = K + 1;
-        this.hold  = new double[SIZE];
+        this.hold = new double[SIZE];
         this.cosum = new double[SIZE];
-        // cosum[] parte a zero per definizione
+        // cosum[] inizializzato a 0.0 di default
     }
 
     /**
-     * Aggiunge un'osservazione x.
-     * La logica ricalca l'originale:
-     *  - per i primi SIZE valori: riempie solo hold[] e somma
-     *  - dal (SIZE+1)-esimo in poi: aggiorna cosum con i prodotti dei valori nel buffer,
-     *    poi inserisce x nella posizione p e fa avanzare il puntatore circolare.
+     * Invia un nuovo dato al calcolatore.
+     * Mantiene la stessa sequenza operativa dell'originale:
+     * - finché non abbiamo SIZE (=K+1) dati, riempiamo il buffer senza aggiornare cosum[]
+     * - quando il buffer è pieno: prima accumuliamo i prodotti con l'elemento più vecchio hold[p],
+     * poi sovrascriviamo hold[p] con il nuovo x e avanziamo p
      */
-    public void add(double x) {
-        ensureNotFinished();
-
-        if (i < SIZE) {
-            // fase di "priming": solo riempimento iniziale del buffer
-            sum     += x;
-            hold[i]  = x;
-            i++;
-            return;
+    public void iteration(double x) {
+        if (finished) {
+            throw new IllegalStateException("finish() già chiamato: crea un nuovo calcolatore o chiama reset()");
         }
 
-        // fase principale: aggiorna cosum con l'elemento più vecchio e i successivi
+        if (filled < SIZE) {
+            // fase di bootstrap: riempi il buffer
+            hold[filled++] = x;
+            sum += x;
+            n++;
+            return; // identico allo schema originale (nessun aggiornamento cosum finché non è pieno)
+        }
+
+        // buffer pieno: accumula i prodotti con l'elemento più vecchio e poi inserisci x
         for (int j = 0; j < SIZE; j++) {
             cosum[j] += hold[p] * hold[(p + j) % SIZE];
         }
-
-        // inserisci il nuovo valore, avanza il puntatore, aumenta il conteggio e la somma
+        sum += x;
         hold[p] = x;
         p = (p + 1) % SIZE;
-        sum += x;
-        i++;
+        n++;
     }
 
     /**
-     * Chiude la raccolta, esegue il "draining" del buffer (identico all'originale),
-     * normalizza e calcola l'ACF. Dopo questa chiamata l'oggetto è chiuso.
+     * Completa il calcolo effettuando lo "svuotamento" del buffer (exactly like the original):
+     * per SIZE volte:
+     * - accumula cosum[j] con hold[p] * hold[(p + j) % SIZE]
+     * - poi azzera hold[p] e avanza p
      */
     public void finish() {
-        ensureNotFinished();
-        if (i < SIZE) {
-            throw new IllegalStateException(
-                    "Per coerenza con l'algoritmo ACS originale servono almeno K+1 osservazioni."
-            );
+        if (finished) return;
+
+        if (n < SIZE) {
+            throw new IllegalStateException("Servono almeno K+1 = " + SIZE + " dati prima di finish().");
         }
 
-        // n = numero punti “veri” raccolti prima del draining
-        n = i;
-
-        // draining del buffer come nel codice del libro
-        while (i < n + SIZE) {
+        int i = 0;
+        while (i < SIZE) {
             for (int j = 0; j < SIZE; j++) {
                 cosum[j] += hold[p] * hold[(p + j) % SIZE];
             }
@@ -98,68 +91,143 @@ public class AutoCorrelationFunction {
             p = (p + 1) % SIZE;
             i++;
         }
-
-        // media e trasformazione cosum in covarianze campionarie
-        mean = sum / n;
-        for (int j = 0; j <= K; j++) {
-            cosum[j] = (cosum[j] / (n - j)) - (mean * mean);
-        }
-
-        // ACF: r[j] = cov(j) / var, con var = cosum[0]
-        acf = new double[K + 1];
-        acf[0] = 1.0;
-        double var = cosum[0];
-        for (int j = 1; j <= K; j++) {
-            acf[j] = (var == 0.0) ? 0.0 : (cosum[j] / var);
-        }
-
         finished = true;
     }
 
     /**
-     * Salva su CSV i punti (lag, acf) per j=1..K (come stampa il main originale).
+     * Numero totale di dati visti.
      */
-    public void saveAcfToCsv(Path file) {
-        requireFinished();
-        try (CsvAppender csv = new CsvAppender(file, "Lag", "ACF")) {
-            for (int j = 1; j <= K; j++) {
-                csv.writeRow(String.valueOf(j), String.valueOf(acf[j]));
-            }
-        } catch (IOException e) {
-            throw new RuntimeException("Errore scrivendo CSV ACF", e);
+    public long count() {
+        return n;
+    }
+
+    /**
+     * Media dei dati.
+     */
+    public double mean() {
+        if (n == 0) return Double.NaN;
+        return sum / n;
+    }
+
+    /**
+     * Deviazione standard "biased" (sqrt(gamma_0)). Richiede finish().
+     */
+    public double stdev() {
+        checkFinished();
+        return Math.sqrt(autocovarianceAtLag(0));
+    }
+
+    /**
+     * Autocovarianza "biased" al lag j: gamma_j = cosum[j]/(n - j) - mean^2.
+     * Richiede finish(). Valida per 0 <= j <= K (con n >= K+1 garantito).
+     */
+    public double autocovarianceAtLag(int j) {
+        checkFinished();
+        if (j < 0 || j > K) {
+            throw new IllegalArgumentException("j deve essere in [0, " + K + "]");
         }
+        double m = mean();
+        return (cosum[j] / (n - j)) - (m * m);
     }
 
-    // ---------------------------
-    // Getter risultati (post-finish)
-    // ---------------------------
-
-    public long getCount()          { requireFinished(); return n; }
-    public double getMean()         { requireFinished(); return mean; }
-    /** dev. std. popolazionale (sqrt(var)), come nel main originale (sqrt(cosum[0])) */
-    public double getStdDev()       { requireFinished(); return Math.sqrt(cosum[0]); }
-    /** array ACF[0..K], con ACF[0]=1.0 */
-    public double[] getAcf()        { requireFinished(); return acf.clone(); }
-    /** covarianza(j) già normalizzata come nel codice originale */
-    public double getCovarianceAtLag(int j) {
-        requireFinished();
-        if (j < 0 || j > K) throw new IllegalArgumentException("Lag fuori range");
-        return cosum[j];
-    }
-
-    // ---------------------------
-    // Utility
-    // ---------------------------
-
-    private void ensureNotFinished() {
-        if (finished) {
-            throw new IllegalStateException("AcsAutocorrelation già chiusa: non è possibile aggiungere altri dati.");
+    /**
+     * Autocorrelazioni r[0..K], con r[0] = 1.
+     * Richiede finish().
+     */
+    public double[] autocorrelation() {
+        checkFinished();
+        double m = mean();
+        double gamma0 = (cosum[0] / (n - 0)) - (m * m);
+        double[] r = new double[SIZE];
+        r[0] = 1.0;
+        for (int j = 1; j <= K; j++) {
+            double gammaj = (cosum[j] / (n - j)) - (m * m);
+            r[j] = gammaj / gamma0;
         }
+        return r;
     }
 
-    private void requireFinished() {
+    /**
+     * Reset completo dello stato per riutilizzare l’istanza.
+     */
+    public void reset() {
+        Arrays.fill(hold, 0.0);
+        Arrays.fill(cosum, 0.0);
+        p = 0;
+        filled = 0;
+        n = 0;
+        sum = 0.0;
+        finished = false;
+    }
+
+    private void checkFinished() {
         if (!finished) {
             throw new IllegalStateException("Chiama finish() prima di leggere i risultati.");
         }
     }
+
+    /**
+     * Suggerisce un cutoff K' usando bande di significatività ±1.96/√n.
+     * Default: window=8 lag consecutivi dentro le bande, margin=4 di sicurezza.
+     * Restituisce un valore clampato a min(K, floor(n/10)), e ≥ 1.
+     * Richiede finish().
+     */
+    public int suggestCutoff() {
+        return suggestCutoff(8, 4);
+    }
+
+    /**
+     * Versione parametrica.
+     * @param window quanti lag consecutivi devono restare entro ±1.96/√n (>=1)
+     * @param margin margine addizionale dopo il primo lag “stabile” (>=0)
+     * @return cutoff K' (1..min(K, floor(n/10))) calcolato data-driven;
+     *         se non si trova stabilità, usa fallback di Newey–West.
+     */
+    public int suggestCutoff(int window, int margin) {
+        checkFinished();
+        if (window < 1) throw new IllegalArgumentException("window deve essere >= 1");
+        if (margin < 0) margin = 0;
+
+        // Upper bound di sicurezza
+        int maxByN = (int) Math.max(1, Math.floor(n / 10.0));
+        int hardMax = Math.min(K, maxByN);
+
+        double[] r = autocorrelation();     // r[0..K], r[0]=1
+        double thr = 1.96 / Math.sqrt(n);   // bande di significatività
+
+        int found = -1;
+        if (K >= window) {
+            outer:
+            for (int j = 1; j <= K - window + 1; j++) {
+                for (int t = j; t < j + window; t++) {
+                    if (Math.abs(r[t]) > thr) {
+                        continue outer;
+                    }
+                }
+                found = j; // primo lag da cui inizia una finestra "quieta"
+                break;
+            }
+        }
+
+        int cutoff;
+        if (found != -1) {
+            long candidate = (long) found + margin;
+            if (candidate > Integer.MAX_VALUE) candidate = Integer.MAX_VALUE;
+            cutoff = (int) candidate;
+        } else {
+            // Fallback: banda Newey–West
+            double nw = 4.0 * Math.pow(n / 100.0, 2.0 / 9.0);
+            cutoff = (int) Math.floor(nw);
+            if (cutoff < 1) {
+                // Secondo fallback se n è piccolo
+                cutoff = (int) Math.max(1, Math.floor(Math.pow(n, 1.0 / 3.0)));
+            }
+        }
+
+        // Clamp finale
+        if (cutoff > hardMax) cutoff = hardMax;
+        if (cutoff < 1) cutoff = 1;
+        return cutoff;
+    }
+
 }

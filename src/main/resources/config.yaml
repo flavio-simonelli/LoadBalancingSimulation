@@ -13,7 +13,7 @@ finitesimulation:
 
 
 autocorrelation:
-  maxlag: 1000000
+  maxlag: 100000
 
 workload:
   chooseWorkload: "hyperexponential"  # valori possibili: "trace", "hyperexponential", "exponential"
