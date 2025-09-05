@@ -10,10 +10,10 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 public class Autocorrelation implements RunPolicy {
-    private final AutoCorrelationFunction acf;
+    private final AutoCorrelationFunction acs;
 
     public Autocorrelation(int maxLag) {
-        this.acf = new AutoCorrelationFunction(maxLag, "autocorrelation.csv");
+        this.acs = new AutoCorrelationFunction(maxLag);
     }
 
     @Override
@@ -26,14 +26,18 @@ public class Autocorrelation implements RunPolicy {
         if (currentTime < 1200.0) {
             return; // skip the first 120 seconds to avoid transient effects
         }
-        this.acf.add(responseTime); // response R0
+        this.acs.add(responseTime); // response R0
     }
 
     @Override
     public void updateFinalStats() {
-        // write the csv file
-        this.acf.saveToCsv();
-        System.out.println("CUTOFF VALUE "+this.acf.findCutoffLag(0.05,10));
+        acs.finish(); // esegue draining + normalizzazione
+        double[] r = acs.getAcf();           // ACF[0..K], con r[0]=1.0
+        double mean = acs.getMean();
+        double stdev = acs.getStdDev();
+
+        // opzionale: salva CSV
+        acs.saveAcfToCsv(Path.of("output/csv/acf_run1.csv"));
     }
 
     @Override

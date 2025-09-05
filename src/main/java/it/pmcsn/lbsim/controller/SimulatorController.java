@@ -108,7 +108,7 @@ public class SimulatorController {
         // create a new system
         Simulator simulator = createNewSimulator(config.getInitialServerCount(), config.getSpikeCpuMultiplier(), config.getSpikeCpuPercentage(), config.getSchedulingType(), config.isSpikeEnabled(), config.getSImax(), config.isHorizontalEnabled(), config.getSlidingWindowSize(), config.getR0min(), config.getR0max(), config.getHorizontalCoolDown(), runPolicy, wg);
         // run simulation
-        simulator.run(config.getMaxLag()*100); //TODO: empirical value ho scelto io
+        simulator.run(config.getMaxLag()+500);
         logger.log(Level.INFO, "Final seeds: {0}\n", Arrays.toString(rngs.getSeedArray()));
         // close csv
         runPolicy.closeCsvs();

@@ -1,105 +1,165 @@
 package it.pmcsn.lbsim.utils;
 
+
 import it.pmcsn.lbsim.utils.csv.CsvAppender;
 
 import java.io.IOException;
 import java.nio.file.Path;
 
+/**
+ * Implementazione OO dell'algoritmo ACS del libro:
+ * - mantiene un buffer circolare di SIZE = K+1 osservazioni
+ * - accumula cosum[j] = somma di x[i] * x[i+j]
+ * - normalizza a fine raccolta per ottenere ACF (autocorrelazione) ai lag 1..K
+ *
+ * NOTE:
+ *  - Per coerenza con il codice del libro, la logica è identica.
+ *  - Si assume di fornire almeno K+1 osservazioni (come l'esempio originale).
+ *  - Dopo finish() l'istanza è “chiusa” (non chiamare più add()).
+ */
 public class AutoCorrelationFunction {
-    private final int K;             // lag massimo
-    private final int SIZE;          // buffer size = K+1
-    private final double[] hold;     // buffer circolare
-    private final double[] cosum;    // accumulo prodotti x[i]*x[i+j]
-    private double sum;              // somma valori
-    private long count;              // numero osservazioni
-    private int p;                   // indice testa buffer
-    private final CsvAppender csv;
 
-    public AutoCorrelationFunction(int K, String fileName) {
+    private final int K;          // massimo lag
+    private final int SIZE;       // K + 1 (dimensione del buffer)
+    private final double[] hold;  // buffer circolare con gli ultimi K+1 valori
+    private final double[] cosum; // cosum[j] accumula x[i] * x[i+j]
+
+    // stato di accumulo
+    private int i = 0;            // quanti punti ho ricevuto (indice "dati letti")
+    private int p = 0;            // testa del buffer circolare
+    private double sum = 0.0;     // somma dei valori per la media
+    private boolean finished = false;
+
+    // risultati finali
+    private long n = 0;           // numero totale di dati (prima del draining)
+    private double mean = Double.NaN;
+    private double[] acf = null;  // ACF[0..K] con acf[0]=1.0
+
+    public AutoCorrelationFunction(int K) {
+        if (K < 1) throw new IllegalArgumentException("K deve essere >= 1");
         this.K = K;
         this.SIZE = K + 1;
-        this.hold = new double[SIZE];
+        this.hold  = new double[SIZE];
         this.cosum = new double[SIZE];
-        this.sum = 0.0;
-        this.count = 0;
-        this.p = 0;
-
-        try {
-            this.csv = new CsvAppender(
-                    Path.of("output/csv/" + fileName),
-                    "Lag", "ACF"
-            );
-        } catch (IOException e) {
-            throw new RuntimeException("Errore creando CSV ACF", e);
-        }
+        // cosum[] parte a zero per definizione
     }
 
+    /**
+     * Aggiunge un'osservazione x.
+     * La logica ricalca l'originale:
+     *  - per i primi SIZE valori: riempie solo hold[] e somma
+     *  - dal (SIZE+1)-esimo in poi: aggiorna cosum con i prodotti dei valori nel buffer,
+     *    poi inserisce x nella posizione p e fa avanzare il puntatore circolare.
+     */
     public void add(double x) {
-        // aggiorna cosum con i valori correnti del buffer
-        for (int j = 0; j < SIZE; j++) {
-            cosum[j] += hold[(p + j) % SIZE] * x;
+        ensureNotFinished();
+
+        if (i < SIZE) {
+            // fase di "priming": solo riempimento iniziale del buffer
+            sum     += x;
+            hold[i]  = x;
+            i++;
+            return;
         }
 
-        // aggiorna buffer circolare
+        // fase principale: aggiorna cosum con l'elemento più vecchio e i successivi
+        for (int j = 0; j < SIZE; j++) {
+            cosum[j] += hold[p] * hold[(p + j) % SIZE];
+        }
+
+        // inserisci il nuovo valore, avanza il puntatore, aumenta il conteggio e la somma
         hold[p] = x;
         p = (p + 1) % SIZE;
-
-        // aggiorna contatori globali
         sum += x;
-        count++;
+        i++;
     }
 
     /**
-     * Calcola l'array ACF [0..K]
+     * Chiude la raccolta, esegue il "draining" del buffer (identico all'originale),
+     * normalizza e calcola l'ACF. Dopo questa chiamata l'oggetto è chiuso.
      */
-    public double[] getACF() {
-        double[] acf = new double[K + 1];
-        if (count < 2) return acf;
+    public void finish() {
+        ensureNotFinished();
+        if (i < SIZE) {
+            throw new IllegalStateException(
+                    "Per coerenza con l'algoritmo ACS originale servono almeno K+1 osservazioni."
+            );
+        }
 
-        double mean = sum / count;
+        // n = numero punti “veri” raccolti prima del draining
+        n = i;
 
-        // ricrea copia cosum normalizzata
+        // draining del buffer come nel codice del libro
+        while (i < n + SIZE) {
+            for (int j = 0; j < SIZE; j++) {
+                cosum[j] += hold[p] * hold[(p + j) % SIZE];
+            }
+            hold[p] = 0.0;
+            p = (p + 1) % SIZE;
+            i++;
+        }
+
+        // media e trasformazione cosum in covarianze campionarie
+        mean = sum / n;
         for (int j = 0; j <= K; j++) {
-            double cov = (cosum[j] / (count - j)) - (mean * mean);
-            if (j == 0) {
-                acf[0] = 1.0; // sempre 1
-            } else {
-                acf[j] = cov / ((cosum[0] / count) - (mean * mean));
-            }
+            cosum[j] = (cosum[j] / (n - j)) - (mean * mean);
         }
-        return acf;
+
+        // ACF: r[j] = cov(j) / var, con var = cosum[0]
+        acf = new double[K + 1];
+        acf[0] = 1.0;
+        double var = cosum[0];
+        for (int j = 1; j <= K; j++) {
+            acf[j] = (var == 0.0) ? 0.0 : (cosum[j] / var);
+        }
+
+        finished = true;
     }
 
     /**
-     * Trova il cutoff lag: primo lag con |acf[j]| < threshold
-     * per almeno consecutive passi.
+     * Salva su CSV i punti (lag, acf) per j=1..K (come stampa il main originale).
      */
-    public int findCutoffLag(double threshold, int consecutive) {
-        double[] acf = getACF();
-        int consec = 0;
-        for (int j = 1; j < acf.length; j++) {
-            if (Math.abs(acf[j]) < threshold) {
-                consec++;
-                if (consec >= consecutive) {
-                    return j - consecutive + 1;
-                }
-            } else {
-                consec = 0;
-            }
-        }
-
-        return acf.length - 1; // fallback
-    }
-
-    public void saveToCsv() {
-        double[] acf = getACF();
-        try {
+    public void saveAcfToCsv(Path file) {
+        requireFinished();
+        try (CsvAppender csv = new CsvAppender(file, "Lag", "ACF")) {
             for (int j = 1; j <= K; j++) {
                 csv.writeRow(String.valueOf(j), String.valueOf(acf[j]));
             }
-            csv.close();
-        } catch (Exception e) {
-            throw new RuntimeException("Errore scrivendo ACF", e);
+        } catch (IOException e) {
+            throw new RuntimeException("Errore scrivendo CSV ACF", e);
+        }
+    }
+
+    // ---------------------------
+    // Getter risultati (post-finish)
+    // ---------------------------
+
+    public long getCount()          { requireFinished(); return n; }
+    public double getMean()         { requireFinished(); return mean; }
+    /** dev. std. popolazionale (sqrt(var)), come nel main originale (sqrt(cosum[0])) */
+    public double getStdDev()       { requireFinished(); return Math.sqrt(cosum[0]); }
+    /** array ACF[0..K], con ACF[0]=1.0 */
+    public double[] getAcf()        { requireFinished(); return acf.clone(); }
+    /** covarianza(j) già normalizzata come nel codice originale */
+    public double getCovarianceAtLag(int j) {
+        requireFinished();
+        if (j < 0 || j > K) throw new IllegalArgumentException("Lag fuori range");
+        return cosum[j];
+    }
+
+    // ---------------------------
+    // Utility
+    // ---------------------------
+
+    private void ensureNotFinished() {
+        if (finished) {
+            throw new IllegalStateException("AcsAutocorrelation già chiusa: non è possibile aggiungere altri dati.");
+        }
+    }
+
+    private void requireFinished() {
+        if (!finished) {
+            throw new IllegalStateException("Chiama finish() prima di leggere i risultati.");
         }
     }
 }
