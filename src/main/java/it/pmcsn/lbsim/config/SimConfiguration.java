@@ -34,10 +34,8 @@ public interface SimConfiguration {
 
     boolean isSpikeEnabled();
     int getSImax();
-    int getSImin();
     int getSpikeCpuMultiplier();
     double getSpikeCpuPercentage();
-    Duration getSpikeCoolDown();
 
     boolean isHorizontalEnabled();
     int getSlidingWindowSize();

@@ -63,10 +63,8 @@ public class Config {
     public static class SpikeServer {
         public boolean enabled;
         public int SImax;
-        public int SImin;
         public int cpuMultiplier;
         public double cpuPercentage;
-        public Duration coolDown;
     }
 
     public static class Horizontal {
