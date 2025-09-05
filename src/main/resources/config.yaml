@@ -1,10 +1,10 @@
 simulation:
-  typesimulation: "infinitesimulation" # valori possibili: "infinitesimulation", "finitesimulationjobs", "finitesimulationtime", "autocorrelation"
+  typesimulation: "autocorrelation" # valori possibili: "infinitesimulation", "finitesimulationjobs", "finitesimulationtime", "autocorrelation"
   seed: 123456789
 
 infinitesimulation:
   k: 64 # numero di batch
-  b: 1000000 # dimensione del batch
+  b: 100000 # dimensione del batch
 
 finitesimulation:
   replica: 10  #numero di repliche
@@ -13,7 +13,7 @@ finitesimulation:
 
 
 autocorrelation:
-  maxlag: 1000
+  maxlag: 100000
 
 workload:
   chooseWorkload: "hyperexponential"  # valori possibili: "trace", "hyperexponential", "exponential"
