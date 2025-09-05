@@ -15,8 +15,9 @@ import java.util.logging.Level;
 
 public class BatchMeans implements RunPolicy {
     private final int batchSize;
-    private int countDeparture = 0;
+    private int countTotalDeparture = 0;
     private int currentBatch = 0;
+    private double time = 0;
     private final CsvAppender responceTimeCsv;
     private final CsvAppender utilizationCsv;
     private final CsvAppender meanNumberJobsCsv;
@@ -26,6 +27,7 @@ public class BatchMeans implements RunPolicy {
     private final TimeMediateWelford utilizationSpikeServerWelford = new TimeMediateWelford();
     private final TimeMediateWelford meanNumberJobsWebServerWelford = new TimeMediateWelford();
     private final TimeMediateWelford meanNumberJobsSpikeServerWelford = new TimeMediateWelford();
+    private final WelfordSimple responseR0Welford = new WelfordSimple();
     private final IntervalEstimation intervalEstimation;
     private final static Logger logger = Logger.getLogger(BatchMeans.class.getName());
 
@@ -34,7 +36,7 @@ public class BatchMeans implements RunPolicy {
         this.intervalEstimation = new IntervalEstimation(LOC);
         this.batchSize = batchSize;
         try {
-            responceTimeCsv = new CsvAppender(Path.of("output/csv/ResponceTime.csv"), "BatchID", "NumberOfDeparture", "MeanWS", "MeanSS", "StdDevWS", "StdDevSS", "VarianceWS", "VarianceSS", "SemiIntervalWB", "SemiIntervalSS");
+            responceTimeCsv = new CsvAppender(Path.of("output/csv/ResponceTime.csv"), "BatchID", "NumberOfDeparture", "MeanWS", "MeanSS", "StdDevWS", "StdDevSS", "VarianceWS", "VarianceSS", "SemiIntervalWB", "SemiIntervalSS","R0captured", "SemiIntervalR0" ,"R0Calculated", "ThWS", "ThSS", "Th0","elapsedTime");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -60,7 +62,7 @@ public class BatchMeans implements RunPolicy {
 
     @Override
     public void updateDepartureStats(int numJobs, double currentTime, double responseTime, JobStats jobStats, LoadBalancer loadBalancer, FutureEventList futureEventList) {
-        countDeparture++;
+        countTotalDeparture++;
         this.utilizationSpikeServerWelford.iteration(loadBalancer.getSpikeServer().getCurrentSI() > 0 ? 1 : 0, currentTime);
         this.utilizationWebServerWelford.iteration(loadBalancer.getWebServers().getJobCount(0) > 0 ? 1 : 0, currentTime);
         this.meanNumberJobsSpikeServerWelford.iteration(loadBalancer.getSpikeServer().getCurrentSI(), currentTime);
@@ -70,10 +72,13 @@ public class BatchMeans implements RunPolicy {
         } else {
             this.responceTimeWebServerWelford.iteration(responseTime);
         }
-        if (countDeparture == batchSize) {
+        this.responseR0Welford.iteration(responseTime);
+        if (countTotalDeparture == batchSize) {
             logger.log(Level.INFO, "Finite Batch " + currentBatch);
-            printCsvs();
-            countDeparture = 0;
+            double elapsedTime = currentTime - time;
+            time = currentTime;
+            printCsvs(elapsedTime);
+            countTotalDeparture = 0;
             currentBatch++;
             this.responceTimeWebServerWelford.reset();
             this.responceTimeSpikeServerWelford.reset();
@@ -81,6 +86,7 @@ public class BatchMeans implements RunPolicy {
             this.utilizationSpikeServerWelford.reset();
             this.meanNumberJobsWebServerWelford.reset();
             this.meanNumberJobsSpikeServerWelford.reset();
+            this.responseR0Welford.reset();
         }
     }
 
@@ -88,10 +94,13 @@ public class BatchMeans implements RunPolicy {
     public void updateFinalStats() {
     }
 
-    private void printCsvs() {
+    private void printCsvs(double elapsedTime) {
+        double ThWS = calculateThroughput(responceTimeWebServerWelford.getI(), elapsedTime);
+        double ThSS = calculateThroughput(responceTimeSpikeServerWelford.getI(), elapsedTime);
+        double Th0 = calculateThroughput(responseR0Welford.getI(), elapsedTime);
         responceTimeCsv.writeRow(
                 String.valueOf(currentBatch),
-                String.valueOf(countDeparture),
+                String.valueOf(countTotalDeparture),
                 String.valueOf(responceTimeWebServerWelford.getAvg()),
                 String.valueOf(responceTimeSpikeServerWelford.getAvg()),
                 String.valueOf(responceTimeWebServerWelford.getStandardVariation()),
@@ -105,11 +114,21 @@ public class BatchMeans implements RunPolicy {
                 String.valueOf(intervalEstimation.semiIntervalEstimation(
                         responceTimeSpikeServerWelford.getStandardVariation(),
                         responceTimeSpikeServerWelford.getI()
-                ))
+                )),
+                String.valueOf(responseR0Welford.getAvg()),
+                String.valueOf(intervalEstimation.semiIntervalEstimation(
+                        responseR0Welford.getStandardVariation(),
+                        responseR0Welford.getI()
+                )),
+                String.valueOf(calculateBatchR0(responceTimeWebServerWelford.getAvg(), responceTimeSpikeServerWelford.getAvg(), ThWS, ThSS, Th0)),
+                String.valueOf(ThWS),
+                String.valueOf(ThSS),
+                String.valueOf(Th0),
+                String.valueOf(elapsedTime)
         );
         meanNumberJobsCsv.writeRow(
                 String.valueOf(currentBatch),
-                String.valueOf(countDeparture),
+                String.valueOf(countTotalDeparture),
                 String.valueOf(meanNumberJobsWebServerWelford.getAvg()),
                 String.valueOf(meanNumberJobsSpikeServerWelford.getAvg()),
                 String.valueOf(meanNumberJobsWebServerWelford.getStandardVariation()),
@@ -127,7 +146,7 @@ public class BatchMeans implements RunPolicy {
         );
         utilizationCsv.writeRow(
                 String.valueOf(currentBatch),
-                String.valueOf(countDeparture),
+                String.valueOf(countTotalDeparture),
                 String.valueOf(utilizationWebServerWelford.getAvg()),
                 String.valueOf(utilizationSpikeServerWelford.getAvg()),
                 String.valueOf(utilizationWebServerWelford.getStandardVariation()),
@@ -149,5 +168,16 @@ public class BatchMeans implements RunPolicy {
         this.responceTimeCsv.close();
         this.meanNumberJobsCsv.close();
         this.utilizationCsv.close();
+    }
+
+
+
+    private double calculateBatchR0(double r0BatchWB, double r0BatchSS, double trWS, double trSS, double trSys){
+        return r0BatchWB*(trWS/trSys)+r0BatchSS*(trSS/trSys);
+
+    }
+
+    private double calculateThroughput(double jobCompleted, double time){
+        return jobCompleted/time;
     }
 }
