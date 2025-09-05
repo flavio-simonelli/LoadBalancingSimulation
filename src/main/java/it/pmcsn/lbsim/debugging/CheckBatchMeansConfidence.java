@@ -10,11 +10,13 @@ import java.util.Arrays;
 
 public class CheckBatchMeansConfidence {
 
+    // Conta il numero di righe (escludendo l'header)
     public static int countRows(String csv) throws Exception {
         return Math.toIntExact(Math.max(0, java.nio.file.Files.lines(Paths.get(csv)).count() - 1));
     }
 
-    public static double stdDev(String csv) throws Exception {
+    // Calcola la media dei valori R0captured nel CSV
+    public static double grandMean(String csv) throws Exception {
         var lines = java.nio.file.Files.readAllLines(Paths.get(csv));
         int idx = Arrays.asList(lines.get(0).split(",")).indexOf("R0captured");
         if (idx < 0) throw new IllegalArgumentException("Colonna 'R0captured' non trovata");
@@ -23,25 +25,32 @@ public class CheckBatchMeansConfidence {
                 .mapToDouble(a -> {
                     try { return Double.parseDouble(a[idx]); } catch (Exception e) { return Double.NaN; }
                 })
-                .filter(d -> !Double.isNaN(d)).toArray();
-        double mean = Arrays.stream(vals).average().orElse(Double.NaN);
-        double variance = vals.length > 1
-                ? Arrays.stream(vals).map(v -> (v - mean) * (v - mean)).sum() / (vals.length - 1)
-                : Double.NaN;
-        return Math.sqrt(variance);
+                .filter(d -> !Double.isNaN(d))
+                .toArray();
+        return Arrays.stream(vals).average().orElse(Double.NaN);
     }
 
-    public static double grandMean(String csv) throws Exception {
+    // Calcola la deviazione standard campionaria rispetto alla grandMean
+    public static double stdDev(String csv, double grandMean) throws Exception {
         var lines = java.nio.file.Files.readAllLines(Paths.get(csv));
-        int idx = Arrays.asList(lines.getFirst().split(",")).indexOf("R0captured");
+        int idx = Arrays.asList(lines.get(0).split(",")).indexOf("R0captured");
         if (idx < 0) throw new IllegalArgumentException("Colonna 'R0captured' non trovata");
+
         double[] vals = lines.stream().skip(1).map(l -> l.split(","))
                 .filter(a -> a.length > idx && !a[idx].isBlank())
                 .mapToDouble(a -> {
                     try { return Double.parseDouble(a[idx]); } catch (Exception e) { return Double.NaN; }
                 })
-                .filter(d -> !Double.isNaN(d)).toArray();
-        return Arrays.stream(vals).average().orElse(Double.NaN);
+                .filter(d -> !Double.isNaN(d))
+                .toArray();
+
+        if (vals.length < 2) return Double.NaN;
+
+        double variance = Arrays.stream(vals)
+                .map(v -> (v - grandMean) * (v - grandMean))
+                .sum() / (vals.length - 1);
+
+        return Math.sqrt(variance);
     }
 
     public static void main(String[] args) throws Exception {
@@ -61,10 +70,14 @@ public class CheckBatchMeansConfidence {
                 String csv = file.getAbsolutePath();
                 int rows = countRows(csv);
                 double mean = grandMean(csv);
-                double std = stdDev(csv);
+                double std = stdDev(csv, mean);
 
                 IntervalEstimation ie = new IntervalEstimation(0.95);
                 double semiInterval = ie.semiIntervalEstimation(std, rows);
+
+                // Debug utile per capire i valori
+                System.out.printf("File: %s | Rows: %d | Mean: %.6f | StdDev: %.6f | SemiInterval: %.6f%n",
+                        file.getName(), rows, mean, std, semiInterval);
 
                 csvAppender.writeRow(
                         file.getName(),
