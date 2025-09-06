@@ -8,7 +8,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 
-public class CheckBatchMeansConfidence {
+public class BachMeansIntervalEstimation {
 
     // Conta il numero di righe (escludendo l'header)
     public static int countRows(String csv) throws Exception {
@@ -16,10 +16,10 @@ public class CheckBatchMeansConfidence {
     }
 
     // Calcola la media dei valori R0captured nel CSV
-    public static double grandMean(String csv) throws Exception {
+    public static double grandMean(String csv, String targetColumn) throws Exception {
         var lines = java.nio.file.Files.readAllLines(Paths.get(csv));
-        int idx = Arrays.asList(lines.get(0).split(",")).indexOf("R0captured");
-        if (idx < 0) throw new IllegalArgumentException("Colonna 'R0captured' non trovata");
+        int idx = Arrays.asList(lines.get(0).split(",")).indexOf(targetColumn);
+        if (idx < 0) throw new IllegalArgumentException("Colonna "+targetColumn+" non trovata");
         double[] vals = lines.stream().skip(1).map(l -> l.split(","))
                 .filter(a -> a.length > idx && !a[idx].isBlank())
                 .mapToDouble(a -> {
@@ -31,10 +31,10 @@ public class CheckBatchMeansConfidence {
     }
 
     // Calcola la deviazione standard campionaria rispetto alla grandMean
-    public static double stdDev(String csv, double grandMean) throws Exception {
+    public static double stdDev(String csv, double grandMean, String targetColumn) throws Exception {
         var lines = java.nio.file.Files.readAllLines(Paths.get(csv));
-        int idx = Arrays.asList(lines.get(0).split(",")).indexOf("R0captured");
-        if (idx < 0) throw new IllegalArgumentException("Colonna 'R0captured' non trovata");
+        int idx = Arrays.asList(lines.get(0).split(",")).indexOf(targetColumn);
+        if (idx < 0) throw new IllegalArgumentException("Colonna "+targetColumn+" non trovata");
 
         double[] vals = lines.stream().skip(1).map(l -> l.split(","))
                 .filter(a -> a.length > idx && !a[idx].isBlank())
@@ -63,14 +63,53 @@ public class CheckBatchMeansConfidence {
             return;
         }
 
-        Path outputPath = Paths.get(folderPath, "summary.csv");
+        Path outputPath = Paths.get(folderPath, "summaryResp.csv");
         try (CsvAppender csvAppender = new CsvAppender(outputPath, "File", "Rows", "GrandMean", "StdDev", "SemiInterval")) {
 
             for (File file : files) {
                 String csv = file.getAbsolutePath();
                 int rows = countRows(csv);
-                double mean = grandMean(csv);
-                double std = stdDev(csv, mean);
+                double mean = grandMean(csv, "R0captured");
+                double std = stdDev(csv, mean, "R0captured");
+
+                IntervalEstimation ie = new IntervalEstimation(0.95);
+                double semiInterval = ie.semiIntervalEstimation(std, rows);
+
+                // Debug utile per capire i valori
+                System.out.printf("File: %s | Rows: %d | Mean: %.6f | StdDev: %.6f | SemiInterval: %.6f%n",
+                        file.getName(), rows, mean, std, semiInterval);
+
+                csvAppender.writeRow(
+                        file.getName(),
+                        String.valueOf(rows),
+                        String.valueOf(mean),
+                        String.valueOf(std),
+                        String.valueOf(semiInterval)
+                );
+            }
+        }
+
+        System.out.println("CSV finale creato in: " + outputPath);
+
+
+
+
+
+        files = folder.listFiles((dir, name) -> name.contains("Utilization") && name.endsWith(".csv"));
+
+        if (files == null || files.length == 0) {
+            System.out.println("Nessun file trovato.");
+            return;
+        }
+
+        outputPath = Paths.get(folderPath, "summaryUtilizationSS.csv");
+        try (CsvAppender csvAppender = new CsvAppender(outputPath, "File", "Rows", "GrandMean", "StdDev", "SemiInterval")) {
+
+            for (File file : files) {
+                String csv = file.getAbsolutePath();
+                int rows = countRows(csv);
+                double mean = grandMean(csv, "MeanSS");
+                double std = stdDev(csv, mean, "MeanSS");
 
                 IntervalEstimation ie = new IntervalEstimation(0.95);
                 double semiInterval = ie.semiIntervalEstimation(std, rows);
