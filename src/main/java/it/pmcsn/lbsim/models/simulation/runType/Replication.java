@@ -29,7 +29,7 @@ public class Replication implements  RunPolicy {
             throw new RuntimeException(e);
         }
         try {
-            this.singleResponseTime = new CsvAppender(Path.of("output/csv/responseTimeSingle0.csv"), "Time","R0");
+            this.singleResponseTime = new CsvAppender(Path.of("output/csv/responseTimeSingle0.csv"), "Time","R0","CurrentJobCount");
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -49,9 +49,9 @@ public class Replication implements  RunPolicy {
     @Override
     public void updateDepartureStats(int jobs, double currentTime, double responseTime, JobStats jobStats, LoadBalancer loadBalancer, FutureEventList futureEventList) {
         responseTimeWebServerWelford.iteration(responseTime);
-        if (responseTimeWebServerWelford.getI() % 1000 == 0) {
-            this.singleResponseTime.writeRow(String.valueOf(currentTime), String.valueOf(responseTimeWebServerWelford.getAvg()));
-        }
+        //if (responseTimeWebServerWelford.getI() % 1000 == 0) {
+        this.singleResponseTime.writeRow(String.valueOf(currentTime), String.valueOf(responseTimeWebServerWelford.getAvg()), String.valueOf(loadBalancer.getCurrentJobCount()));
+        //}
         this.everyResponseTime.writeRow(String.valueOf(currentTime), String.valueOf(responseTime), String.valueOf(loadBalancer.getCurrentJobCount()));
     }
 
@@ -72,7 +72,7 @@ public class Replication implements  RunPolicy {
             String path = "output/csv/responseTimeSingle" + this.replica + ".csv";
             System.out.println("Creating new csv file: " + path);
             // create a new csv file for the next replica
-            this.singleResponseTime = new CsvAppender(Path.of(path), "Time","R0");
+            this.singleResponseTime = new CsvAppender(Path.of(path), "Time","R0","CurrentJobCount");
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
