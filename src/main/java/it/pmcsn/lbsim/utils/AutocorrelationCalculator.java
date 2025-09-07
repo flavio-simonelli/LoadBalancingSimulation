@@ -157,9 +157,9 @@ public class AutocorrelationCalculator {
         int si = config.getSImax();
 
         // File CSV
-        Path responseTimeCsv = Path.of("output/csv/ResponseTimeSI160.csv");
-        Path utilizationCsv   = Path.of("output/csv/UtilizationSI160.csv");
-        Path meanJobsCsv      = Path.of("output/csv/MeanJobsSI160.csv");
+        Path responseTimeCsv = Path.of("output/csv/ResponseTime.csv");
+        Path utilizationCsv   = Path.of("output/csv/Utilization.csv");
+        Path meanJobsCsv      = Path.of("output/csv/MeanJobs.csv");
 
         // Crea la directory output se non esiste
         Path outputDir = Path.of("output");

@@ -11,6 +11,7 @@ import it.pmcsn.lbsim.utils.csv.CsvAppender;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -60,10 +61,10 @@ public class BatchMeans implements RunPolicy {
         this.intervalEstimation = new IntervalEstimation(LOC);
         this.batchSize = batchSize;
         try {
-            responseTimeCsv = new CsvAppender(Path.of("output/csv/ResponseTimeSI160.csv"), "BatchID", "TotalDepartures", "ServerID", "Type", "NumDepartures", "Mean", "StdDev", "Variance", "SeminInterval", "%reqDirected", "Throughput");
-            utilizationCsv = new CsvAppender(Path.of("output/csv/UtilizationSI160.csv"), "BatchID", "ServerID", "Type", "NumSamples", "Mean", "StdDev", "Variance");
-            meanJobsCsv = new CsvAppender(Path.of("output/csv/MeanJobsSI160.csv"), "BatchID", "ServerID", "Type", "NumSamples", "Mean", "StdDev", "Variance");
-            responseR0Csv = new CsvAppender(Path.of("output/csv/ResponseR0SI160.csv"), "BatchID", "TotalDepartures", "Mean", "StdDev", "Variance", "SeminIntervalR0", "horizontalscaleActions");
+            responseTimeCsv = new CsvAppender(Path.of("output/csv/ResponseTime.csv"), "BatchID", "TotalDepartures", "ServerID", "Type", "NumDepartures", "Mean", "StdDev", "Variance", "SeminInterval", "%reqDirected", "Throughput");
+            utilizationCsv = new CsvAppender(Path.of("output/csv/Utilization.csv"), "BatchID", "ServerID", "Type", "NumSamples", "Mean", "StdDev", "Variance");
+            meanJobsCsv = new CsvAppender(Path.of("output/csv/MeanJobs.csv"), "BatchID", "ServerID", "Type", "NumSamples", "Mean", "StdDev", "Variance");
+            responseR0Csv = new CsvAppender(Path.of("output/csv/ResponseR0.csv"), "BatchID", "TotalDepartures", "Mean", "StdDev", "Variance", "SeminIntervalR0", "horizontalscaleActions");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -238,8 +239,8 @@ public class BatchMeans implements RunPolicy {
                 String.valueOf(respStats.getVariance()),
                 String.valueOf(intervalEstimation.semiIntervalEstimation(
                         respStats.getStandardVariation(), respStats.getI())),
-                String.format("%.2f", percDirected),
-                String.format("%.6f", throughput)
+                String.format(Locale.US, "%.2f", percDirected),
+                String.format(Locale.US, "%.6f", throughput)
         );
     }
 
