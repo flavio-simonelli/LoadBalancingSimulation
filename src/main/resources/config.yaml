@@ -4,7 +4,7 @@ simulation:
 
 infinitesimulation:
   k: 256 # numero di batch
-  b: 125000 # dimensione del batch
+  b: 10000 # dimensione del batch
 
 finitesimulation:
   replica: 11  #numero di repliche

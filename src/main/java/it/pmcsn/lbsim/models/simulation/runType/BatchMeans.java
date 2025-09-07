@@ -60,7 +60,7 @@ public class BatchMeans implements RunPolicy {
             responseTimeCsv = new CsvAppender(Path.of("output/csv/ResponseTime.csv"), "BatchID", "TotalDepartures", "ServerID", "Type", "NumDepartures", "Mean", "StdDev", "Variance", "SeminInterval", "%reqDirected", "Throughput");
             utilizationCsv = new CsvAppender(Path.of("output/csv/Utilization.csv"), "BatchID", "ServerID", "Type", "NumSamples", "Mean", "StdDev", "Variance");
             meanJobsCsv = new CsvAppender(Path.of("output/csv/MeanJobs.csv"), "BatchID", "ServerID", "Type", "NumSamples", "Mean", "StdDev", "Variance");
-            responseR0Csv = new CsvAppender(Path.of("output/csv/ResponseR0.csv"), "BatchID", "TotalDepartures", "MeanR0", "StdDevR0", "VarianceR0", "SeminIntervalR0");
+            responseR0Csv = new CsvAppender(Path.of("output/csv/ResponseR0.csv"), "BatchID", "TotalDepartures", "Mean", "StdDev", "Variance", "SeminIntervalR0");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -240,6 +240,7 @@ public class BatchMeans implements RunPolicy {
         this.responseTimeCsv.close();
         this.meanJobsCsv.close();
         this.utilizationCsv.close();
+        this.responseR0Csv.close();
     }
 
     // ---------------- Helpers ----------------
