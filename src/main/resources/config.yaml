@@ -8,8 +8,8 @@ infinitesimulation:
 
 finitesimulation:
   replica: 11  #numero di repliche
-  numjobs: 11000 # numero di job da eseguire per ogni replica
-  duration: "PT3H"   # P2DT3H4M → 2 giorni, 3 ore, 4 minuti (tempo per ogni replica)
+  numjobs: 10000 # numero di job da eseguire per ogni replica
+  duration: "P3DT0H"   # P2DT3H4M → 2 giorni, 3 ore, 4 minuti (tempo per ogni replica)
 
 
 autocorrelation:
@@ -41,9 +41,9 @@ scaling:
     cpuPercentage: 0.4 # percentuale CPU assegnata all'app spike
 
   horizontal:
-    enabled: false
-    slidingWindowSize: 4835     # finestra mobile per media tempo risposta
-    R0max: "PT8S"        # media tempo di risposta per scale in
+    enabled: true
+    slidingWindowSize: 5000     # finestra mobile per media tempo risposta
+    R0max: "PT4S"        # media tempo di risposta per scale in
     R0min: "PT0S"        # media tempo di risposta per scale out
     coolDown: "PT35M"     # ritardo tra una scalata e l'altra
 

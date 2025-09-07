@@ -25,6 +25,7 @@ public class Replication implements RunPolicy {
     // CSV writers per replica
     private CsvAppender perServerCsv;
     private CsvAppender r0Csv;
+    private CsvAppender allDataCsv;
     // Spike trackers
     private final WelfordSimple responseTimeSpike = new WelfordSimple();
     private final TimeMediateWelford utilizationSpike = new TimeMediateWelford();
@@ -67,6 +68,8 @@ public class Replication implements RunPolicy {
             );
             r0Csv = new CsvAppender(
                     Path.of("output/csv/ResponseR0Replica" + replica + ".csv"), "Time", "MeanResponseTime", "StdDevResponseTime", "VarianceResponseTime");
+            allDataCsv = new CsvAppender(
+                    Path.of("output/csv/ResponseTuTTOReplica" + replica + ".csv"), "Time", "ServerID", "ResponseTime", "SI"); // da togliere
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -75,6 +78,7 @@ public class Replication implements RunPolicy {
     private void closeCsvsForReplica() {
         if (perServerCsv != null) perServerCsv.close();
         if (r0Csv != null) r0Csv.close();
+        if (allDataCsv != null) allDataCsv.close(); // da togliere
     }
 
     // ---------------- Simulation hooks ----------------
@@ -121,6 +125,18 @@ public class Replication implements RunPolicy {
 
         // R0 update
         responseR0.iteration(responseTime);
+
+        //TODO: da togliere
+        try {
+            allDataCsv.writeRow(
+                    String.valueOf(currentTime),
+                    String.valueOf(departureJob.getJob().getAssignedServer().getId()),
+                    String.valueOf(responseTime),
+                    String.valueOf(departureJob.getJob().getAssignedServer().getCurrentSI())
+            );
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         // Scrittura riga su CSV
         writePerServerRows(currentTime);
