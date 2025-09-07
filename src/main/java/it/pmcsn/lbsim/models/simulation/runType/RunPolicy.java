@@ -8,8 +8,8 @@ public interface RunPolicy {
 
 
 
-    void updateArrivalStats(double size, int currentJobCount, Double currentTime, LoadBalancer loadBalancer, FutureEventList futureEventList, JobStats jobStats);
-    void updateDepartureStats(int jobs, double currentTime, double responseTime, JobStats jobStats, LoadBalancer loadBalancer, FutureEventList futureEventList);
+    void updateArrivalStats(double time, JobStats newJobStats, LoadBalancer loadBalancer);
+    void updateDepartureStats(double currentTime, JobStats departureJob, LoadBalancer loadBalancer, double responseTime);
     void updateFinalStats();
     void closeCsvs();
 

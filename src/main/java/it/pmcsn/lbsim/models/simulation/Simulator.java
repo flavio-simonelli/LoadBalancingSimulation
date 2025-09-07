@@ -137,7 +137,7 @@ public class Simulator {
         for (JobStats jobStat : this.futureEventList.getJobStats()) {
             jobStat.estimateDepartureTime(this.currentTime);
         }
-        runPolicy.updateArrivalStats(size, loadBalancer.getCurrentJobCount(), this.currentTime, this.loadBalancer, this.futureEventList, newJobStats);
+        runPolicy.updateArrivalStats(this.currentTime, newJobStats, this.loadBalancer);
     }
 
     private void departureHandler(double elapsedTime, JobStats targetDepartureJobStats) {
@@ -154,7 +154,7 @@ public class Simulator {
             js.estimateDepartureTime(this.currentTime);
         }
         // Log job statistics
-        this.runPolicy.updateDepartureStats(loadBalancer.getCurrentJobCount(), this.currentTime, responseTime, targetDepartureJobStats,loadBalancer,futureEventList);
+        this.runPolicy.updateDepartureStats(this.currentTime, targetDepartureJobStats, this.loadBalancer, responseTime);
     }
 
 

@@ -72,6 +72,10 @@ public class Server {
         }
     }
 
+    public int isBusy() {
+        return activeJobs.isEmpty() ? 0 : 1;
+    }
+
 }
 
 

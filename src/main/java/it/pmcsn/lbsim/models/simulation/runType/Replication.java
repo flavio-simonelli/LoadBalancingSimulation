@@ -16,7 +16,7 @@ public class Replication implements  RunPolicy {
     private final WelfordSimple responseTimeWebServerWelford;
     private final CsvAppender replicationResponseTime;
     private CsvAppender singleResponseTime;
-    private List<Double> replicaMeans = new ArrayList<>();
+    private final List<Double> replicaMeans = new ArrayList<>();
     private final IntervalEstimation intervalEstimation;
 
     public Replication(float LOC) {
@@ -28,25 +28,21 @@ public class Replication implements  RunPolicy {
             throw new RuntimeException(e);
         }
         try {
-            this.singleResponseTime = new CsvAppender(Path.of("output/csv/responseTimeSingle0.csv"), "Time","R0","CurrentJobCount");
+            this.singleResponseTime = new CsvAppender(Path.of("output/csv/responseTimeSingle"+ this.replica +".csv"), "Time","R0","CurrentJobCount");
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-
     @Override
-    public void updateArrivalStats(double size, int currentJobCount, Double currentTime, LoadBalancer loadBalancer, FutureEventList futureEventList, JobStats jobStats) {
-
+    public void updateArrivalStats(double time, JobStats newJobStats, LoadBalancer loadBalancer) {
+        // no-op
     }
 
     @Override
-    public void updateDepartureStats(int jobs, double currentTime, double responseTime, JobStats jobStats, LoadBalancer loadBalancer, FutureEventList futureEventList) {
+    public void updateDepartureStats(double currentTime, JobStats departureJob, LoadBalancer loadBalancer, double responseTime) {
         responseTimeWebServerWelford.iteration(responseTime);
-        //if (responseTimeWebServerWelford.getI() % 1000 == 0) {
         this.singleResponseTime.writeRow(String.valueOf(currentTime), String.valueOf(responseTimeWebServerWelford.getAvg()), String.valueOf(loadBalancer.getCurrentJobCount()));
-        //}
-
     }
 
     @Override
