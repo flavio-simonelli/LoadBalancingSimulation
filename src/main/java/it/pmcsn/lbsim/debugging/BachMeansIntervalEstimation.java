@@ -64,7 +64,7 @@ public class BachMeansIntervalEstimation {
         }
 
         Path outputPath = Paths.get(folderPath, "summaryResp.csv");
-        try (CsvAppender csvAppender = new CsvAppender(outputPath, "File", "Rows", "GrandMean", "StdDev", "SemiInterval")) {
+        try (CsvAppender csvAppender = new CsvAppender(outputPath, "File", "Rows", "GrandMean", "StdDev", "SemiInterval", "Inizio intervallo", "Fine intervallo")) {
 
             for (File file : files) {
                 String csv = file.getAbsolutePath();
@@ -76,15 +76,17 @@ public class BachMeansIntervalEstimation {
                 double semiInterval = ie.semiIntervalEstimation(std, rows);
 
                 // Debug utile per capire i valori
-                System.out.printf("File: %s | Rows: %d | Mean: %.6f | StdDev: %.6f | SemiInterval: %.6f%n",
-                        file.getName(), rows, mean, std, semiInterval);
+                System.out.printf("File: %s | Rows: %d | Mean: %.6f | StdDev: %.6f | SemiInterval: %.6f%n | Intervall: [%.6f , %.6f] ",
+                        file.getName(), rows, mean, std, semiInterval, mean-semiInterval, mean+semiInterval);
 
                 csvAppender.writeRow(
                         file.getName(),
                         String.valueOf(rows),
                         String.valueOf(mean),
                         String.valueOf(std),
-                        String.valueOf(semiInterval)
+                        String.valueOf(semiInterval),
+                        String.valueOf(mean - semiInterval),
+                        String.valueOf(mean+semiInterval)
                 );
             }
         }
@@ -102,14 +104,14 @@ public class BachMeansIntervalEstimation {
             return;
         }
 
-        outputPath = Paths.get(folderPath, "summaryUtilizationSS.csv");
+        outputPath = Paths.get(folderPath, "summaryUtilizationWS.csv");
         try (CsvAppender csvAppender = new CsvAppender(outputPath, "File", "Rows", "GrandMean", "StdDev", "SemiInterval")) {
 
             for (File file : files) {
                 String csv = file.getAbsolutePath();
                 int rows = countRows(csv);
-                double mean = grandMean(csv, "MeanSS");
-                double std = stdDev(csv, mean, "MeanSS");
+                double mean = grandMean(csv, "MeanWS");
+                double std = stdDev(csv, mean, "MeanWS");
 
                 IntervalEstimation ie = new IntervalEstimation(0.95);
                 double semiInterval = ie.semiIntervalEstimation(std, rows);

@@ -36,7 +36,7 @@ public class Replication implements  RunPolicy {
 
 
     @Override
-    public void updateArrivalStats(double size, int currentJobCount, Double currentTime, LoadBalancer loadBalancer, FutureEventList futureEventList) {
+    public void updateArrivalStats(double size, int currentJobCount, Double currentTime, LoadBalancer loadBalancer, FutureEventList futureEventList, JobStats jobStats) {
 
     }
 

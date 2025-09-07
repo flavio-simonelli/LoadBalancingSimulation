@@ -41,14 +41,18 @@ public class Autocorrelation implements RunPolicy {
 
     @Override
     public void updateArrivalStats(double size, int currentJobCount, Double currentTime,
-                                   LoadBalancer loadBalancer, FutureEventList futureEventList) {
+                                   LoadBalancer loadBalancer, FutureEventList futureEventList, JobStats jobStats) {
         // no-op
     }
 
     @Override
     public void updateDepartureStats(int jobs, double currentTime, double responseTime,
                                      JobStats jobStats, LoadBalancer lb, FutureEventList fel) {
-        // Assunto: questo metodo viene chiamato UNA VOLTA PER JOB con il suo responseTime.
+
+        if(jobStats.getJob().getAssignedServer().getId() != -1) {
+            return;
+        }
+        // Assunto: questo metodo viene chiamato UNA VOLTA PER  JOB con il suo responseTime.
         completedJobs++;
 
         // warm-up: se definito a tempo o per #job

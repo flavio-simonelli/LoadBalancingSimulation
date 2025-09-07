@@ -36,7 +36,7 @@ public class BatchMeans implements RunPolicy {
         this.intervalEstimation = new IntervalEstimation(LOC);
         this.batchSize = batchSize;
         try {
-            responceTimeCsv = new CsvAppender(Path.of("output/csv/ResponceTime.csv"), "BatchID", "NumberOfDeparture", "MeanWS", "MeanSS", "StdDevWS", "StdDevSS", "VarianceWS", "VarianceSS", "SemiIntervalWB", "SemiIntervalSS","R0captured", "SemiIntervalR0" ,"R0Calculated", "ThWS", "ThSS", "Th0","elapsedTime");
+            responceTimeCsv = new CsvAppender(Path.of("output/csv/esponceTime.csv"), "BatchID", "NumberOfDeparture", "MeanWS", "MeanSS", "StdDevWS", "StdDevSS", "VarianceWS", "VarianceSS", "SemiIntervalWB", "SemiIntervalSS","R0captured", "SemiIntervalR0" ,"R0Calculated", "ThWS", "ThSS", "Th0","elapsedTime");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -53,21 +53,21 @@ public class BatchMeans implements RunPolicy {
     }
 
     @Override
-    public void updateArrivalStats(double size, int currentJobCount, Double currentTime, LoadBalancer loadBalancer, FutureEventList futureEventList) {
+    public void updateArrivalStats(double size, int currentJobCount, Double currentTime, LoadBalancer loadBalancer, FutureEventList futureEventList, JobStats jobStats) {
         this.utilizationSpikeServerWelford.iteration(loadBalancer.getSpikeServer().getCurrentSI() > 0 ? 1 : 0, currentTime);
-        this.utilizationWebServerWelford.iteration(loadBalancer.getWebServers().getJobCount(0) > 0 ? 1 : 0, currentTime);
+        this.utilizationWebServerWelford.iteration(loadBalancer.getWebServers().getJobCount(jobStats.getJob().getAssignedServer().getId()) > 0 ? 1 : 0, currentTime);
         this.meanNumberJobsSpikeServerWelford.iteration(loadBalancer.getSpikeServer().getCurrentSI(), currentTime);
-        this.meanNumberJobsWebServerWelford.iteration(loadBalancer.getWebServers().getJobCount(0), currentTime);
+        this.meanNumberJobsWebServerWelford.iteration(loadBalancer.getWebServers().getJobCount(jobStats.getJob().getAssignedServer().getId()), currentTime);
     }
 
     @Override
     public void updateDepartureStats(int numJobs, double currentTime, double responseTime, JobStats jobStats, LoadBalancer loadBalancer, FutureEventList futureEventList) {
         countTotalDeparture++;
         this.utilizationSpikeServerWelford.iteration(loadBalancer.getSpikeServer().getCurrentSI() > 0 ? 1 : 0, currentTime);
-        this.utilizationWebServerWelford.iteration(loadBalancer.getWebServers().getJobCount(0) > 0 ? 1 : 0, currentTime);
+        this.utilizationWebServerWelford.iteration(loadBalancer.getWebServers().getJobCount(jobStats.getJob().getAssignedServer().getId()) > 0 ? 1 : 0, currentTime);
         this.meanNumberJobsSpikeServerWelford.iteration(loadBalancer.getSpikeServer().getCurrentSI(), currentTime);
-        this.meanNumberJobsWebServerWelford.iteration(loadBalancer.getWebServers().getJobCount(0), currentTime);
-        if (jobStats.getJob().getAssignedServer().getId() == -1) {
+        this.meanNumberJobsWebServerWelford.iteration(loadBalancer.getWebServers().getJobCount(jobStats.getJob().getAssignedServer().getId()), currentTime);
+        if (jobStats.getJob().getAssignedServer().getId() != -1) {
             this.responceTimeSpikeServerWelford.iteration(responseTime);
         } else {
             this.responceTimeWebServerWelford.iteration(responseTime);
