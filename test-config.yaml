@@ -1,0 +1,61 @@
+simulation:
+  typesimulation: "infinitesimulation" # valori possibili: "infinitesimulation", "finitesimulationjobs", "finitesimulationtime", "autocorrelation"
+  seed: 123456789
+
+infinitesimulation:
+  k: 10 # numero di batch
+  b: 1000 # dimensione del batch
+
+finitesimulation:
+  replica: 3  #numero di repliche
+  numjobs: 5000 # numero di job da eseguire per ogni replica
+  duration: "PT30S"   # P2DT3H4M → 2 giorni, 3 ore, 4 minuti (tempo per ogni replica)
+
+
+autocorrelation:
+  maxlag: 50000
+
+workload:
+  chooseWorkload: "hyperexponential"  # valori possibili: "trace", "hyperexponential", "exponential"
+  interarrival:
+    mean: 0.15        # media dei tempi di interarrivo (if chooseWorkload = "exponential" is used for the exponential distribution)
+    cv: 4             # coefficiente di variazione
+    streamp: 0
+    streamhexp1: 1
+    streamhexp2: 2
+  service:
+    mean: 0.16        # media della distribuzione del tempo di servizio
+    cv: 4             # coefficiente di variazione
+    streamp: 3
+    streamhexp1: 4
+    streamhexp2: 5
+
+scheduling:
+  policy: "least_load"   # valori possibili: least_load, round_robin
+
+scaling:
+  spikeServer:
+    enabled: true
+    SImax: 0        # max job nel web server prima di reindirizzare allo spike
+    cpuMultiplier: 2  # moltiplicatore CPU spike
+    cpuPercentage: 0.4 # percentuale CPU assegnata all'app spike
+
+  horizontal:
+    enabled: false
+    slidingWindowSize: 10     # finestra mobile per media tempo risposta
+    R0max: "PT3S"        # media tempo di risposta per scale in
+    R0min: "PT1.2S"        # media tempo di risposta per scale out
+    coolDown: "PT10S"     # ritardo tra una scalata e l'altra
+
+    initialServerCount: 1   # server iniziali (senza spike)
+
+output:
+  csvDir: "output/csv/"
+  plotDir: "output/plot/"
+
+logging:
+  level: "INFO"   # possibili valori: SEVERE, WARNING, INFO, FINE, FINER, FINEST
+
+path:
+  traceArrivalsPath: "src/main/resources/arrivals.txt"
+  traceSizePath: "src/main/resources/sizes.txt"

@@ -17,15 +17,23 @@ public class ConfigLoader {
     private static final Logger logger = Logger.getLogger(ConfigLoader.class.getName());
 
     public static SimConfiguration load(String filePath) {
-        try (InputStream input = ConfigLoader.class.getClassLoader().getResourceAsStream(filePath)) {
+        try {
+            InputStream input = ConfigLoader.class.getClassLoader().getResourceAsStream(filePath);
+            
+            // If not found in classpath, try to load from file system
             if (input == null) {
-                throw new IllegalArgumentException("File YAML non trovato: " + filePath);
+                try {
+                    input = new java.io.FileInputStream(filePath);
+                } catch (java.io.FileNotFoundException e) {
+                    throw new IllegalArgumentException("File YAML non trovato: " + filePath);
+                }
             }
 
             ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
             mapper.registerModule(new JavaTimeModule());
 
             Config raw = mapper.readValue(input, Config.class);
+            input.close();
 
             // Configura logging dal file
             if (raw.logging != null && raw.logging.level != null) {

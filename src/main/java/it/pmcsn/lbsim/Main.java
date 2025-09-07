@@ -10,8 +10,11 @@ public class Main {
 
     public static void main(String[] args) {
 
+        // Use command line argument for config file, or default to config.yaml
+        String configFile = args.length > 0 ? args[0] : configFilePath;
+        
         // read the configuration from a YAML file
-        SimConfiguration config = ConfigLoader.load(configFilePath);
+        SimConfiguration config = ConfigLoader.load(configFile);
 
         // create the application controller
         SimulatorController controller = new SimulatorController();
