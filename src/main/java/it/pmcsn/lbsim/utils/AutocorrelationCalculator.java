@@ -115,7 +115,7 @@ public class AutocorrelationCalculator {
     private static void printReport(String centerName,
                                     double rhoResp, double rhoUtil, double rhoJobs) {
         System.out.println("****************************************");
-        System.out.printf("AUTOCORRELATION VALUES FOR %s [B:125000|K:256]%n", centerName);
+        System.out.printf("AUTOCORRELATION VALUES FOR %s [B:10000|K:256]%n", centerName);
         System.out.printf("E[ResponseTime]: %.4f%n", rhoResp);
         System.out.printf("E[Utilization]:  %.4f%n", rhoUtil);
         System.out.printf("E[MeanJobs]:     %.4f%n", rhoJobs);

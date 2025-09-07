@@ -4,10 +4,10 @@ simulation:
 
 infinitesimulation:
   k: 256 # numero di batch
-  b: 10000 # dimensione del batch
+  b: 50000 # dimensione del batch
 
 finitesimulation:
-  replica: 11  #numero di repliche
+  replica: 10  #numero di repliche
   numjobs: 11000 # numero di job da eseguire per ogni replica
   duration: "PT3H"   # P2DT3H4M → 2 giorni, 3 ore, 4 minuti (tempo per ogni replica)
 
@@ -36,7 +36,7 @@ scheduling:
 scaling:
   spikeServer:
     enabled: true
-    SImax: 80        # max job nel web server prima di reindirizzare allo spike
+    SImax: 70        # max job nel web server prima di reindirizzare allo spike
     cpuMultiplier: 2  # moltiplicatore CPU spike
     cpuPercentage: 0.4 # percentuale CPU assegnata all'app spike
 

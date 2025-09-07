@@ -72,7 +72,7 @@ public class SimulatorController {
         // istance workload
         WorkloadGenerator wg = istanceWorkloadGenerator(rngs, config.getChooseWorkload(), config.getInterarrivalMean(), config.getInterarrivalCv(), config.getServiceMean(), config.getServiceCv(), config.getInterarrivalStreamP(), config.getInterarrivalStreamHexp1(), config.getInterarrivalStreamHexp2(), config.getServiceStreamP(), config.getServiceStreamHexp1(), config.getServiceStreamHexp2(), config.getTraceArrivalsPath(), config.getTraceSizePath());
         // create a run policy
-        Replication runPolicy = new Replication(0.95F);
+        Replication runPolicy = new Replication(config.getNumberOfReplicas());
         // run n replicas
         for (int replica = 0; replica<config.getNumberOfReplicas(); replica++) {
             // print the initial seed of the replica
@@ -87,13 +87,9 @@ public class SimulatorController {
             }
             // print the final seed of the replica
             logger.log(Level.INFO, "Final seeds of Replica {0}: {1}\n", new Object[]{replica,Arrays.toString(rngs.getSeedArray())});
-            // update the replica counter
-            runPolicy.nextReplica();
         }
         // close csv
         runPolicy.closeCsvs();
-        // print the results of the replicas
-        runPolicy.finalCalculation();
     }
 
     public void autocorrelation(SimConfiguration config) {
