@@ -33,6 +33,7 @@ public class BatchMeans implements RunPolicy {
     private final CsvAppender responseTimeCsv;
     private final CsvAppender utilizationCsv;
     private final CsvAppender meanJobsCsv;
+    private final CsvAppender responseR0Csv;
 
     // Spike server metrics
     private final WelfordSimple responseTimeSpike = new WelfordSimple();
@@ -56,10 +57,10 @@ public class BatchMeans implements RunPolicy {
         this.intervalEstimation = new IntervalEstimation(LOC);
         this.batchSize = batchSize;
         try {
-            responseTimeCsv = new CsvAppender(
-                    Path.of("output/csv/ResponseTime.csv"), "BatchID", "TotalDepartures", "ServerID", "Type", "NumDepartures", "Mean", "StdDev", "Variance", "SeminInterval", "%reqDirected", "Throughput");
+            responseTimeCsv = new CsvAppender(Path.of("output/csv/ResponseTime.csv"), "BatchID", "TotalDepartures", "ServerID", "Type", "NumDepartures", "Mean", "StdDev", "Variance", "SeminInterval", "%reqDirected", "Throughput");
             utilizationCsv = new CsvAppender(Path.of("output/csv/Utilization.csv"), "BatchID", "ServerID", "Type", "NumSamples", "Mean", "StdDev", "Variance");
             meanJobsCsv = new CsvAppender(Path.of("output/csv/MeanJobs.csv"), "BatchID", "ServerID", "Type", "NumSamples", "Mean", "StdDev", "Variance");
+            responseR0Csv = new CsvAppender(Path.of("output/csv/ResponseR0.csv"), "BatchID", "TotalDepartures", "MeanR0", "StdDevR0", "VarianceR0", "SeminIntervalR0");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -201,6 +202,16 @@ public class BatchMeans implements RunPolicy {
                     String.valueOf(jobs.getVariance())
             );
         }
+        // R0 global
+        responseR0Csv.writeRow(
+                String.valueOf(currentBatch),
+                String.valueOf(totalDepartures),
+                String.valueOf(responseR0.getAvg()),
+                String.valueOf(responseR0.getStandardVariation()),
+                String.valueOf(responseR0.getVariance()),
+                String.valueOf(intervalEstimation.semiIntervalEstimation(
+                        responseR0.getStandardVariation(), responseR0.getI()))
+        );
     }
 
     private void writeResponseRow(int batchId, int totalDepartures,
