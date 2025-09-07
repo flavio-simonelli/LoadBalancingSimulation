@@ -128,25 +128,25 @@ public class SimulatorController {
         HyperExponential interarrivalTimeObj;
         HyperExponential serviceTimeObj;
         switch (workloadType) {
-            case WorkloadType.HYPEREXPONENTIAL:
+            case HYPEREXPONENTIAL:
                 interarrivalTimeObj = new HyperExponential(interarrivalCv, interarrivalMean, interarrivalStream1, interarrivalStream2, interarrivalStream3);
                 logger.log(Level.INFO, "Hyperexponential interarrival with parameters {0} {1} {2} and {3} {4} {5}\n", new Object[]{interarrivalTimeObj.getP(), interarrivalTimeObj.getM1(), interarrivalTimeObj.getM2(), interarrivalTimeObj.getStreamP(), interarrivalTimeObj.getStreamExp1(), interarrivalTimeObj.getStreamExp2()});
                 serviceTimeObj = new HyperExponential(sizeCv, sizeMean, sizeStream1, sizeStream2, sizeStream3);
                 logger.log(Level.INFO, "Hyperexponential service with parameters {0} {1} {2} and stream {3} {4} {5}\n", new Object[]{serviceTimeObj.getP(), serviceTimeObj.getM1(), serviceTimeObj.getM2(), serviceTimeObj.getStreamP(), serviceTimeObj.getStreamExp1(), serviceTimeObj.getStreamExp2()});
                 wg = new DistributionWorkloadGenerator(rngs, interarrivalTimeObj, serviceTimeObj);
                 break;
-            case WorkloadType.EXPONENTIAL:
+            case EXPONENTIAL:
                 serviceTimeObj = new HyperExponential(sizeCv, sizeMean, sizeStream1, sizeStream2, sizeStream3);
                 logger.log(Level.INFO, "Exponential interarrival with parameters {0} and stream {1}", new Object[]{interarrivalMean, interarrivalStream1});
                 logger.log(Level.INFO, "Hyperexponential service with parameters {0} {1} {2} and stream {3} {4} {5}\n", new Object[]{serviceTimeObj.getP(), serviceTimeObj.getM1(), serviceTimeObj.getM2(), serviceTimeObj.getStreamP(), serviceTimeObj.getStreamExp1(), serviceTimeObj.getStreamExp2()});
                 wg = new VerifyWorkloadGenerator(rngs, interarrivalMean, interarrivalStream1, serviceTimeObj);
                 break;
-            case WorkloadType.FULLEXP:
+            case FULLEXP:
                 logger.log(Level.INFO, "Exponential interarrival with parameters {0} and stream {1}", new Object[]{interarrivalMean, interarrivalStream1});
                 logger.log(Level.INFO, "Exponential service with parameters {0} and stream {1}", new Object[]{sizeMean, sizeStream1});
                 wg = new FullExpWorkloadGenerator(rngs, interarrivalMean, interarrivalStream1, sizeMean, sizeStream1);
                 break;
-            case WorkloadType.TRACE:
+            case TRACE:
                 try {
                     logger.log(Level.INFO, "Trace driven workload with arrivals from {0} and sizes from {1}\n", new Object[]{traceArrivalPath, traceSizePath});
                     wg = new TraceWorkloadGenerator(Path.of(traceArrivalPath), Path.of(traceSizePath));
