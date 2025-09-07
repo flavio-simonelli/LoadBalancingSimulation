@@ -10,4 +10,9 @@ public class NoneHorizontalScaler implements HorizontalScaler {
     public Action notifyJobDeparture(double responseTimeSeconds, double nowSeconds) {
         return Action.NONE;
     }
+
+    @Override
+    public int getScaleActions() {
+        return 0;
+    }
 }

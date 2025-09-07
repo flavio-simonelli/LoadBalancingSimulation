@@ -108,6 +108,10 @@ public class LoadBalancer {
         }
     }
 
+    public HorizontalScaler getHorizontalScaler() {
+        return horizontalScaler;
+    }
+
     public int getWebServerCount() {
         return webServers.getWebServerCount();
     }

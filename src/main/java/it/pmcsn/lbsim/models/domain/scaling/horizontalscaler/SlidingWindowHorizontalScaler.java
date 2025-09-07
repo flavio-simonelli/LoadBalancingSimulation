@@ -20,6 +20,7 @@ public class SlidingWindowHorizontalScaler implements HorizontalScaler {
     private final double r0min;
     private final double r0max;
     private final double cooldownSec;
+    private int scaleActions = 0; // numero di azioni di scaling effettuate
 
     private double lastActionAt = Double.NEGATIVE_INFINITY;
 
@@ -63,5 +64,11 @@ public class SlidingWindowHorizontalScaler implements HorizontalScaler {
     @Override
     public void setLastActionAt(double time) {
         this.lastActionAt = time;
+        this.scaleActions++;
+    }
+
+    @Override
+    public int getScaleActions() {
+        return scaleActions;
     }
 }

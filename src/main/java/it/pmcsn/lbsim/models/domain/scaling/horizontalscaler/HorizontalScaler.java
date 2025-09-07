@@ -8,6 +8,8 @@ public interface HorizontalScaler {
 
     void setLastActionAt(double time);
 
+    int getScaleActions();
+
     enum Action { NONE, SCALE_OUT, SCALE_IN }
 
     /**
