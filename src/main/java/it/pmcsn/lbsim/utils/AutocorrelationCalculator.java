@@ -1,9 +1,15 @@
 package it.pmcsn.lbsim.utils;
 
+import it.pmcsn.lbsim.config.ConfigLoader;
+import it.pmcsn.lbsim.config.SimConfiguration;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.file.Path;
+import java.nio.file.Files;
 import java.util.*;
 
 public class AutocorrelationCalculator {
@@ -112,38 +118,92 @@ public class AutocorrelationCalculator {
         return max; // il primo che NON esiste
     }
 
-    private static void printReport(String centerName,
-                                    double rhoResp, double rhoUtil, double rhoJobs) {
-        System.out.println("****************************************");
-        System.out.printf("AUTOCORRELATION VALUES FOR %s [B:10000|K:256]%n", centerName);
-        System.out.printf("E[ResponseTime]: %.4f%n", rhoResp);
-        System.out.printf("E[Utilization]:  %.4f%n", rhoUtil);
-        System.out.printf("E[MeanJobs]:     %.4f%n", rhoJobs);
-        System.out.println("****************************************");
+    private static void printAndWriteReport(PrintWriter writer, String centerName,
+                                            double rhoResp, double rhoUtil, double rhoJobs,
+                                            int b, int k, String fileName1, String fileName2, String fileName3) {
+        String separator = "****************************************";
+        String dataLine = "Data for " + fileName1 + ", " + fileName2 + ", " + fileName3;
+        String titleLine = String.format("AUTOCORRELATION VALUES FOR %s [B:%d|K:%d]", centerName, b, k);
+        String respLine = String.format("E[ResponseTime]: %.4f", rhoResp);
+        String utilLine = String.format("E[Utilization]:  %.4f", rhoUtil);
+        String jobsLine = String.format("E[MeanJobs]:     %.4f", rhoJobs);
+
+        // Print to console
+        System.out.println(separator);
+        System.out.println(dataLine);
+        System.out.println(titleLine);
+        System.out.println(respLine);
+        System.out.println(utilLine);
+        System.out.println(jobsLine);
+        System.out.println(separator);
         System.out.println();
+
+        // Write to file
+        writer.println(separator);
+        writer.println(dataLine);
+        writer.println(titleLine);
+        writer.println(respLine);
+        writer.println(utilLine);
+        writer.println(jobsLine);
+        writer.println(separator);
+        writer.println();
     }
 
     public static void main(String[] args) throws IOException {
+        final String configFilePath = "config.yaml"; // Default configuration file path
+        SimConfiguration config = ConfigLoader.load(configFilePath);
+        int b = config.getBatchSize();
+        int k = config.getNumberOfBatchs();
+        int si = config.getSImax();
+
         // File CSV
-        Path responseTimeCsv = Path.of("output/csv/ResponseTime.csv");
-        Path utilizationCsv   = Path.of("output/csv/Utilization.csv");
-        Path meanJobsCsv      = Path.of("output/csv/MeanJobs.csv");
+        Path responseTimeCsv = Path.of("output/csv/ResponseTimeSI160.csv");
+        Path utilizationCsv   = Path.of("output/csv/UtilizationSI160.csv");
+        Path meanJobsCsv      = Path.of("output/csv/MeanJobsSI160.csv");
+
+        // Crea la directory output se non esiste
+        Path outputDir = Path.of("output");
+        if (!Files.exists(outputDir)) {
+            Files.createDirectories(outputDir);
+        }
+
+        // Crea il nome del file di output con Si, b, k
+        String outputFileName = String.format("AutocorrelationReport_SI%d_B%d_K%d.txt",si, b, k);
+        Path outputFile = outputDir.resolve(outputFileName);
 
         // Trova il numero di WebServer (0..N-1)
         int maxServerId = findMaxServerId(responseTimeCsv, ",");
 
-        // SpikeServer (-1)
-        double rhoRespSpike = lag1Autocorrelation(readMeansFromCsv(responseTimeCsv, ",", -1));
-        double rhoUtilSpike = lag1Autocorrelation(readMeansFromCsv(utilizationCsv, ",", -1));
-        double rhoJobsSpike = lag1Autocorrelation(readMeansFromCsv(meanJobsCsv, ",", -1));
-        printReport("SpikeServer", rhoRespSpike, rhoUtilSpike, rhoJobsSpike);
+        try (PrintWriter writer = new PrintWriter(new FileWriter(outputFile.toFile()))) {
+            // Header del file
+            writer.println("AUTOCORRELATION ANALYSIS REPORT");
+            writer.println("Generated on: " + java.time.LocalDateTime.now());
+            writer.println("Configuration: SI=" + si + ", BatchSize=" + b + ", NumberOfBatchs=" + k);
+            writer.println("Source files: " + responseTimeCsv.getFileName() + ", " +
+                    utilizationCsv.getFileName() + ", " + meanJobsCsv.getFileName());
+            writer.println();
 
-        // WebServer (0..maxServerId-1)
-        for (int id = 0; id < maxServerId; id++) {
-            double rhoResp = lag1Autocorrelation(readMeansFromCsv(responseTimeCsv, ",", id));
-            double rhoUtil = lag1Autocorrelation(readMeansFromCsv(utilizationCsv, ",", id));
-            double rhoJobs = lag1Autocorrelation(readMeansFromCsv(meanJobsCsv, ",", id));
-            printReport("WebServer" + id, rhoResp, rhoUtil, rhoJobs);
+            // SpikeServer (-1)
+            double rhoRespSpike = lag1Autocorrelation(readMeansFromCsv(responseTimeCsv, ",", -1));
+            double rhoUtilSpike = lag1Autocorrelation(readMeansFromCsv(utilizationCsv, ",", -1));
+            double rhoJobsSpike = lag1Autocorrelation(readMeansFromCsv(meanJobsCsv, ",", -1));
+            printAndWriteReport(writer, "SpikeServer", rhoRespSpike, rhoUtilSpike, rhoJobsSpike, b, k,
+                    responseTimeCsv.getFileName().toString(),
+                    utilizationCsv.getFileName().toString(),
+                    meanJobsCsv.getFileName().toString());
+
+            // WebServer (0..maxServerId-1)
+            for (int id = 0; id < maxServerId; id++) {
+                double rhoResp = lag1Autocorrelation(readMeansFromCsv(responseTimeCsv, ",", id));
+                double rhoUtil = lag1Autocorrelation(readMeansFromCsv(utilizationCsv, ",", id));
+                double rhoJobs = lag1Autocorrelation(readMeansFromCsv(meanJobsCsv, ",", id));
+                printAndWriteReport(writer, "WebServer" + id, rhoResp, rhoUtil, rhoJobs, b, k,
+                        responseTimeCsv.getFileName().toString(),
+                        utilizationCsv.getFileName().toString(),
+                        meanJobsCsv.getFileName().toString());
+            }
+
+            System.out.println("Report saved to: " + outputFile.toAbsolutePath());
         }
     }
 }

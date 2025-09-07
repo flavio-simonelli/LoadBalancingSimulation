@@ -4,26 +4,81 @@ import it.pmcsn.lbsim.utils.IntervalEstimation;
 import it.pmcsn.lbsim.utils.csv.CsvAppender;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.List;
 
 public class BachMeansIntervalEstimation {
+
+    public static int getMaxBatchID(String csv) throws Exception {
+        List<String> lines = Files.readAllLines(Paths.get(csv));
+        String[] headers = lines.get(0).split(",");
+
+        int batchIDIndex = -1;
+        for (int i = 0; i < headers.length; i++) {
+            if (headers[i].trim().equals("BatchID")) {
+                batchIDIndex = i;
+                break;
+            }
+        }
+
+        if (batchIDIndex == -1) return 0;
+
+        int max = 0;
+        for (int i = 1; i < lines.size(); i++) {
+            String[] values = lines.get(i).split(",");
+            if (values.length > batchIDIndex) {
+                try {
+                    int value = Integer.parseInt(values[batchIDIndex].trim());
+                    if (value > max) max = value;
+                } catch (NumberFormatException e) {
+                    // Ignora valori non numerici
+                }
+            }
+        }
+
+        return max;
+    }
 
     // Conta il numero di righe (escludendo l'header)
     public static int countRows(String csv) throws Exception {
         return Math.toIntExact(Math.max(0, java.nio.file.Files.lines(Paths.get(csv)).count() - 1));
     }
 
-    // Calcola la media dei valori R0captured nel CSV
+    // Calcola la media dei valori della colonna target
     public static double grandMean(String csv, String targetColumn) throws Exception {
         var lines = java.nio.file.Files.readAllLines(Paths.get(csv));
-        int idx = Arrays.asList(lines.get(0).split(",")).indexOf(targetColumn);
-        if (idx < 0) throw new IllegalArgumentException("Colonna "+targetColumn+" non trovata");
+        String[] headers = lines.getFirst().split(",");
+        int targetIdx = Arrays.asList(headers).indexOf(targetColumn);
+        if (targetIdx < 0) throw new IllegalArgumentException("Colonna "+targetColumn+" non trovata");
+
         double[] vals = lines.stream().skip(1).map(l -> l.split(","))
-                .filter(a -> a.length > idx && !a[idx].isBlank())
+                .filter(a -> a.length > targetIdx && !a[targetIdx].isBlank())
                 .mapToDouble(a -> {
-                    try { return Double.parseDouble(a[idx]); } catch (Exception e) { return Double.NaN; }
+                    try { return Double.parseDouble(a[targetIdx]); } catch (Exception e) { return Double.NaN; }
+                })
+                .filter(d -> !Double.isNaN(d))
+                .toArray();
+        return Arrays.stream(vals).average().orElse(Double.NaN);
+    }
+
+    // Calcola la media dei valori della colonna target filtrati per Type
+    public static double grandMeanWithTypeFilter(String csv, String targetColumn, String typeColumn, String typeValue) throws Exception {
+        var lines = java.nio.file.Files.readAllLines(Paths.get(csv));
+        String[] headers = lines.get(0).split(",");
+        int targetIdx = Arrays.asList(headers).indexOf(targetColumn);
+        int typeIdx = Arrays.asList(headers).indexOf(typeColumn);
+
+        if (targetIdx < 0) throw new IllegalArgumentException("Colonna "+targetColumn+" non trovata");
+        if (typeIdx < 0) throw new IllegalArgumentException("Colonna "+typeColumn+" non trovata");
+
+        double[] vals = lines.stream().skip(1).map(l -> l.split(","))
+                .filter(a -> a.length > Math.max(targetIdx, typeIdx) && !a[targetIdx].isBlank() && !a[typeIdx].isBlank())
+                .filter(a -> a[typeIdx].trim().equals(typeValue))
+                .mapToDouble(a -> {
+                    try { return Double.parseDouble(a[targetIdx]); } catch (Exception e) { return Double.NaN; }
                 })
                 .filter(d -> !Double.isNaN(d))
                 .toArray();
@@ -33,13 +88,42 @@ public class BachMeansIntervalEstimation {
     // Calcola la deviazione standard campionaria rispetto alla grandMean
     public static double stdDev(String csv, double grandMean, String targetColumn) throws Exception {
         var lines = java.nio.file.Files.readAllLines(Paths.get(csv));
-        int idx = Arrays.asList(lines.get(0).split(",")).indexOf(targetColumn);
-        if (idx < 0) throw new IllegalArgumentException("Colonna "+targetColumn+" non trovata");
+        String[] headers = lines.get(0).split(",");
+        int targetIdx = Arrays.asList(headers).indexOf(targetColumn);
+        if (targetIdx < 0) throw new IllegalArgumentException("Colonna "+targetColumn+" non trovata");
 
         double[] vals = lines.stream().skip(1).map(l -> l.split(","))
-                .filter(a -> a.length > idx && !a[idx].isBlank())
+                .filter(a -> a.length > targetIdx && !a[targetIdx].isBlank())
                 .mapToDouble(a -> {
-                    try { return Double.parseDouble(a[idx]); } catch (Exception e) { return Double.NaN; }
+                    try { return Double.parseDouble(a[targetIdx]); } catch (Exception e) { return Double.NaN; }
+                })
+                .filter(d -> !Double.isNaN(d))
+                .toArray();
+
+        if (vals.length < 2) return Double.NaN;
+
+        double variance = Arrays.stream(vals)
+                .map(v -> (v - grandMean) * (v - grandMean))
+                .sum() / (vals.length - 1);
+
+        return Math.sqrt(variance);
+    }
+
+    // Calcola la deviazione standard campionaria con filtro per Type
+    public static double stdDevWithTypeFilter(String csv, double grandMean, String targetColumn, String typeColumn, String typeValue) throws Exception {
+        var lines = java.nio.file.Files.readAllLines(Paths.get(csv));
+        String[] headers = lines.get(0).split(",");
+        int targetIdx = Arrays.asList(headers).indexOf(targetColumn);
+        int typeIdx = Arrays.asList(headers).indexOf(typeColumn);
+
+        if (targetIdx < 0) throw new IllegalArgumentException("Colonna "+targetColumn+" non trovata");
+        if (typeIdx < 0) throw new IllegalArgumentException("Colonna "+typeColumn+" non trovata");
+
+        double[] vals = lines.stream().skip(1).map(l -> l.split(","))
+                .filter(a -> a.length > Math.max(targetIdx, typeIdx) && !a[targetIdx].isBlank() && !a[typeIdx].isBlank())
+                .filter(a -> a[typeIdx].trim().equals(typeValue))
+                .mapToDouble(a -> {
+                    try { return Double.parseDouble(a[targetIdx]); } catch (Exception e) { return Double.NaN; }
                 })
                 .filter(d -> !Double.isNaN(d))
                 .toArray();
@@ -56,21 +140,21 @@ public class BachMeansIntervalEstimation {
     public static void main(String[] args) throws Exception {
         String folderPath = "output/csv/";
         File folder = new File(folderPath);
-        File[] files = folder.listFiles((dir, name) -> name.contains("Respo") && name.endsWith(".csv"));
+        File[] files = folder.listFiles((dir, name) -> name.contains("ResponseR0") && name.endsWith(".csv"));
 
         if (files == null || files.length == 0) {
             System.out.println("Nessun file trovato.");
             return;
         }
 
-        Path outputPath = Paths.get(folderPath, "summaryResp.csv");
+        Path outputPath = Paths.get(folderPath, "summaryR0.csv");
         try (CsvAppender csvAppender = new CsvAppender(outputPath, "File", "Rows", "GrandMean", "StdDev", "SemiInterval", "Inizio intervallo", "Fine intervallo")) {
 
             for (File file : files) {
                 String csv = file.getAbsolutePath();
-                int rows = countRows(csv);
-                double mean = grandMean(csv, "R0captured");
-                double std = stdDev(csv, mean, "R0captured");
+                int rows = getMaxBatchID(csv)+1;
+                double mean = grandMean(csv, "Mean");
+                double std = stdDev(csv, mean, "Mean");
 
                 IntervalEstimation ie = new IntervalEstimation(0.95);
                 double semiInterval = ie.semiIntervalEstimation(std, rows);
@@ -93,10 +177,7 @@ public class BachMeansIntervalEstimation {
 
         System.out.println("CSV finale creato in: " + outputPath);
 
-
-
-
-
+        // SEZIONE MODIFICATA: Filtro per Type="SPIKE"
         files = folder.listFiles((dir, name) -> name.contains("Utilization") && name.endsWith(".csv"));
 
         if (files == null || files.length == 0) {
@@ -104,14 +185,15 @@ public class BachMeansIntervalEstimation {
             return;
         }
 
-        outputPath = Paths.get(folderPath, "summaryUtilizationWS.csv");
+        outputPath = Paths.get(folderPath, "summaryUtilizatiionSS.csv");
         try (CsvAppender csvAppender = new CsvAppender(outputPath, "File", "Rows", "GrandMean", "StdDev", "SemiInterval")) {
 
             for (File file : files) {
                 String csv = file.getAbsolutePath();
-                int rows = countRows(csv);
-                double mean = grandMean(csv, "MeanWS");
-                double std = stdDev(csv, mean, "MeanWS");
+                int rows = getMaxBatchID(csv)+1;
+                // MODIFICA: usa i metodi con filtro per Type="SPIKE"
+                double mean = grandMeanWithTypeFilter(csv, "Mean", "Type", "SPIKE");
+                double std = stdDevWithTypeFilter(csv, mean, "Mean", "Type", "SPIKE");
 
                 IntervalEstimation ie = new IntervalEstimation(0.95);
                 double semiInterval = ie.semiIntervalEstimation(std, rows);

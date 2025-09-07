@@ -11,7 +11,7 @@ public class SimpleSpikeRouter implements SpikeRouter {
     private final int siMax;
 
     public SimpleSpikeRouter(int siMax) {
-        if (siMax <= 0) throw new IllegalArgumentException("SImax must be > 0");
+        //if (siMax <= 0) throw new IllegalArgumentException("SImax must be > 0");
         this.siMax = siMax;
     }
 
