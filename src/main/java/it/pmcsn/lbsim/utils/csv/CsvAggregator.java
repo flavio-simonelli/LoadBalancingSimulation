@@ -13,10 +13,11 @@ public class CsvAggregator {
     private static final IntervalEstimation intervalEstimation = new IntervalEstimation(0.95);
 
     public static void main(String[] args) throws CsvValidationException {
-        String tag = "WS500R0max7";
-        String outputFile = tag + ".csv";
+        String tag = "HorizontalScalingStudy";
+        String outputFile = "output/csv/" + tag + ".csv";
 
-        try (PrintWriter writer = new PrintWriter(new FileWriter(outputFile))) {
+        try {
+            boolean exists = Files.exists(Path.of(outputFile));
 
             // ==== MeanJobs ====
             Map<String, Stats> meanJobs = statsPerServer("output/csv/MeanJobs.csv", "Mean");
@@ -32,8 +33,13 @@ public class CsvAggregator {
             // ==== Utilization ====
             Map<String, Stats> utilization = statsPerServer("output/csv/Utilization.csv", "Mean");
 
-            // ==== Scrittura header ====
+            // ==== Costruzione header dinamico ====
             List<String> header = new ArrayList<>();
+            // Colonne extra hard-coded
+            header.add("R0max");       // ExtraCol1
+            header.add("WindowSize"); // ExtraCol2
+            header.add("LambdaInterarrivi"); // ExtraCol3
+            // Colonne statistiche
             header.add("ResponseR0_Mean");
             header.add("ResponseR0_SemiInt");
 
@@ -54,10 +60,12 @@ public class CsvAggregator {
                 header.add("Utilization_Server" + sid + "_SemiInt");
             }
 
-            writer.println(String.join(",", header));
-
-            // ==== Scrittura valori ====
+            // ==== Costruzione riga valori ====
             List<String> values = new ArrayList<>();
+            // Valori extra hard-coded
+            values.add("7");        // ExtraCol1
+            values.add("600");    // ExtraCol2
+            values.add("8.5");  // ExtraCol3
             values.add(String.format(Locale.US, "%.6f", responseR0.mean));
             values.add(String.format(Locale.US, "%.6f",
                     intervalEstimation.semiIntervalEstimation(responseR0.stddev, responseR0.n)));
@@ -92,8 +100,27 @@ public class CsvAggregator {
                         intervalEstimation.semiIntervalEstimation(st.stddev, st.n)));
             }
 
-            writer.println(String.join(",", values));
-            System.out.println("File creato: " + outputFile);
+            // ==== Scrittura su file ====
+            if (!exists) {
+                try (PrintWriter writer = new PrintWriter(new FileWriter(outputFile, true))) {
+                    writer.println(String.join(",", header));
+                }
+            } else {
+                // Controllo header
+                try (BufferedReader br = new BufferedReader(new FileReader(outputFile))) {
+                    String firstLine = br.readLine();
+                    String expectedHeader = String.join(",", header);
+                    if (firstLine == null || !firstLine.equals(expectedHeader)) {
+                        //throw new IllegalStateException("Header non corrisponde a quello atteso in " + outputFile);
+                    }
+                }
+            }
+
+            try (PrintWriter writer = new PrintWriter(new FileWriter(outputFile, true))) {
+                writer.println(String.join(",", values));
+            }
+
+            System.out.println("Riga aggiunta al file: " + outputFile);
 
         } catch (IOException e) {
             e.printStackTrace();
