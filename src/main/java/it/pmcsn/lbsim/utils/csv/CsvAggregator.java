@@ -24,6 +24,8 @@ public class CsvAggregator {
 
             // ==== ResponseR0 ====
             Stats responseR0 = statsSingle("output/csv/ResponseR0.csv", "Mean");
+            Stats numberScaleIn = statsSingle("output/csv/Scalability.csv", "scaleInActions");
+            Stats numberScaleOut = statsSingle("output/csv/Scalability.csv", "scaleOutActions");
 
             // ==== ResponseTime ====
             Map<String, Stats> respTimeMean = statsPerServer("output/csv/ResponseTime.csv", "Mean");
@@ -42,6 +44,10 @@ public class CsvAggregator {
             // Colonne statistiche
             header.add("ResponseR0_Mean");
             header.add("ResponseR0_SemiInt");
+            header.add("MeanNumScaleIn");
+            header.add("NumScaleIn_SemiInt");
+            header.add("MeanNumScaleOut");
+            header.add("NumScaleOut_SemiInt");
 
             for (String sid : meanJobs.keySet()) {
                 header.add("MeanJobs_Server" + sid + "_Mean");
@@ -69,6 +75,12 @@ public class CsvAggregator {
             values.add(String.format(Locale.US, "%.6f", responseR0.mean));
             values.add(String.format(Locale.US, "%.6f",
                     intervalEstimation.semiIntervalEstimation(responseR0.stddev, responseR0.n)));
+            values.add(String.valueOf(numberScaleIn.mean));
+            values.add(String.format(Locale.US, "%.6f",
+                    intervalEstimation.semiIntervalEstimation(numberScaleIn.stddev, numberScaleIn.n)));
+            values.add(String.valueOf(numberScaleOut.mean));
+            values.add(String.format(Locale.US, "%.6f",
+                    intervalEstimation.semiIntervalEstimation(numberScaleOut.stddev, numberScaleOut.n)));
 
             for (String sid : meanJobs.keySet()) {
                 Stats st = meanJobs.get(sid);
