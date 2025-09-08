@@ -33,6 +33,10 @@ public class SlidingWindowResponseTime {
         return sum / queue.size(); // Calculate and return the average
     }
 
+    public boolean isFull() {
+        return queue.size() == windowSize;
+    }
+
 
 
 }

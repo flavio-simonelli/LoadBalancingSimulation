@@ -64,8 +64,8 @@ public class CsvAggregator {
             List<String> values = new ArrayList<>();
             // Valori extra hard-coded
             values.add("8");        // ExtraCol1
-            values.add("300");    // ExtraCol2
-            values.add("11");  // ExtraCol3
+            values.add("1500");    // ExtraCol2
+            values.add("9");  // ExtraCol3
             values.add(String.format(Locale.US, "%.6f", responseR0.mean));
             values.add(String.format(Locale.US, "%.6f",
                     intervalEstimation.semiIntervalEstimation(responseR0.stddev, responseR0.n)));
