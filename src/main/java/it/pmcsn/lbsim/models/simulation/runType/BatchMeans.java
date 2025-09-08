@@ -134,7 +134,7 @@ public class BatchMeans implements RunPolicy {
         responseR0.iteration(responseTime);
         // get if scaling action happened
         if (loadBalancer.isScaleOutinThisDeparture()) scaleOutAction++;
-        if (loadBalancer.isScaleOutinThisDeparture()) scaleInAction++;
+        if (loadBalancer.isScaleInThisDeparture()) scaleInAction++;
 
         // End of batch?
         if (countTotalDeparture == batchSize) {
