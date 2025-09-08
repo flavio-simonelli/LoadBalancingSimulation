@@ -1,7 +1,6 @@
 package it.pmcsn.lbsim.models.simulation.runType;
 
 import it.pmcsn.lbsim.models.domain.LoadBalancer;
-import it.pmcsn.lbsim.models.simulation.FutureEventList;
 import it.pmcsn.lbsim.models.simulation.JobStats;
 import it.pmcsn.lbsim.utils.IntervalEstimation;
 import it.pmcsn.lbsim.utils.TimeMediateWelford;
@@ -35,6 +34,7 @@ public class BatchMeans implements RunPolicy {
     private final CsvAppender utilizationCsv;
     private final CsvAppender meanJobsCsv;
     private final CsvAppender responseR0Csv;
+    private final CsvAppender serverActvityCsv;
 
     // Spike server metrics
     private final WelfordSimple responseTimeSpike = new WelfordSimple();
@@ -54,6 +54,8 @@ public class BatchMeans implements RunPolicy {
 
     // Global R0
     private final WelfordSimple responseR0 = new WelfordSimple();
+    private final TimeMediateWelford onlineServers = new TimeMediateWelford();
+    private final TimeMediateWelford activeServers = new TimeMediateWelford();
 
     private final IntervalEstimation intervalEstimation;
     private final static Logger logger = Logger.getLogger(BatchMeans.class.getName());
@@ -66,6 +68,7 @@ public class BatchMeans implements RunPolicy {
             utilizationCsv = new CsvAppender(Path.of("output/csv/Utilization.csv"), "BatchID", "ServerID", "Type", "NumSamples", "Mean", "StdDev", "Variance");
             meanJobsCsv = new CsvAppender(Path.of("output/csv/MeanJobs.csv"), "BatchID", "ServerID", "Type", "NumSamples", "Mean", "StdDev", "Variance");
             responseR0Csv = new CsvAppender(Path.of("output/csv/ResponseR0.csv"), "BatchID", "TotalDepartures", "Mean", "StdDev", "Variance", "SeminIntervalR0", "scaleInActions", "scaleOutActions");
+            serverActvityCsv = new CsvAppender(Path.of("output/csv/ServerActivity.csv"), "BatchID", "NumActiveServer", "NumOnlineServer");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -106,6 +109,9 @@ public class BatchMeans implements RunPolicy {
             getUtilizationTracker(id).iteration(ws.isBusy(), current);
             getMeanJobsTracker(id).iteration(ws.getCurrentSI(), current);
         });
+        // num servers
+        activeServers.iteration(loadBalancer.getWebServers().getWebServers().size(), current);
+        onlineServers.iteration(loadBalancer.getWebServers().getWebServers().size()+loadBalancer.getWebServers().getRemovingServers().size(), current);
     }
 
     @Override
@@ -135,6 +141,9 @@ public class BatchMeans implements RunPolicy {
         // get if scaling action happened
         if (loadBalancer.isScaleOutinThisDeparture()) scaleOutAction++;
         if (loadBalancer.isScaleInThisDeparture()) scaleInAction++;
+        // num servers
+        activeServers.iteration(loadBalancer.getWebServers().getWebServers().size(), currentTime);
+        onlineServers.iteration(loadBalancer.getWebServers().getWebServers().size()+loadBalancer.getWebServers().getRemovingServers().size(), currentTime);
 
         // End of batch?
         if (countTotalDeparture == batchSize) {
@@ -222,6 +231,12 @@ public class BatchMeans implements RunPolicy {
                 String.valueOf(scaleInAction),
                 String.valueOf(scaleOutAction)
         );
+
+        serverActvityCsv.writeRow(
+                String.valueOf(currentBatch),
+                String.valueOf(activeServers.getMean()),
+                String.valueOf(onlineServers.getMean())
+        );
     }
 
     private void writeResponseRow(int batchId, int totalDepartures,
@@ -251,6 +266,7 @@ public class BatchMeans implements RunPolicy {
         this.meanJobsCsv.close();
         this.utilizationCsv.close();
         this.responseR0Csv.close();
+        this.serverActvityCsv.close();
     }
 
     // ---------------- Helpers ----------------

@@ -35,6 +35,10 @@ public class ServerPool {
         return webServers;
     }
 
+    public List<Server> getRemovingServers() {
+        return removingServers;
+    }
+
     // return true if scale-in request accepted, false otherwise
     public boolean requestScaleIn() {
         if (webServers.size() <= 1) {

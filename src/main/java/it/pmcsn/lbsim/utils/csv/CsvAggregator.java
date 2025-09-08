@@ -35,6 +35,10 @@ public class CsvAggregator {
             // ==== Utilization ====
             Map<String, Stats> utilization = statsPerServer("output/csv/Utilization.csv", "Mean");
 
+            // MeanNumServerActive and TotalServices
+            Stats meanNumServerActive = statsSingle("output/csv/ServerActivity.csv", "NumActiveServer");
+            Stats meanNumServerOnline = statsSingle("output/csv/ServerActivity.csv", "NumOnlineServer");
+
             // ==== Costruzione header dinamico ====
             List<String> header = new ArrayList<>();
             // Colonne extra hard-coded
@@ -48,6 +52,10 @@ public class CsvAggregator {
             header.add("NumScaleIn_SemiInt");
             header.add("MeanNumScaleOut");
             header.add("NumScaleOut_SemiInt");
+            header.add("MeanNumServerActive_Mean");
+            header.add("MeanNumServerActive_SemiInt");
+            header.add("MeanNumServerOnline_Mean");
+            header.add("MeanNumServerOnline_SemiInt");
 
             for (String sid : meanJobs.keySet()) {
                 header.add("MeanJobs_Server" + sid + "_Mean");
@@ -81,6 +89,13 @@ public class CsvAggregator {
             values.add(String.valueOf(numberScaleOut.mean));
             values.add(String.format(Locale.US, "%.6f",
                     intervalEstimation.semiIntervalEstimation(numberScaleOut.stddev, numberScaleOut.n)));
+            values.add(String.format(Locale.US, "%.6f", meanNumServerActive.mean));
+            values.add(String.format(Locale.US, "%.6f",
+                    intervalEstimation.semiIntervalEstimation(meanNumServerActive.stddev, meanNumServerActive.n)));
+            values.add(String.format(Locale.US, "%.6f", meanNumServerOnline.mean));
+            values.add(String.format(Locale.US, "%.6f",
+                    intervalEstimation.semiIntervalEstimation(meanNumServerOnline.stddev, meanNumServerOnline.n)));
+
 
             for (String sid : meanJobs.keySet()) {
                 Stats st = meanJobs.get(sid);

@@ -4,7 +4,7 @@ simulation:
 
 infinitesimulation:
   k: 128 # numero di batch
-  b: 100000 # dimensione del batch
+  b: 20000 # dimensione del batch
 
 finitesimulation:
   replica: 5  #numero di repliche
@@ -18,7 +18,7 @@ autocorrelation:
 workload:
   chooseWorkload: "hyperexponential"  # valori possibili: "trace", "hyperexponential", "exponential"
   interarrival:
-    mean: 0.125       # media dei tempi di interarrivo (if chooseWorkload = "exponential" is used for the exponential distribution)
+    mean: 0.15       # media dei tempi di interarrivo (if chooseWorkload = "exponential" is used for the exponential distribution)
     cv: 4             # coefficiente di variazione
     streamp: 0
     streamhexp1: 1
@@ -42,7 +42,7 @@ scaling:
 
   horizontal:
     enabled: true
-    slidingWindowSize: 3000     # finestra mobile per media tempo risposta
+    slidingWindowSize: 1000     # finestra mobile per media tempo risposta
     R0max: "PT8S"        # media tempo di risposta per scale in
     R0min: "PT3.6S"        # media tempo di risposta per scale out
     coolDown: "PT5M"     # ritardo tra una scalata e l'altra
