@@ -24,6 +24,8 @@ public class LoadBalancer {
     private final SchedulingPolicy schedulingPolicy;            // Scheduling policy to use for job assignment
     private final HorizontalScaler horizontalScaler;           // Horizontal scaler
     private final SpikeRouter spikeRouter;                   // Spike router
+    private boolean scaleInThisDeparture = false;
+    private boolean scaleOutinThisDeparture = false;
 
     public LoadBalancer(ServerPool pool,
                         Server spikeServer,
@@ -70,6 +72,8 @@ public class LoadBalancer {
     }
 
     public void completeJob(Job job, double currentTime, double responseTime) {
+        scaleInThisDeparture = false;
+        scaleOutinThisDeparture = false;
 
         if (job == null) {
             logger.log(Level.SEVERE, "Job cannot be null");
@@ -95,17 +99,26 @@ public class LoadBalancer {
             case SCALE_OUT -> {
                 if (this.webServers.requestScaleOut()) {
                     this.horizontalScaler.setLastActionAt(currentTime);
+                    scaleOutinThisDeparture = true;
                 }
             }
             case SCALE_IN -> {
                 if(this.webServers.requestScaleIn()) {
                     this.horizontalScaler.setLastActionAt(currentTime);
+                    scaleInThisDeparture = true;
                 }
             }
             case NONE -> {
                 // No action needed
             }
         }
+    }
+
+    public boolean isScaleInThisDeparture() {
+        return scaleInThisDeparture;
+    }
+    public boolean isScaleOutinThisDeparture() {
+        return scaleOutinThisDeparture;
     }
 
     public HorizontalScaler getHorizontalScaler() {

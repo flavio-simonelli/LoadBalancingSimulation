@@ -49,7 +49,8 @@ public class BatchMeans implements RunPolicy {
     private final Map<Integer, Integer> requestsWSProcessed = new HashMap<>();
 
     // scaling orizzontale
-    private int scaleActions = 0;
+    private int scaleInAction = 0;
+    private int scaleOutAction = 0;
 
     // Global R0
     private final WelfordSimple responseR0 = new WelfordSimple();
@@ -64,7 +65,7 @@ public class BatchMeans implements RunPolicy {
             responseTimeCsv = new CsvAppender(Path.of("output/csv/ResponseTime.csv"), "BatchID", "TotalDepartures", "ServerID", "Type", "NumDepartures", "Mean", "StdDev", "Variance", "SeminInterval", "%reqDirected", "Throughput");
             utilizationCsv = new CsvAppender(Path.of("output/csv/Utilization.csv"), "BatchID", "ServerID", "Type", "NumSamples", "Mean", "StdDev", "Variance");
             meanJobsCsv = new CsvAppender(Path.of("output/csv/MeanJobs.csv"), "BatchID", "ServerID", "Type", "NumSamples", "Mean", "StdDev", "Variance");
-            responseR0Csv = new CsvAppender(Path.of("output/csv/ResponseR0.csv"), "BatchID", "TotalDepartures", "Mean", "StdDev", "Variance", "SeminIntervalR0", "horizontalscaleActions");
+            responseR0Csv = new CsvAppender(Path.of("output/csv/ResponseR0.csv"), "BatchID", "TotalDepartures", "Mean", "StdDev", "Variance", "SeminIntervalR0", "scaleInActions", "scaleOutActions");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -131,16 +132,16 @@ public class BatchMeans implements RunPolicy {
             incrementRequestsProcessed(id);
         }
         responseR0.iteration(responseTime);
+        // get if scaling action happened
+        if (loadBalancer.isScaleOutinThisDeparture()) scaleOutAction++;
+        if (loadBalancer.isScaleOutinThisDeparture()) scaleInAction++;
 
         // End of batch?
         if (countTotalDeparture == batchSize) {
             logger.log(Level.INFO, "Finished batch " + currentBatch);
-            int newscaleAction = loadBalancer.getHorizontalScaler().getScaleActions();
-            int scaledDiff = newscaleAction - scaleActions;
-            scaleActions = newscaleAction;
             double elapsedTime = currentTime - time;
             time = currentTime;
-            printCsvs(elapsedTime, scaledDiff);
+            printCsvs(elapsedTime);
             resetTrackers(time, loadBalancer);
             countTotalDeparture = 0;
             currentBatch++;
@@ -154,7 +155,7 @@ public class BatchMeans implements RunPolicy {
 
     // ---------------- CSV printing ----------------
 
-    private void printCsvs(double elapsedTime, int scaledDiff) {
+    private void printCsvs(double elapsedTime) {
         int totalDepartures = countTotalDeparture;
 
         // Spike
@@ -218,7 +219,8 @@ public class BatchMeans implements RunPolicy {
                 String.valueOf(responseR0.getVariance()),
                 String.valueOf(intervalEstimation.semiIntervalEstimation(
                         responseR0.getStandardVariation(), responseR0.getI())),
-                String.valueOf(scaledDiff)
+                String.valueOf(scaleInAction),
+                String.valueOf(scaleOutAction)
         );
     }
 
@@ -260,6 +262,9 @@ public class BatchMeans implements RunPolicy {
 
         responseR0.reset();
         responseTimeWS.values().forEach(WelfordSimple::reset);
+
+        scaleInAction = 0;
+        scaleOutAction = 0;
 
         // reset per ogni web server allo stato corrente
         lb.getWebServers().getWebServers().forEach(ws -> {

@@ -4,12 +4,12 @@ simulation:
 
 infinitesimulation:
   k: 128 # numero di batch
-  b: 200000 # dimensione del batch
+  b: 100000 # dimensione del batch
 
 finitesimulation:
-  replica: 1  #numero di repliche
+  replica: 5  #numero di repliche
   numjobs: 10000 # numero di job da eseguire per ogni replica
-  duration: "PT6H"   # P2DT3H4M → 2 giorni, 3 ore, 4 minuti (tempo per ogni replica)
+  duration: "PT5M"   # P2DT3H4M → 2 giorni, 3 ore, 4 minuti (tempo per ogni replica)
 
 
 autocorrelation:
@@ -42,10 +42,10 @@ scaling:
 
   horizontal:
     enabled: true
-    slidingWindowSize: 1500     # finestra mobile per media tempo risposta
+    slidingWindowSize: 1000     # finestra mobile per media tempo risposta
     R0max: "PT8S"        # media tempo di risposta per scale in
-    R0min: "PT0S"        # media tempo di risposta per scale out
-    coolDown: "PT20M"     # ritardo tra una scalata e l'altra
+    R0min: "PT3.60S"        # media tempo di risposta per scale out
+    coolDown: "PT0S"     # ritardo tra una scalata e l'altra
 
     initialServerCount: 1   # server iniziali (senza spike)
 
