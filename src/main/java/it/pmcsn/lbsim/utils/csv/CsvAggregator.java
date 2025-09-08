@@ -63,9 +63,9 @@ public class CsvAggregator {
             // ==== Costruzione riga valori ====
             List<String> values = new ArrayList<>();
             // Valori extra hard-coded
-            values.add("7");        // ExtraCol1
-            values.add("600");    // ExtraCol2
-            values.add("8.5");  // ExtraCol3
+            values.add("8");        // ExtraCol1
+            values.add("300");    // ExtraCol2
+            values.add("11");  // ExtraCol3
             values.add(String.format(Locale.US, "%.6f", responseR0.mean));
             values.add(String.format(Locale.US, "%.6f",
                     intervalEstimation.semiIntervalEstimation(responseR0.stddev, responseR0.n)));
@@ -111,7 +111,7 @@ public class CsvAggregator {
                     String firstLine = br.readLine();
                     String expectedHeader = String.join(",", header);
                     if (firstLine == null || !firstLine.equals(expectedHeader)) {
-                        //throw new IllegalStateException("Header non corrisponde a quello atteso in " + outputFile);
+                        throw new IllegalStateException("Header non corrisponde a quello atteso in " + outputFile);
                     }
                 }
             }
