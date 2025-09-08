@@ -24,8 +24,8 @@ public class CsvAggregator {
 
             // ==== ResponseR0 ====
             Stats responseR0 = statsSingle("output/csv/ResponseR0.csv", "Mean");
-            Stats numberScaleIn = statsSingle("output/csv/Scalability.csv", "scaleInActions");
-            Stats numberScaleOut = statsSingle("output/csv/Scalability.csv", "scaleOutActions");
+            Stats numberScaleIn = statsSingle("output/csv/ResponseR0.csv", "scaleInActions");
+            Stats numberScaleOut = statsSingle("output/csv/ResponseR0.csv", "scaleOutActions");
 
             // ==== ResponseTime ====
             Map<String, Stats> respTimeMean = statsPerServer("output/csv/ResponseTime.csv", "Mean");
