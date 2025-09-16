@@ -8,8 +8,8 @@ import java.util.stream.Collectors;
 public class MetricsConfidenceAggregator {
 
     // Parametri hardcoded
-    private static final double START_TIME = 0.0;
-    private static final double END_TIME = 18000.0;
+    private static final double START_TIME = 172800.0; //
+    private static final double END_TIME = 208800.0;   //
     private static final double STEP = 300.0;
     private static final double LOC = 0.95;
 

@@ -41,19 +41,17 @@ public class ProvaRunPolicy implements RunPolicy {
                                      LoadBalancer lb, double responseTime) {
         // === Tempo di risposta medio ===
         responseR0.iteration(responseTime);
-        responseCsv.writeRow(String.valueOf(currentTime),
-                String.valueOf(responseR0.getAvg()));
-
-        // === Numero server attivi ===
         int active = lb.getWebServers().getWebServers().size() +
-                lb.getWebServers().getRemovingServers().size();;
-        serversCsv.writeRow(String.valueOf(currentTime),
-                String.valueOf(active));
-
-        // === Utilizzazione Spike ===
+                lb.getWebServers().getRemovingServers().size();
         spikeUtil.iteration(lb.getSpikeServer().isBusy(), currentTime);
-        spikeCsv.writeRow(String.valueOf(currentTime),
-                String.valueOf(spikeUtil.getMean()));
+        if (currentTime >= 172800.0) {
+            responseCsv.writeRow(String.valueOf(currentTime),
+                    String.valueOf(responseR0.getAvg()));
+            serversCsv.writeRow(String.valueOf(currentTime),
+                    String.valueOf(active));
+            spikeCsv.writeRow(String.valueOf(currentTime),
+                    String.valueOf(spikeUtil.getMean()));
+        }
     }
 
     @Override
