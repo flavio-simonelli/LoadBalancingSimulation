@@ -9,16 +9,26 @@ infinitesimulation:
 finitesimulation:
   replica: 30  #numero di repliche
   numjobs: 100000 # numero di job da eseguire per ogni replica
-  duration: "P2DT10H"   # P2DT3H4M → 2 giorni, 3 ore, 4 minuti (tempo per ogni replica)
+  duration: "PT4H"   # P2DT3H4M → 2 giorni, 3 ore, 4 minuti (tempo per ogni replica)
 
 realsimulation:
   phases:
     - time: "PT0H"     # 0h
       interarrivalMean: 0.1667   # λ=6
-    - time: "P2DT0H"  # +30 min
+    - time: "PT0H30M"  # +30 min
       interarrivalMean: 0.0833   # λ=12
-    - time: "P2DT5H"  # +15 min
-      interarrivalMean: 0.25    # λ=4
+    - time: "PT1H"  # +15 min
+      interarrivalMean: 0.125    # λ=8
+    - time: "PT1H30M"
+      interarrivalMean: 0.1      # λ=10
+    - time: "PT1H50M"
+      interarrivalMean: 0.1429   # λ=7
+    - time: "PT2H20M"
+      interarrivalMean: 0.0769   # λ=13
+    - time: "PT2H35M"
+      interarrivalMean: 0.125    # λ=8
+    - time: "PT3H"
+      interarrivalMean: 0.1667   # λ=6
 
 
 autocorrelation:
@@ -45,16 +55,16 @@ scheduling:
 scaling:
   spikeServer:
     enabled: true
-    SImax: 40        # max job nel web server prima di reindirizzare allo spike
+    SImax: 80        # max job nel web server prima di reindirizzare allo spike
     cpuMultiplier: 2  # moltiplicatore CPU spike
     cpuPercentage: 0.4 # percentuale CPU assegnata all'app spike
 
   horizontal:
     enabled: true
-    slidingWindowSize: 5000     # finestra mobile per media tempo risposta
-    R0max: "PT4S"        # media tempo di risposta per scale in
-    R0min: "PT2S"        # media tempo di risposta per scale out
-    coolDown: "PT1M"     # ritardo tra una scalata e l'altra
+    slidingWindowSize: 3000     # finestra mobile per media tempo risposta
+    R0max: "PT8S"        # media tempo di risposta per scale in
+    R0min: "PT3.6S"        # media tempo di risposta per scale out
+    coolDown: "PT3M"     # ritardo tra una scalata e l'altra
 
     initialServerCount: 1   # server iniziali (senza spike)
 

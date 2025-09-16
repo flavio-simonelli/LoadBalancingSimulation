@@ -75,7 +75,7 @@ public class SimulatorController {
         logger.log(Level.INFO, "Initial seeds of the real simulation: {0}\n", Arrays.toString(rngs.getSeedArray()));
         // run policy → di solito con replica o durata fissa, decidi tu
         // ad esempio: una run di durata massima (prendi l’ultima fase)
-        Replication runPolicy = new Replication(config.getNumberOfReplicas());
+        ProvaRunPolicy runPolicy = new ProvaRunPolicy(config.getNumberOfReplicas());
         // run n replicas
         for (int replica = 0; replica < config.getNumberOfReplicas(); replica++) {
             logger.log(Level.SEVERE, "Initial seeds of Replica {0}: {1}\n",
