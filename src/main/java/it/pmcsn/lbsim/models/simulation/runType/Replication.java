@@ -26,7 +26,7 @@ public class Replication implements RunPolicy {
     private CsvAppender perServerCsv;
     private CsvAppender r0Csv;
     private CsvAppender allResponseCsv;
-    private CsvAppender allSICsv;
+    //private CsvAppender allSICsv;
     private CsvAppender allscalabilityCsv;
     // Spike trackers
     private final WelfordSimple responseTimeSpike = new WelfordSimple();
@@ -72,8 +72,7 @@ public class Replication implements RunPolicy {
                     Path.of("output/csv/ResponseR0Replica" + replica + ".csv"), "Time", "MeanResponseTime", "StdDevResponseTime", "VarianceResponseTime");
             allResponseCsv = new CsvAppender(
                     Path.of("output/csv/AllReplica" + replica + ".csv"), "Time", "ServerID", "ResponseTime");
-            allSICsv = new CsvAppender(
-                    Path.of("output/csv/AllSIReplica" + replica + ".csv"), "Time", "ServerID", "CurrentSI");
+            //allSICsv = new CsvAppender(Path.of("output/csv/AllSIReplica" + replica + ".csv"), "Time", "ServerID", "CurrentSI");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -83,7 +82,7 @@ public class Replication implements RunPolicy {
         if (perServerCsv != null) perServerCsv.close();
         if (r0Csv != null) r0Csv.close();
         if (allResponseCsv != null) allResponseCsv.close(); // da togliere
-        if (allSICsv != null) allSICsv.close();
+        //if (allSICsv != null) allSICsv.close();
     }
 
     // ---------------- Simulation hooks ----------------
@@ -100,7 +99,7 @@ public class Replication implements RunPolicy {
             getUtilizationTracker(id).iteration(ws.isBusy(), current);
             getMeanJobsTracker(id).iteration(ws.getCurrentSI(), current);
         });
-
+        /*
         try{
             allSICsv.writeRow(
                     String.valueOf(current),
@@ -110,6 +109,8 @@ public class Replication implements RunPolicy {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+         */
 
         // Scrittura riga su CSV (senza response time, solo utilizzo e jobs)
         writePerServerRows(current, loadBalancer);
@@ -146,11 +147,14 @@ public class Replication implements RunPolicy {
                     String.valueOf(departureJob.getJob().getAssignedServer().getId()),
                     String.valueOf(responseTime)
             );
+            /*
             allSICsv.writeRow(
                     String.valueOf(currentTime),
                     String.valueOf(departureJob.getJob().getAssignedServer().getId()),
                     String.valueOf(departureJob.getJob().getAssignedServer().getCurrentSI())
             );
+
+             */
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -187,6 +191,7 @@ public class Replication implements RunPolicy {
     // ---------------- CSV writing ----------------
 
     private void writePerServerRows(double time, LoadBalancer loadBalancer) {
+        if ( time < 172800 ) return; // Skip first 2 day
         // Spike row
         perServerCsv.writeRow(
                 String.valueOf(time),
@@ -226,6 +231,7 @@ public class Replication implements RunPolicy {
     }
 
     private void writeR0Row(double time) {
+        if ( time < 172800 ) return; // Skip first 2 day
         r0Csv.writeRow(
                 String.valueOf(time),
                 String.valueOf(responseR0.getAvg()),
