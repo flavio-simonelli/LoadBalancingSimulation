@@ -191,7 +191,6 @@ public class Replication implements RunPolicy {
     // ---------------- CSV writing ----------------
 
     private void writePerServerRows(double time, LoadBalancer loadBalancer) {
-        if ( time < 172800 ) return; // Skip first 2 day
         // Spike row
         perServerCsv.writeRow(
                 String.valueOf(time),
@@ -231,7 +230,6 @@ public class Replication implements RunPolicy {
     }
 
     private void writeR0Row(double time) {
-        if ( time < 172800 ) return; // Skip first 2 day
         r0Csv.writeRow(
                 String.valueOf(time),
                 String.valueOf(responseR0.getAvg()),
